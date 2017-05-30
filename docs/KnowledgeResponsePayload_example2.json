@@ -1,0 +1,229 @@
+{"feed": {
+  "xsi": "http://www.w3.org/2001/XMLSchema-instance",
+  "base": "http://www.ncbi.nlm.nih.gov/pubmed/",
+  "lang": "en"
+  "title": {
+    "_value": "PubMed - Clinical Queries",
+    "type": "text"
+  },
+  "subtitle": {
+    "_value": "Bacterial Pneumonia",
+    "type": "text"
+  },
+
+  "author": {
+    "name": {
+      "_value": "National Library of Medicine"
+    },
+    "uri": {
+      "_value": " http://http://www.ncbi.nlm.nih.gov/pubmed/"
+    }
+  },
+  "updated": {
+	"_value": "2010-07-13T14:02:29Z",
+	},
+  "category": [
+    {
+      "scheme": "mainSearchCriteria.v.c",
+      "term": 53084003
+    },
+    {
+      "scheme": "mainSearchCriteria.v.cs",
+      "term": "2.16.840.1.113883.6.96"
+    },
+    {
+      "scheme": "mainSearchCriteria.v.c",
+      "term": "Bacterial Pneumonia"
+    },
+    {
+      "scheme": "ageGroup.v.c",
+      "term": "D000368"
+    },
+    {
+      "scheme": "ageGroup.v.cs",
+      "term": "2.16.840.1.113883.6.177"
+    },
+    {
+      "scheme": "ageGroup.v.dn",
+      "term": "Aged"
+    },
+    {
+      "scheme": "subTopic.v.c",
+      "term": "Q000628"
+    },
+    {
+      "scheme": "subTopic.v.cs",
+      "term": "2.16.840.1.113883.6.177"
+    },
+    {
+      "scheme": "subTopic.v.dn",
+      "term": "therapy"
+    }
+  ],
+  "id": {
+    "_value": "urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6"
+  },
+
+  "entry": [
+    {
+      "summary": {
+        "_value": "OBJECTIVE: To investigate whether adding rifampicin to vancomycin could cure more patients with nosocomial methicillin-resistant Staphylococcus aureus pneumonia compared with vancomycin-only. DESIGN: Prospective randomized open-label study. Setting: Medical intensive care unit in Seoul, Korea. Patients: Ninety-three of 183 patients with Gram-positive nosocomial pneumonia. Interventions: The enrolled patients with subsequently documented methicillin-resistant Staphylococcus aureus pneumonia (modified intention-to-treat population) were treated with vancomycin (1 g intravenous every 12 hrs) plus rifampicin (300 mg twice daily by mouth) (n \u003d 41) or with vancomycin-only (n \u003d 42). The intended treatment (at least 5 days) was completed in 30 patients in the vancomycin plus rifampicin group and 34 patients in the vancomycin-only group (per protocol population). MEASUREMENTS AND MAIN RESULTS: The primary outcome was the clinical cure rate on day 14 of treatment. The secondary outcomes were intensive care unit mortality on days 28 and 60, and microbiological eradication on day 14. The clinical cure rate in the modified intention-to-treat population was 53.7% (22 of 41) in the vancomycin plus rifampicin group, and 31.0% (13 of 42) in the vancomycin-only group (p \u003d .047), and the respective rates in the per protocol population were 63.3% (19 of 30) and 38.2% (13 of 34) (p \u003d .079). The respective mortality rates were nine (22.0%) of 41 and 16 (38.1%) of 42 on day 28 (p \u003d .151), and 11 (26.8%) of 41 and 21 (50.0%) of 42 on day 60 (p \u003d .042). The microbiological eradication rate did not differ between groups (p \u003d .472). CONCLUSIONS: Vancomycin plus rifampicin seems to be more effective than vancomycin alone in the treatment of nosocomial methicillin-resistant Staphylococcus aureus pneumonia.",
+        "type": "text"
+      },
+      "id": {
+			"_value": "tag:nlm.nih.gov,2010-05-01:20050336"
+		},
+      "category": [
+        {
+          "scheme": "mainSearchCriteria.v.c",
+          "term": 266096002
+        },
+        {
+          "scheme": "mainSearchCriteria.v.cs",
+          "term": "2.16.840.1.113883.6.96"
+        },
+        {
+          "scheme": "mainSearchCriteria.v.dn",
+          "term": "Methicillin resistant Staphylococcus aureus infection"
+        },
+        {
+          "scheme": "relevanceScore",
+          "term": 0.5
+        },
+        {
+          "scheme": "strengthOfRecommedation",
+          "term": "2A"
+        }
+      ],
+      "title": {
+        "_value": "Effect of vancomycin plus rifampicin in the treatment of nosocomial methicillin-resistant Staphylococcus aureus pneumonia",
+        "type": "text"
+      },
+
+      "updated": {
+			"_value": "2010-05-01T00:00:00Z",
+		},
+      "link": {
+        "hreflang": "en",
+        "title": "Effect of vancomycin plus rifampicin in the treatment of nosocomial methicillin-resistant Staphylococcus aureus pneumonia",
+        "rel": "alternate",
+        "type": "html",
+        "href": 20050336
+      },
+      "lang": "en"
+    },
+    {
+      "summary": {
+        "_value": "BACKGROUND: Tigecycline, an expanded broad-spectrum glycylcycline, exhibits in vitro activity against many common pathogens associated with community-acquired pneumonia (CAP), as well as penetration into lung tissues that suggests effectiveness in hospitalized CAP patients. The aim of the present study was to compare the efficacy and safety of intravenous (IV) tigecycline with IV levofloxacin in hospitalized adults with CAP. METHODS: In this prospective, double-blind, non-inferiority phase 3 trial, eligible patients with a clinical diagnosis of CAP supported by radiographic evidence were stratified by Fine Pneumonia Severity Index and randomized to tigecycline or levofloxacin for 7-14 days of therapy. Co-primary efficacy endpoints were clinical response in the clinically evaluable (CE) and clinical modified intent-to-treat (c-mITT) populations at test-of-cure (Day 10-21 post-therapy). RESULTS: Of the 428 patients who received at least one dose of study drug, 79% had CAP of mild-moderate severity according to their Fine score. Clinical cure rates for the CE population were 88.9% for tigecycline and 85.3% for levofloxacin. Corresponding c-mITT population rates were 83.7% and 81.5%, respectively. Eradication rates for Streptococcus pneumoniae were 92% for tigecycline and 89% for levofloxacin. Nausea, vomiting, and diarrhoea were the most frequently reported adverse events. Rates of premature discontinuation of study drug or study withdrawal because of any adverse event were similar for both study drugs. CONCLUSION: These findings suggest that IV tigecycline is non-inferior to IV levofloxacin and is generally well-tolerated in the treatment of hospitalized adults with CAP. TRIAL REGISTRATION: NCT00081575.",
+        "type": "text"
+      },
+      "id": {
+			"_value": "tag:nlm.nih.gov,2009-09-01:19740418"
+		},
+      "category": [
+        {
+          "scheme": "mainSearchCriteria.v.c",
+          "term": 387552007
+        },
+        {
+          "scheme": "mainSearchCriteria.v.cs",
+          "term": "2.16.840.1.113883.6.96"
+        },
+        {
+          "scheme": "mainSearchCriteria.v.dn",
+          "term": "Levofloxacin"
+        },
+        {
+          "scheme": "relevanceScore",
+          "term": 0.5
+        },
+        {
+          "scheme": "strengthOfRecommedation",
+          "term": "2B"
+        }
+      ],
+      "title": {
+        "_value": "Efficacy and safety of tigecycline versus levofloxacin for community-acquired pneumonia.",
+        "type": "text"
+      },
+      "updated": {
+			"_value": "2009-09-01T00:00:00Z"
+		},
+      "link": [
+        {
+          "hreflang": "en",
+          "title": "Efficacy and safety of tigecycline versus levofloxacin for community-acquired pneumonia",
+          "rel": "alternate",
+          "type": "html",
+          "href": 19740418
+        },
+        {
+          "hreflang": "en",
+          "title": "Full-text in PubMed Central",
+          "rel": "alternate",
+          "type": "html",
+          "href": "http://www.pubmedcentral.nih.gov/articlerender.fcgi?tool=pubmed&pubmedid=19740418"
+        },
+        {
+          "hreflang": "en",
+          "title": "Full-text in BioMed Central",
+          "rel": "alternate",
+          "type": "html",
+          "href": "http://www.biomedcentral.com/1471-2466/9/44"
+        }
+      ],
+      "lang": "en"
+    },
+    {
+      "summary": {
+        "_value": "OBJECTIVE: To evaluate the value of serum procalcitonin (PCT) on antibiotic use in treatment of community acquired pneumonia (CAP) in outpatient. METHODS: From November 2006 to February 2008, a total of 127 patients with CAP in outpatient were randomly assigned into two groups: PCT group (n \u003d 63) and control group (n \u003d 64). PCT levels of all patients were measured after study admission. On the base of similarly normal treatment, the control group received antibiotics according to the attending physicians and the PCT group were treated with antibiotics according to serum PCT levels: antibiotic treatment was applied with PCT level \u003e or \u003d 0.25 microg/L and was discouraged with PCT level \u003c 0.25 microg/L. Clinical efficacy, rate of antibiotics use, duration courses and costs of antibiotics were observed. RESULTS: Clinical efficacy of the PCT group was similar with the control group (92.1% vs 87.5%, P \u003e 0.05); rate and costs of antibiotics use was lower, antibiotic duration of the PCT group was shorter than that of the control group (P  \u003c 0.05, P  \u003c 0.001, P  \u003c 0.001). CONCLUSION: PCT could be used in treatment of CAP for antibiotic use in outpatient, which may reduce antibiotic use, shorten antibiotic duration and lower costs of antibiotic.",
+        "type": "text"
+      },
+      "id": {
+			"_value": "tag:nlm.nih.gov,2009-03-01:19576090"
+		},
+      "category": [
+        {
+          "scheme": "mainSearchCriteria.v.c",
+          "term": 385093006
+        },
+        {
+          "scheme": "mainSearchCriteria.v.cs",
+          "term": "2.16.840.1.113883.6.177"
+        },
+        {
+          "scheme": "mainSearchCriteria.v.dn",
+          "term": "Community acquired pneumonia"
+        },
+        {
+          "scheme": "relevanceScore",
+          "term": 0.5
+        }
+      ],
+      "title": {
+        "_value": "The value of serum procalcitonin in treatment of community acquired pneumonia in outpatient.",
+        "type": "text"
+      },
+      "updated": {
+			"_value": "2009-03-01T00:00:00Z"
+		},
+      "link": [
+        {
+          "hreflang": "en",
+          "title": "The value of serum procalcitonin in treatment of community acquired pneumonia in outpatient",
+          "rel": "alternate",
+          "type": "html",
+          "href": 19576090
+        },
+        {
+          "hreflang": "zh",
+          "title": "Full-text in Zhonghua Nei Ke Za Zhi [Chinese journal of internal medicine]",
+          "rel": "alternate",
+          "type": "html",
+          "href": "http://open.oriprobe.com/order.htm?id=15286572"
+        }
+      ],
+      "lang": "en"
+    }
+  ],
+}}

@@ -1,0 +1,209 @@
+{"feed": {
+    "xsi": "http://www.w3.org/2001/XMLSchema-instance",
+    "base": "http://www.ncbi.nlm.nih.gov/medlineplus/",
+    "lang": "en",
+    "title": {
+        "_value": "MedlinePlus",
+        "type": "text"
+    },
+
+    "subtitle": {
+        "_value": "Diabetes  Mellitus",
+        "type": "text"
+    },
+	
+    "author": {
+        "name": {
+            "_value": "National Library of Medicine"
+        },
+        "uri": {
+            "_value": "http://medlineplus.gov"
+        }
+    },
+    "updated": {
+        "_value": "2010-07-06T14:02:29Z"
+    },
+    "category": [
+        {
+            "scheme": "taskContext.c.c",
+            "term": "PROBLISTREV"
+        },
+        {
+            "scheme": "mainSearchCriteria.v.c",
+            "term": "E11"
+        },
+        {
+            "scheme": "mainSearchCriteria.v.cs",
+            "term": "2.16.840.1.113883.6.90"
+        },
+        {
+            "scheme": "mainSearchCriteria.v.dn",
+            "term": "Type  2  Diabetes  Mellitus"
+        },
+        {
+            "scheme": "mainSearchCriteria.v.ot",
+            "term": "Diabetes  Type  2"
+        },
+        {
+            "scheme": "informationRecipient",
+            "term": "PAT"
+        }
+    ],
+    "id": {
+        "_value": "urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6"
+    },
+    "entry": [
+        {
+            "lang": "en"
+            "summary": {
+                "_value": "If  you  have  diabetes,  your  body  cannot  make  or  properly  use  insulin.    This  leads  to  high  blood  glucose,  or  sugar,  levels  in  your  blood.  Healthy  eating  helps  to  reduce  your  blood  sugar.    It  is  a  critical  part  of  managing  your  diabetes,  because  controlling  your  blood  sugar  can  prevent  the  <  href=\"http://www.nlm.nih.gov/medlineplus/diabetescomplications.html\">complications  of  diabetes  <\/a>.",
+                "type": "html"
+            },
+            "id": "tag:nlm.nih.gov,2011-15-02:/medlineplus/diabeticdiet.html",
+            "category": [
+                {
+                    "scheme": "mainSearchCriteria.v.c",
+                    "term": "E11"
+                },
+                {
+                    "scheme": "mainSearchCriteria.v.cs",
+                    "term": "2.16.840.1.113883.6.90"
+                },
+                {
+                    "scheme": "mainSearchCriteria.v.dn",
+                    "term": "Type  2  Diabetes  Mellitus"
+                },
+                {
+                    "scheme": "mainSearchCriteria.v.c",
+                    "term": "D003927"
+                },
+                {
+                    "scheme": "mainSearchCriteria.v.cs",
+                    "term": "2.16.840.1.113883.6.177"
+                },
+                {
+                    "scheme": "mainSearchCriteria.v.dn",
+                    "term": "Diet"
+                },
+                {
+                    "scheme": "informationRecipient",
+                    "term": "PAT"
+                }
+            ],
+    "entry": [
+        {
+            "lang": "en",
+            "title": {
+                "_value": "Diabetic diet",
+                "type": "text"
+            },
+            "link": [
+                {
+                    "hreflang": "en",
+                    "title": "Diabetic Diet",
+                    "rel": "alternate",
+                    "type": "html",
+                    "href": "/diabeticdiet.html"
+                },
+                {
+                    "hreflang": "es",
+                    "title": "Dieta para diabeticos",
+                    "rel": "alternate",
+                    "type": "html",
+                    "href": "/spanish/diabeticdiet.html"
+                }
+            ],
+            "id": {
+                "_value": "tag:nlm.nih.gov,2011-15-02:/medlineplus/diabeticdiet.html"
+            },
+            "updated": {
+                "_value": "2011-02-15T00:00:00Z"
+            },
+            "summary": {
+                "_value": "If you have diabetes, your body cannot make or properly use insulin.  This leads to high blood glucose, or sugar, levels in your blood.  Healthy eating helps to reduce your blood sugar.  It is a critical part of managing your diabetes, because controlling your blood sugar can prevent the \u003ca href\u003d\"http://www.nlm.nih.gov/medlineplus/diabetescomplications.html\"\u003ecomplications of diabetes\u003c/a\u003e.",
+                "type": "html"
+            },
+            "category": [
+                {
+                    "scheme": "mainSearchCriteria.v.c",
+                    "term": "E11"
+                },
+                {
+                    "scheme": "mainSearchCriteria.v.cs",
+                    "term": "2.16.840.1.113883.6.90"
+                },
+                {
+                    "scheme": "mainSearchCriteria.v.dn",
+                    "term": "Type  2  Diabetes  Mellitus"
+                },
+                {
+                    "scheme": "mainSearchCriteria.v.c",
+                    "term": "D003927"
+                },
+                {
+                    "scheme": "mainSearchCriteria.v.cs",
+                    "term": "2.16.840.1.113883.6.177"
+                },
+                {
+                    "scheme": "mainSearchCriteria.v.dn",
+                    "term": "Diet"
+                },
+                {
+                    "scheme": "informationRecipient",
+                    "term": "PAT"
+                }
+            ]
+        },
+        {
+            "lang": "es",
+            "title": {
+                "_value": "Diabetic foot",
+                "type": "text"
+            },
+            "link": [
+                {
+                    "hreflang": "en",
+                    "title": "Diabetic Foot",
+                    "rel": "alternate",
+                    "type": "html",
+                    "href": "/diabeticfoot.html"
+                },
+                {
+                    "hreflang": "es",
+                    "title": "Pie diabetico",
+                    "rel": "alternate",
+                    "type": "html",
+                    "href": "/spanish/diabeticfoot.html"
+                }
+            ],
+            "id": {
+                "_value": "tag:nlm.nih.gov,2011-02-11:/medlineplus/diabeticfoot.html"
+            },
+            "updated": {
+                "_value": "2011-02-11T00:00:00Z"
+            },
+            "summary": {
+                "_value": "If you have \u003ca href\u003d\"http://www.nlm.nih.gov/medlineplus/diabetes.html\"\u003ediabetes\u003c/a\u003e, your blood sugar levels are too high.  Over time, this can damage your nerves or blood vessels.  Nerve damage from diabetes can cause you to lose feeling in your feet.",
+                "type": "html"
+            },
+            "category": [
+                {
+                    "scheme": "mainSearchCriteria.v.c",
+                    "term": "E11.621"
+                },
+                {
+                    "scheme": "mainSearchCriteria.v.cs",
+                    "term": "2.16.840.1.113883.6.90"
+                },
+                {
+                    "scheme": "mainSearchCriteria.v.c",
+                    "term": "Type  2  diabetes  mellitus  with  foot  ulcer"
+                },
+                {
+                    "scheme": "informationRecipient",
+                    "term": "PAT"
+                }
+            ]
+        }
+    ]
+}}

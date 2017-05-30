@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xml:base="http://www.ncbi.nlm.nih.gov/medlineplus/" xml:lang="en" xsi:schemaLocation="http://www.w3.org/2005/Atom KnowledgeResponse.xsd">
+	<title type="text">MedlinePlus</title>
+	<subtitle type="text">Diabetes Mellitus</subtitle>
+	<author>
+		<name>National Library of Medicine</name>
+		<uri>http://medlineplus.gov</uri>
+	</author>
+	<updated>2010-07-06T14:02:29Z</updated>
+	<category scheme="taskContext.c.c" term="PROBLISTREV"/>
+	<category scheme="mainSearchCriteria.v.c" term="E11"/>
+	<category scheme="mainSearchCriteria.v.cs" term="2.16.840.1.113883.6.90"/>
+	<category scheme="mainSearchCriteria.v.dn" term="Type 2 Diabetes Mellitus"/>
+	<category scheme="mainSearchCriteria.v.ot" term="Diabetes Type 2"/>
+	<category scheme="informationRecipient" term="PAT"/>
+	<id>urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6</id>
+	<entry xml:lang="en">
+		<title type="text">Diabetic diet</title>
+		<link href="/diabeticdiet.html" rel="alternate" type="html" hreflang="en" title="Diabetic Diet"/>
+		<link href="/spanish/diabeticdiet.html" rel="alternate" type="html" hreflang="es" title="Dieta para diabeticos"/>
+		<id>tag:nlm.nih.gov,2011-15-02:/medlineplus/diabeticdiet.html</id>
+		<updated>2011-02-15T00:00:00Z</updated>
+		<summary type="html">If you have diabetes, your body cannot make or properly use insulin.  This leads to high blood glucose, or sugar, levels in your blood. Healthy eating helps to reduce your blood sugar.  It is a critical part of managing your diabetes, because controlling your blood sugar can prevent the &lt; href="http://www.nlm.nih.gov/medlineplus/diabetescomplications.html">complications of diabetes &lt;/a>.</summary>
+		<category scheme="mainSearchCriteria.v.c" term="E11"/>
+		<category scheme="mainSearchCriteria.v.cs" term="2.16.840.1.113883.6.90"/>
+		<category scheme="mainSearchCriteria.v.dn" term="Type 2 Diabetes Mellitus"/>
+		<category scheme="mainSearchCriteria.v.c" term="D003927"/>
+		<category scheme="mainSearchCriteria.v.cs" term="2.16.840.1.113883.6.177"/>
+		<category scheme="mainSearchCriteria.v.dn" term="Diet"/>
+		<category scheme="informationRecipient" term="PAT"/>
+	</entry>
+	<entry xml:lang="es">
+		<title type="text">Diabetic foot</title>
+		<link href="/diabeticfoot.html" rel="alternate" type="html" hreflang="en" title="Diabetic Foot"/>
+		<link href="/spanish/diabeticfoot.html" rel="alternate" type="html" hreflang="es" title="Pie diabetico"/>
+		<id>tag:nlm.nih.gov,2011-02-11:/medlineplus/diabeticfoot.html</id>
+		<updated>2011-02-11T00:00:00Z</updated>
+		<summary type="html">If you have &lt;a href="http://www.nlm.nih.gov/medlineplus/diabetes.html">diabetes&lt;/a>, your blood sugar levels are too high.  Over time, this can damage your nerves or blood vessels.  Nerve damage from diabetes can cause you to lose feeling in your feet.</summary>
+		<category scheme="mainSearchCriteria.v.c" term="E11.621"/>
+		<category scheme="mainSearchCriteria.v.cs" term="2.16.840.1.113883.6.90"/>
+		<category scheme="mainSearchCriteria.v.c" term="Type 2 diabetes mellitus with foot ulcer"/>
+		<category scheme="informationRecipient" term="PAT"/>
+	</entry>
+</feed>
