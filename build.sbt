@@ -10,12 +10,12 @@ lazy val root = (project in file(".")).
     name := "InfoButtonPOC"
   )
 
-val akkaVersion = "10.0.6"
-val playJsonVersion = "2.6.0-M7"
+val akkaVersion = "10.0.7" //"10.0.6"
+val playJsonVersion = "2.6.0-RC2" // 2.6.0-M7"
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http" % akkaVersion,
   "com.typesafe.play" %% "play-json" % playJsonVersion
 )
 
-scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")
+scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Ywarn-unused")
