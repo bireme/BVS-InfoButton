@@ -7,15 +7,19 @@ lazy val commonSettings = Seq(
 lazy val root = (project in file(".")).
   settings(commonSettings: _*).
   settings(
-    name := "InfoButtonPOC"
+    name := "BVS-InfoButton"
   )
 
 val akkaVersion = "10.0.7" //"10.0.6"
 val playJsonVersion = "2.6.0-RC2" // 2.6.0-M7"
+val scalaXmlVersion = "1.0.6"
+val dom4jVersion = "2.0.0"
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http" % akkaVersion,
-  "com.typesafe.play" %% "play-json" % playJsonVersion
+  "com.typesafe.play" %% "play-json" % playJsonVersion,
+  "org.scala-lang.modules" % "scala-xml_2.12" % scalaXmlVersion,
+  "org.dom4j" % "dom4j" % dom4jVersion
 )
 
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Ywarn-unused")

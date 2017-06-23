@@ -24,11 +24,11 @@ class MeshConverter {
     }
   }
 
-  private def icd9_cm2Mesh(code: String): Option[String] = ???
-  private def icd10_cm2Mesh(code: String): Option[String] = ???
-  private def icd102Mesh(code: String): Option[String] = ???
-  private def snomed_ct2Mesh(code: String): Option[String] = ???
-  private def rxnorm2Mesh(code: String): Option[String] = ???
-  private def ndc2Mesh(code: String): Option[String] = ???
-  private def loinc2Mesh(code: String): Option[String] = ???
+  private def icd9_cm2Mesh(code: String): Option[String] = None
+  private def icd10_cm2Mesh(code: String): Option[String] = None
+  private def icd102Mesh(code: String): Option[String] = None
+  private def snomed_ct2Mesh(code: String): Option[String] = None
+  private def rxnorm2Mesh(code: String): Option[String] = None
+  private def ndc2Mesh(code: String): Option[String] = None
+  private def loinc2Mesh(code: String): Option[String] = None
 }
