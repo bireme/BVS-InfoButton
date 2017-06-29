@@ -2,11 +2,10 @@ package org.bireme.infob.parameters
 
 import org.bireme.infob.{Category, MeshConverter}
 
-class InfoRecipient(role: Option[String],
-                    langCodeSystem: Option[String] = None,
-                    langCode: Option[String] = None,
-                    langDisplayName: Option[String] = None)
-                                                       extends SearchParameter {
+class Performer(role: Option[String],
+                langCodeSystem: Option[String] = None,
+                langCode: Option[String] = None,
+                langDisplayName: Option[String] = None) extends SearchParameter {
   val lang2 = Map("en" -> "english", "es" -> "spanish", "pt" -> "portuguese",
     "fr" -> "french", "zh" -> "chinese", "de" -> "german", "ru" -> "russian",
     "jv" -> "japanese", "nl" -> "dutch", "ar" -> "arabic", "pl" -> "polish",
@@ -45,28 +44,28 @@ class InfoRecipient(role: Option[String],
 
   override def getCategories: Seq[Category] = {
     Seq(
-      Category("informationRecipient", role2.getOrElse("")),
-      Category("informationRecipient.languageCode.c", langCode.getOrElse("")),
-      Category("informationRecipient.languageCode.cs", langCodeSystem.getOrElse("")),
-      Category("informationRecipient.languageCode.dn", langDisplayName.getOrElse(""))
+      Category("performer", role2.getOrElse("")),
+      Category("performer.languageCode.c", langCode.getOrElse("")),
+      Category("performer.languageCode.cs", langCodeSystem.getOrElse("")),
+      Category("performer.languageCode.dn", langDisplayName.getOrElse(""))
     ).filter(!_.term.isEmpty)
   }
 
   override def toString =
-    s"""InfoRecipient(role: Option[String] = $role,
-                      langCodeSystem: Option[String] = $langCodeSystem,
-                      langCode: Option[String] = $langCode,
-                      langDisplayName: Option[String] = $langDisplayName)"""
+    s"""Performer(role: Option[String] = $role,
+                  langCodeSystem: Option[String] = $langCodeSystem,
+                  langCode: Option[String] = $langCode,
+                  langDisplayName: Option[String] = $langDisplayName)"""
 }
 
-object InfoRecipient extends Parser {
-  override def parse(parameters: Map[String,String]): Option[InfoRecipient] = {
-    parameters.find(_._1.startsWith("informationRecipient")) match {
-      case Some(_) => Some(new InfoRecipient(
-        parameters.get("informationRecipient"),
-        parameters.get("informationRecipient.languageCode.c"),
-        parameters.get("informationRecipient.languageCode.cs"),
-        parameters.get("informationRecipient.languageCode.dn")
+object Performer extends Parser {
+  override def parse(parameters: Map[String,String]): Option[Performer] = {
+    parameters.find(_._1.startsWith("performer")) match {
+      case Some(_) => Some(new Performer(
+        parameters.get("performer"),
+        parameters.get("performer.languageCode.c"),
+        parameters.get("performer.languageCode.cs"),
+        parameters.get("performer.languageCode.dn")
       ))
       case None => None
     }

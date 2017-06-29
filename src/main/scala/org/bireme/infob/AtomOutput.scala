@@ -23,8 +23,8 @@ object AtomOutput {
     val feed = feed2Json(atom.feed)
     val entries = Seq("entry" -> JsArray(atom.entry.map(entry2Json(_))))
 
-    //Json.prettyPrint(JsObject(List("feed" -> JsObject(feed ++ entries))))
-    Json.stringify(JsObject(List("feed" -> JsObject(feed ++ entries))))
+    Json.prettyPrint(JsObject(List("feed" -> JsObject(feed ++ entries))))
+    //Json.stringify(JsObject(List("feed" -> JsObject(feed ++ entries))))
   }
 
   private def feed2Xml(feed: AtomFeed,

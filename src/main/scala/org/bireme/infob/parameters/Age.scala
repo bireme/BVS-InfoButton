@@ -8,19 +8,19 @@ class Age(value: String,
   require (value.toInt > 0)
   require (unit != null)
 
-  val agroup = convertToMonth(value, unit) match {
-    case Some(x) if ((x >= 0) && (x < 1)) => Some("infant, newborn")
-    case Some(x) if ((x >= 1) && (x < 24)) => Some("infant")
+  val agroup = (convertToMonth(value, unit) match {
+    case Some(x) if ((x >= 0) && (x <= 1)) => Some("infant, newborn")
+    case Some(x) if ((x > 1) && (x < 24)) => Some("infant")
     case Some(x) if ((x >= 24) && (x < 72)) => Some("child, preschool")
     case Some(x) if ((x >= 72) && (x < 156)) => Some("child")
     case Some(x) if ((x >= 156) && (x < 228)) => Some("adolescent")
-    case Some(x) if ((x >= 228) && (x < 300)) => Some("young adult")
-    case Some(x) if ((x >= 156) && (x < 540)) => Some("adult")
-    case Some(x) if ((x >= 672) && (x < 960)) => Some("aged")
+    case Some(x) if ((x >= 228) && (x < 288)) => Some("young adult")
+    case Some(x) if ((x >= 228) && (x < 540)) => Some("adult")
     case Some(x) if ((x >= 540) && (x < 780)) => Some("middle aged")
+    case Some(x) if ((x >= 780) && (x < 960)) => Some("aged")
     case Some(x) if (x >= 960) => Some("aged, 80 and older")
     case None => None
-  }
+  }).map(_.replace(" ", "%20"))
 
   private def convertToMonth(value: String,
                              unit: String): Option[Int] = {
@@ -37,7 +37,7 @@ class Age(value: String,
     }
   }
 
-  override def tryToString(conv: MeshConverter): Option[String] =
+  override def toSrcExpression(conv: MeshConverter): Option[String] =
     agroup match {
       case Some(ag) => Some(s"%20AND%20(limit:(%22$ag%22))")
       case None => None
@@ -48,5 +48,21 @@ class Age(value: String,
       Category("age.v.v", value),
       Category("age.v.u", unit)
     )
+  }
+
+  override def toString =
+    s"""Age(value: String = $value,
+            unit: String = $unit)"""
+}
+
+object Age extends Parser {
+  override def parse(parameters: Map[String,String]): Option[Age] = {
+    parameters.get("age.v.v") match {
+      case Some(v) => parameters.get("age.v.u") match {
+        case Some(u) => Some(new Age(v,u))
+        case None => None
+      }
+      case None => None
+    }
   }
 }

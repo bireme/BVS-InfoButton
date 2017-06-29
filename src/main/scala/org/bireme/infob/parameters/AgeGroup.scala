@@ -19,8 +19,8 @@ class AgeGroup(code: Option[String] = None,
       case "D000293" => Some("adolescent")
       case "D055815" => Some("young adult")
       case "D000328" => Some("adult")
-      case "D000368" => Some("aged")
       case "D008875" => Some("middle aged")
+      case "D000368" => Some("aged")
       case "D000369" => Some("aged, 80 and older")
       case _ => None
     }
@@ -49,7 +49,7 @@ class AgeGroup(code: Option[String] = None,
     }
   }
 
-  override def tryToString(conv: MeshConverter): Option[String] =
+  override def toSrcExpression(conv: MeshConverter): Option[String] =
     agroup match {
       case Some(ag) => Some(s"%20AND%20(limit:(%22$ag%22))")
       case None => None
@@ -60,6 +60,24 @@ class AgeGroup(code: Option[String] = None,
       Category("ageGroup.v.c",  code.getOrElse("")),
       Category("ageGroup.v.cs", codeSystem.getOrElse("")),
       Category("ageGroup.v.dn", displayName.getOrElse(""))
-    )
+    ).filter(!_.term.isEmpty)
+  }
+
+  override def toString =
+    s"""AgeGroup(code: Option[String] = $code,
+                   codeSystem: Option[String] = $codeSystem,
+                   displayName: Option[String] = $displayName)"""
+}
+
+object AgeGroup extends Parser {
+  override def parse(parameters: Map[String,String]): Option[AgeGroup] = {
+    parameters.find(_._1.startsWith("AgeGroup.v.")) match {
+      case Some(_) => Some(new AgeGroup(
+        parameters.get("AgeGroup.v.c"),
+        parameters.get("AgeGroup.v.cs"),
+        parameters.get("AgeGroup.v.dn")
+      ))
+      case None => None
+    }
   }
 }
