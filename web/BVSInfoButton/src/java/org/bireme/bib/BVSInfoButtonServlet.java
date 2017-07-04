@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -26,8 +28,20 @@ import org.bireme.infob.MeshConverter;
  */
 @WebServlet(name = "BVSInfoButtonServlet", urlPatterns = {"/BVSInfoButtonServlet"})
 public class BVSInfoButtonServlet extends HttpServlet {
-    final InfobuttonServer info = new InfobuttonServer(new MeshConverter(),
-                         "http://basalto02.bireme.br:8986/solr5/portal/select");
+    
+    private InfobuttonServer info;    
+    
+    @Override
+    public void init(ServletConfig config) throws ServletException {
+        super.init(config);
+        
+        final ServletContext context = config.getServletContext();
+        final String solrUrl = context.getInitParameter("BVS_SOLR_URL");
+        if (solrUrl == null) throw new ServletException(
+                                                 "empty 'BVS_SOLR_URL' config");
+        
+        info = new InfobuttonServer(new MeshConverter(), solrUrl);
+    }
     
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
