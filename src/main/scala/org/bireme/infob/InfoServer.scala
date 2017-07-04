@@ -1,3 +1,10 @@
+/*=========================================================================
+
+    BVS-InfoButton © Pan American Health Organization, 2017.
+    See License at: https://github.com/bireme/BVS-InfoButton/blob/master/LICENSE.txt
+
+  ==========================================================================*/
+
 package org.bireme.infob
 
 import org.bireme.infob.parameters._
@@ -113,10 +120,7 @@ println(s"url=$url")
     require(outType != null)
     require(callbackFunc != null)
 
-    val lang = info.find(_.isInstanceOf[InfoRecipient]) match {
-      case Some(inf:InfoRecipient) => inf.lcode.getOrElse("en")
-      case _ => "en"
-    }
+    val lang = getRespLanguage(info)
     val subtitle = info.filter(_.isInstanceOf[MainSearchCriteria]).zipWithIndex.
       foldLeft[String]("") {
         case (str, (msc, idx)) =>
@@ -138,6 +142,27 @@ println(s"url=$url")
         s"$fname(${AtomOutput.toJson(atom)});"
       case "text/xml" => AtomOutput.toXml(atom)
       case _ => AtomOutput.toXml(atom)
+    }
+  }
+
+  private def getRespLanguage(info: Seq[SearchParameter]): String = {
+    require(info != null)
+
+    info.find(_.isInstanceOf[InfoRecipient]) match {
+      case Some(inf:InfoRecipient) => inf.lcode match {
+        case Some(lang) => lang
+        case None => info.find(_.isInstanceOf[Performer]) match {
+          case Some(per:Performer) => per.lcode match {
+            case Some(lang) => lang
+            case None => "en"
+          }
+        }
+      }
+      case Some(per:Performer) => per.lcode match {
+        case Some(lang) => lang
+        case None => "en"
+      }
+      case _ => "en"
     }
   }
 }

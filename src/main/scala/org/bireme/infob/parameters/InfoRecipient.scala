@@ -1,10 +1,17 @@
+/*=========================================================================
+
+    BVS-InfoButton © Pan American Health Organization, 2017.
+    See License at: https://github.com/bireme/BVS-InfoButton/blob/master/LICENSE.txt
+
+  ==========================================================================*/
+
 package org.bireme.infob.parameters
 
 import org.bireme.infob.{Category, MeshConverter}
 
 class InfoRecipient(role: Option[String],
-                    langCodeSystem: Option[String] = None,
                     langCode: Option[String] = None,
+                    langCodeSystem: Option[String] = None,
                     langDisplayName: Option[String] = None)
                                                        extends SearchParameter {
   val lang2 = Map("en" -> "english", "es" -> "spanish", "pt" -> "portuguese",
