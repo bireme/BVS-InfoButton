@@ -81,4 +81,5 @@ case class AtomEntry(doc: JsValue,
   }
   val source = (doc \ "fo").asOpt[Seq[String]].map(x => x.head.trim)
   val entryLang = (doc \ "la").asOpt[String]
+  val docType = (doc \ "type").asOpt[Seq[String]].map(x => x.head.trim)
 }

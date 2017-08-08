@@ -5,7 +5,6 @@
 
   ==========================================================================*/
 
-
 /**
   *
   * Description: A task or action that a user may perform in a clinical information system.

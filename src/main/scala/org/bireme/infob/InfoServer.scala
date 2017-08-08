@@ -9,6 +9,11 @@ package org.bireme.infob
 
 import org.bireme.infob.parameters._
 
+import com.typesafe.scalalogging.Logger
+import org.slf4j.LoggerFactory
+import ch.qos.logback.classic.{Level, Logger => xLogger}
+
+
 import play.api.libs.json._
 
 import scala.collection.JavaConverters._
@@ -16,9 +21,24 @@ import scala.io.Source
 import scala.reflect.runtime.universe._
 import scala.util.{Try, Success, Failure}
 
+/**
+  * This class converts an url request into a document with retrieved documents
+  * from BVS that are associated with the url query parameters.
+  *
+  * @param conv the thesaurus to MESH term code converter
+  * @param iahxURL the BVS search portal url
+  *
+  * @author Heitor Barbieri
+  */
 class InfobuttonServer(conv: MeshConverter,
                        iahxUrl: String =
                         "http://basalto02.bireme.br:8986/solr5/portal/select") {
+
+
+  LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).
+    asInstanceOf[xLogger].setLevel(Level.DEBUG) //Level.INFO
+
+  val logger = Logger("BVS-InfoButton")
 
   def getInfo(param: java.util.Map[String, String],
               maxDocs: Int): String = getInfo(param.asScala.toMap, maxDocs)
@@ -28,23 +48,22 @@ class InfobuttonServer(conv: MeshConverter,
     require(param != null)
     require(maxDocs > 0)
 
-    val (info, outType, callbackFunc) = ParameterParser.parse(param)
-
-    getInfo(info, outType.getOrElse("application/json"), maxDocs, callbackFunc)
-  }
-
-  private def getInfo(info: Seq[SearchParameter],
-                      outType: String,
-                      maxDocs: Int,
-                      callbackFunc: Option[String]): String = {
-    require(info != null)
-    require(outType != null)
-    require(maxDocs > 0)
-    require(callbackFunc != null)
-
+    val (info, oType, callbackFunc) = ParameterParser.parse(param)
+    val outType = oType.getOrElse("application/json")
     val expr = convToSrcExpression(info, conv, maxDocs)
+    val (numFound, docs) = search(expr)
 
-    convToInfoResponse(expr, info, search(expr), outType, callbackFunc)
+    logger.debug(
+      (param.foldLeft[String]("\nParameters: ") {
+        case(str,param) => s"$str \n\t[${param._1}: ${param._2}]"
+      }) +
+      (expr match {
+        case Some(expr) => s"\nSearch expression: \n\t$expr"
+        case None => "\nNo search expression."
+      }) + s". \nFound documents: $numFound\n"
+    )
+
+    convToInfoResponse(expr, info, docs, outType, callbackFunc)
   }
 
 //http://basalto02.bireme.br:8986/solr5/portal/select?q=tw:((instance:%22regional%22)%20AND%20(%20mh:(c02.081.270)))&wt=json&indent=true&start=0&rows=10&sort=da+desc
@@ -63,10 +82,6 @@ class InfobuttonServer(conv: MeshConverter,
         OtherSrcExpr[Performer](info, conv)
       )
       case None => None
-    }
-    expr match {
-      case Some(e) => println(s"expressao=$e")
-      case None => println ("nenhuma expressao")
     }
     expr
   }
@@ -90,22 +105,24 @@ class InfobuttonServer(conv: MeshConverter,
     }
   }
 
-  private def search(expression: Option[String]): Seq[JsValue] = {
+  private def search(expression: Option[String]): (Int, Seq[JsValue]) = {
     require(expression != null)
 
     expression match {
       case Some(url) => {
-println(s"url=$url")
         Try(Source.fromURL(url, "utf-8").getLines().mkString("\n")) match {
           case Success(ctt) =>
-            (Json.parse(ctt) \ "response" \ "docs").validate[JsArray] match {
-              case res: JsResult[JsArray] => res.get.value
-              case _ => Seq()
+            val json = Json.parse(ctt)
+            val numFound = (json \ "response" \ "numFound").as[Int]
+
+            (json \ "response" \ "docs").validate[JsArray] match {
+              case res: JsResult[JsArray] => (numFound, res.get.value)
+              case _ => (0, Seq())
             }
-          case Failure(_) => Seq()
+          case Failure(_) => (0, Seq())
         }
       }
-      case None => Seq()
+      case None => (0, Seq())
     }
   }
 
@@ -156,6 +173,7 @@ println(s"url=$url")
             case Some(lang) => lang
             case None => "en"
           }
+          case _ => "en"
         }
       }
       case Some(per:Performer) => per.lcode match {
@@ -170,13 +188,13 @@ println(s"url=$url")
 object InfoServer extends App {
 
   val url =
-"representedOrganization.id.root=[OID of the organization submitting the" +
+"representedOrganization.id.root=[OID of the organization submitting the " +
 "request]&taskContext.c.c=PROBLISTREV&mainSearchCriteria.v.c=C18.452.394.750.149&mainSea" +
 "rchCriteria.v.cs=2.16.840.1.113883.6.177&mainSearchCriteria.v.dn=Type+2+" +
 "Diabetes+Mellitus&mainSearchCriteria.v.ot=diabetes+type+2&patientPerson" +
 ".administrativeGenderCode.c=M&age.v.v=45&age.v.u=a&informationRecipient" +
 "=PAT&performer=PROV&performer.languageCode.c=en&performer.healthCarePro" +
-"vider.c.c=163W00000X&knowledgeResponseType=application/javascript"
+"vider.c.c=163W00000X&knowledgeResponseType=application/json"
 
   val map = url.split("\\&").map(_.trim.split("=")).
     foldLeft[Map[String,String]](Map()) {

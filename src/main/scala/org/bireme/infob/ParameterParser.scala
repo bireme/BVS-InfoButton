@@ -9,7 +9,14 @@ package org.bireme.infob
 
 import org.bireme.infob.parameters._
 
+/**
+  * An object that convertes the map representing url parameters into
+  * SearchParameters objects.
+  *
+  * @author: Heitor Barbieri
+  */
 object ParameterParser {
+  // Sequence of search parameter classes the url parameters will be converted to
   val parSeq = Seq(
     AdministrativeGenderCode,
     Age,
@@ -18,6 +25,15 @@ object ParameterParser {
     Performer
   )
 
+ /**
+   * Convert a map of string url parameters into a sequence of search parameter
+   * objects.
+   *
+   * @param param the map of url parameters like: &param=value
+   * @return a triple of: 1) Sequence of search parameter classes
+   *                      2) Possibly the return type format (xml,json,json-p)
+   *                      3) Possibly the name of the javascript callback function
+   */
   def parse(param: Map[String,String]): (Seq[SearchParameter],
                                          Option[String],
                                          Option[String]) = {
@@ -36,6 +52,9 @@ object ParameterParser {
   }
 }
 
+/**
+  * An application to test the ParameterParser object
+  */
 object ParameterParserTest extends App {
   val url =
     "representedOrganization.id.root=[OID of the organization submitting the" +

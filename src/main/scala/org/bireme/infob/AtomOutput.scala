@@ -102,6 +102,10 @@ object AtomOutput {
                                addAttribute("scheme", cat.scheme).
                                addAttribute("term", cat.term))
 
+    entry.docType.map(docType => entryElem.addElement("category").
+                                          addAttribute("scheme", "documentType").
+                                          addAttribute("term", docType))
+
     entry.author.map(_.foreach(author => entryElem.addElement("author").addText(author)))
     entry.source.map(source => entryElem.addElement("source").addText(source))
   }
@@ -139,11 +143,16 @@ object AtomOutput {
   private def entry2Json(entry: AtomEntry): JsObject = {
     require (entry != null)
 
+    val docType = entry.docType match {
+      case Some(t) => Seq(JsObject(List("scheme" -> JsString("documentType"),
+                                        "type" -> JsString(t))))
+      case None => Seq()
+    }
     val category = Some(JsArray(
       entry.categories.
         filter(cat => (!cat.scheme.isEmpty && !cat.term.isEmpty)).
           map(cat => JsObject(List("scheme" -> JsString(cat.scheme),
-                                   "term" -> JsString(cat.term))))
+                                   "term" -> JsString(cat.term)))) ++ docType
     ))
     val seq = Seq[(String,Option[JsValue])] (
       "summary" -> entry.summary.map(sum => JsObject(List(
