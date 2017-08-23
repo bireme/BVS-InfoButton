@@ -19,7 +19,7 @@ import scala.io._
 * @author: Heitor Barbieri
 * date: 20170808
 */
-class IAHxTest extends FlatSpec {
+class IAHxServiceTest extends FlatSpec {
 
   /**
     * Load the content of a web page and check if there is a Timeouts
@@ -62,8 +62,8 @@ class IAHxTest extends FlatSpec {
     }
   }
 
-  // === Check if the Similar Documents applet is available/accessible ===
-  "The IAHx Solr service" should "be available" in {
+  // === Check if the IAHx Solr service is available/accessible ===
+  "The IAHx Solr service" should "be available (dengue)" in {
     val url = "http://basalto02.bireme.br:8986/solr5/portal/select?q=tw:((instance:%22regional%22)%20AND%20(%20mh:(c02.081.270)))&start=0&rows=0"
     val result = """<result name="response" numFound="(\d+)" start="0">""".r
     val content = pageContent(url)
@@ -72,6 +72,20 @@ class IAHxTest extends FlatSpec {
       case Some(mat) =>
         val numFound = mat.group(1).toInt
         numFound should be > 12500
+      case None => fail
+    }
+  }
+
+  // === Check if the IAHx Solr service is available/accessible ===
+  "The IAHx Solr service" should "be available (zika neonatal)" in {
+    val url = "http://basalto02.bireme.br:8986/solr5/portal/select?q=ti:(zika%20neonatal)%20AND%20(instance:%22regional%22)%20AND%20(%20year_cluster:(%222017%22))&start=0&rows=0"
+    val result = """<result name="response" numFound="(\d+)" start="0">""".r
+    val content = pageContent(url)
+
+    result.findFirstMatchIn(content) match {
+      case Some(mat) =>
+        val numFound = mat.group(1).toInt
+        numFound should be >= 4
       case None => fail
     }
   }
