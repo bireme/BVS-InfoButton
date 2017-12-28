@@ -18,16 +18,19 @@ class MainSearchCriteria(val code: Option[String] = None,
     val cSystem = codeSystem.getOrElse("MESH")
 
     code match {
-      case Some(c) => conv.convert(cSystem, c) match {
-        case Some (cc) => Some(s"(mh:($cc))")
-        case None => None
+      case Some(c) => println("vai converter");conv.convert(cSystem, c) match {
+        case Right(co) => Some(co.map(cod => s"(mh:($cod))").mkString("%20OR%20"))
+        case Left(descr) => descr match {
+          case Some(des) => Some(s"(ti:$des)")
+          case None => displayName match {
+            case Some(dn) => Some(s"(ti:$dn)")
+            case None => originalText.map(ot => s"(tw:$ot)")
+          }
+        }
       }
       case None => displayName match {
-        case Some(dn) => Some(s"(tw:$dn)")
-        case None => originalText match {
-          case Some(ot) => Some(s"(tw:$ot)")
-          case None => None
-        }
+        case Some(dn) => Some(s"(ti:$dn)")
+        case None => originalText.map(ot => s"(tw:$ot)")
       }
     }
   }
@@ -49,7 +52,7 @@ class MainSearchCriteria(val code: Option[String] = None,
 }
 
 object MainSearchCriteria {
-  def parse(parameters: Map[String,String]): (Seq[MainSearchCriteria],
+  def parse(parameters: Map[String,String]): (Seq[SearchParameter],
                                               Map[String,String]) = {
     val (msc,other) = parameters.partition(_._1.startsWith("mainSearchCriteria.v."))
 
@@ -58,7 +61,7 @@ object MainSearchCriteria {
 
   private def getMSC(msc: Map[String,String],
                      cardinality: Int,
-                     auxSeq: Seq[MainSearchCriteria]): Seq[MainSearchCriteria] = {
+                     auxSeq: Seq[MainSearchCriteria]): Seq[SearchParameter] = {
     val cardi = if (cardinality == 0) "" else cardinality.toString
     val (mscCard,other) = msc.partition(p => p._1 matches
                                      s"mainSearchCriteria.v.(c|cs|dn|ot)$cardi")

@@ -1,7 +1,7 @@
 lazy val commonSettings = Seq(
-  organization := "br.bireme",
+  organization := "org.bireme",
   version := "0.1.0",
-  scalaVersion := "2.12.2"
+  scalaVersion := "2.12.4"
 )
 
 lazy val root = (project in file(".")).
@@ -10,13 +10,15 @@ lazy val root = (project in file(".")).
     name := "BVS-InfoButton"
   )
 
-val akkaVersion = "10.0.7" //"10.0.6"
-val playJsonVersion = "2.6.0-RC2" // 2.6.0-M7"
+val akkaVersion = "10.0.10" // "10.0.9"
+val playJsonVersion = "2.6.6" // "2.6.3"
 val scalaXmlVersion = "1.0.6"
-val dom4jVersion = "2.0.0"
-val scalaLoggingVersion = "3.7.1"
+val dom4jVersion = "2.1.0" //"2.0.1"
+val scalaLoggingVersion = "3.7.2"
 val logbackVersion = "1.2.3"
-val scalaTestVersion = "3.0.3"
+val scalaTestVersion = "3.0.4"
+val hairyfotrVersion = "0.1.17"
+val luceneVersion = "7.1.0" // "6.6.0"
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http" % akkaVersion,
@@ -26,10 +28,16 @@ libraryDependencies ++= Seq(
   "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
   "ch.qos.logback" % "logback-classic" % logbackVersion,
   "org.scalactic" %% "scalactic" % scalaTestVersion,
-  "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
+  "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
+  "org.apache.lucene" % "lucene-core" % luceneVersion,
+  "org.apache.lucene" % "lucene-analyzers-common" % luceneVersion,
+  "org.apache.lucene" % "lucene-queryparser" % luceneVersion,
+  "org.apache.lucene" % "lucene-queries" % luceneVersion,
+  "org.apache.lucene" % "lucene-backward-codecs" % luceneVersion
 )
 
 logBuffered in Test := false
 trapExit :=  false  // To allow System.exit() without an exception (TestIndex.scala)
 
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Ywarn-unused")
+addCompilerPlugin("org.psywerx.hairyfotr" %% "linter" % hairyfotrVersion)

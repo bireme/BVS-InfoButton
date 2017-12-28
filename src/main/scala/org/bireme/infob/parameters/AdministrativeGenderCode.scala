@@ -9,6 +9,7 @@ package org.bireme.infob.parameters
 
 import org.bireme.infob.{Category,MeshConverter}
 
+//The gender of a person used for administrative purposes.
 class AdministrativeGenderCode(code: Option[String] = None,
                                displayName: Option[String] = None)
                                                        extends SearchParameter {
@@ -26,17 +27,13 @@ class AdministrativeGenderCode(code: Option[String] = None,
     }
   }
 
-  override def toSrcExpression(conv: MeshConverter): Option[String] = {
-    agcode match {
-      case Some(agc) => Some(s"%20AND%20(limit:(%22$agc%22))")
-      case None => None
-    }
-  }
+  override def toSrcExpression(conv: MeshConverter): Option[String] =     
+    agcode.map(agc => s"(limit:(%22$agc%22))")
 
   override def getCategories: Seq[Category] = {
     Seq(
-      Category("patientPerson.administrativeGenderCode.v.c",  code.getOrElse("")),
-      Category("patientPerson.administrativeGenderCode.v.dn", displayName.getOrElse(""))
+      Category("patientPerson.administrativeGenderCode.c",  code.getOrElse("")),
+      Category("patientPerson.administrativeGenderCode.dn", displayName.getOrElse(""))
     ).filter(!_.term.isEmpty)
   }
 

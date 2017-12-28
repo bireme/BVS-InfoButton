@@ -55,12 +55,9 @@ class AgeGroup(code: Option[String] = None,
         case _ => None
     }
   }
-
+println(s"agroup=$agroup")
   override def toSrcExpression(conv: MeshConverter): Option[String] =
-    agroup match {
-      case Some(ag) => Some(s"%20AND%20(limit:(%22$ag%22))")
-      case None => None
-    }
+    agroup.map(ag => s"(limit:(%22$ag%22))")
 
   override def getCategories: Seq[Category] = {
     Seq(
@@ -78,11 +75,11 @@ class AgeGroup(code: Option[String] = None,
 
 object AgeGroup extends Parser {
   override def parse(parameters: Map[String,String]): Option[AgeGroup] = {
-    parameters.find(_._1.startsWith("AgeGroup.v.")) match {
+    parameters.find(_._1.startsWith("ageGroup.v.")) match {
       case Some(_) => Some(new AgeGroup(
-        parameters.get("AgeGroup.v.c"),
-        parameters.get("AgeGroup.v.cs"),
-        parameters.get("AgeGroup.v.dn")
+        parameters.get("ageGroup.v.c"),
+        parameters.get("ageGroup.v.cs"),
+        parameters.get("ageGroup.v.dn")
       ))
       case None => None
     }

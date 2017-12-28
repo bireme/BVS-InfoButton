@@ -1,16 +1,142 @@
+
 <!DOCTYPE html>
-<!--
-To change this license header, choose License Headers in Project Properties.
-To change this template file, choose Tools | Templates
-and open the template in the editor.
--->
 <html>
-    <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body>
-        <div>TODO write content</div>
-    </body>
+<body>
+
+<style>
+  div {
+    padding-bottom: 1.3em;
+  }
+  h1 {
+    margin-bottom: 1em;
+  }
+  h3 {
+    padding-bottom: 0.8em;
+  }
+  select {
+    margin-left: 0.2em;
+  }
+</style>
+
+<h1>BVS-Infobutton</h1>
+
+<form action="BVSInfoButton" method="post">
+  <h3>Main Search Criteria:</h3>
+
+  <div>
+  Input Option: <select name="inputOption">
+    <option value="code">code</option>
+    <option value="display_text">display text</option>
+    <option value="original_text">original text</option>
+    </select>
+  </div>
+
+  <div>
+  Value: <input type="text" name="value" size="60"></input>
+  </div>
+
+  <div>
+  Code System: <select name="codeSystem">
+   <option value="MESH">MESH</option>
+   <option value="ICD10">ICD10</option>
+   <option disabled value="ICD10-CM">ICD10-CM</option>
+   <option disabled value="ICD9-CM">ICD9-CM</option>
+   <option disabled value="SNOMED-CT">SNOMED-CT</option>
+   <option disabled value="RXNORM">RXNORM</option>
+   <option disabled value="NDC">NDC</option>
+   <option disabled value="LOINC">LOINC</option>
+  </select>
+  </div>
+
+  <h3>Other Search Criterias:</h3>
+
+  <div>
+  Administrative Gender Code: <select name="admGenderCode">
+   <option value="do_not_use">---do not use---</option> 
+   <option value="undifferentiated">undifferentiated</option>
+   <option value="male">male</option>
+   <option value="female">female</option>
+  </select>
+  </div>
+
+  <div>
+  Age Group: <select name="ageGroup">
+   <option value="do_not_use">---do not use---</option>    
+   <option value="infant_newborn">infant, newborn</option>
+   <option value="infant">infant</option>
+   <option value="child_preschool">child, preschool</option>
+   <option value="child">child</option>
+   <option value="adolescent">adolescent</option>
+   <option value="young_adult">young adult</option>
+   <option value="adult">adult</option>
+   <option value="middle_aged">middle aged</option>
+   <option value="aged">aged</option>
+   <option value="aged_80_older">aged, 80 and older</option>
+  </select>
+  </div>
+
+  <div>
+  Info Recipient Role: <select name="infoRecipientRole">
+    <option value="do_not_use">---do not use---</option>    
+    <option value="PAT">patient</option>
+    <option value="PROV">health care provider</option>
+    <option value="PAYOR">payor</option>
+  </select>
+  </div>
+
+  <div>
+  Info Recipient Language: <select name="infoRecipientLanguage">
+   <option value="do_not_use">---do not use---</option>    
+   <option value="english">english</option>
+   <option value="spanish">spanish</option>
+   <option value="portuguese">portuguese</option>
+   <option value="french">french</option>
+   <option disabled value="chinese">chinese</option>
+   <option disabled value="german">german</option>
+   <option disabled value="russian">russian</option>
+   <option disabled value="japanese">japanese</option>
+   <option disabled value="dutch">dutch</option>
+   <option disabled value="arabic">arabic</option>
+   <option disabled value="polish">polish</option>
+   <option disabled value="danish">danish</option>
+   <option disabled value="italian">italian</option>
+   <option disabled value="norwegian">norwegian</option>
+  </select>
+  </div>
+
+  <div>
+  Performer Role: <select name="performerRole">
+   <option value="do_not_use">---do not use---</option>    
+   <option value="PAT">patient</option>
+   <option value="PROV">health care provider</option>
+   <option value="PAYOR">payor</option>
+  </select>
+  </div>
+
+  <div>
+  Performer Language: <select name="performerLanguage">
+   <option value="do_not_use">---do not use---</option>    
+   <option value="english">english</option>
+   <option value="spanish">spanish</option>
+   <option value="portuguese">portuguese</option>
+   <option value="french">french</option>
+   <option disabled value="chinese">chinese</option>
+   <option disabled value="german">german</option>
+   <option disabled value="russian">russian</option>
+   <option disabled value="japanese">japanese</option>
+   <option disabled value="dutch">dutch</option>
+   <option disabled value="arabic">arabic</option>
+   <option disabled value="polish">polish</option>
+   <option disabled value="danish">danish</option>
+   <option disabled value="italian">italian</option>
+   <option disabled value="norwegian">norwegian</option>
+  </select>
+  </div>
+
+  <div>
+     <input type="submit" value="Send">
+  </div>
+</form>
+
+</body>
 </html>

@@ -29,10 +29,7 @@ case class AtomFeed(subtitle: String,
     case _    => "VHL - Virtual Health Library"
   }
   val author = lang match {
-    case "en" => ("BIREME/PAHO/WHO", "http://www.paho.org/bireme")
-    case "es" => ("BIREME/OPS/OMS", "http://www.paho.org/bireme")
-    case "pt" => ("BIREME/OPS/OMS", "http://www.paho.org/bireme")
-    case "fr" => ("BIREME/OPS/OMS", "http://www.paho.org/bireme")
+    case "es"|"pt"|"fr" => ("BIREME/OPS/OMS", "http://www.paho.org/bireme")
     case _    => ("BIREME/PAHO/WHO", "http://www.paho.org/bireme")
   }
   val rights = ("BVS-InfoButton © Pan American Health Organization, 2017.",
@@ -68,12 +65,10 @@ case class AtomEntry(doc: JsValue,
   val author = (doc \ "au").asOpt[Seq[String]]
   val link = (doc \ "ur").asOpt[Seq[String]].map(_.head)
   val id = (doc \ "id").asOpt[String] match {
-    case Some(v) => Some(
-      s"tag:www.paho.org/bireme,${entryDate.getOrElse("")}:${v.toString()}")
-    case None => (doc \ "_version_").asOpt[String] match {
-      case Some(ver) => Some(s"tag:www.paho.org/bireme,$ver")
-      case None => None
-    }
+    case Some(v) =>
+      Some(s"tag:www.paho.org/bireme,${entryDate.getOrElse("")}:$v")
+    case None => (doc \ "_version_").asOpt[String].map(
+      ver => s"tag:www.paho.org/bireme,$ver")
   }
   val summary = (doc \ s"ab_$lang").asOpt[Seq[String]] match {
     case Some(seq) => Some(seq.head)

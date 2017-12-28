@@ -66,24 +66,29 @@ class InfobuttonServer(conv: MeshConverter,
     convToInfoResponse(expr, info, docs, outType, callbackFunc)
   }
 
-//http://basalto02.bireme.br:8986/solr5/portal/select?q=tw:((instance:%22regional%22)%20AND%20(%20mh:(c02.081.270)))&wt=json&indent=true&start=0&rows=10&sort=da+desc
+//http://basalto02.bireme.br:8986/solr5/portal/select?
+//q=tw:((instance:%22regional%22)%20AND%20(%20mh:(c02.081.270)))&wt=json&
+//indent=true&start=0&rows=10&sort=da+desc
   private def convToSrcExpression(info: Seq[SearchParameter],
                                   conv: MeshConverter,
                                   maxDocs: Int): Option[String] = {
-    val expr = MainSearchCriteriaSrcExpr(info, conv) match {
-      case Some(msc_str) => Some(
-        s"$iahxUrl?start=0&rows=$maxDocs&sort=da+desc&wt=json" +
-        s"&q=tw:$msc_str%20AND%20(instance:%22regional%22)%20AND%20" +
-        s"(fulltext:(%221%22))" +
-        OtherSrcExpr[AdministrativeGenderCode](info, conv) +
-        OtherSrcExpr[Age](info, conv) +
-        OtherSrcExpr[AgeGroup](info, conv) +
-        OtherSrcExpr[InfoRecipient](info, conv) +
-        OtherSrcExpr[Performer](info, conv)
-      )
-      case None => None
-    }
-    expr
+    MainSearchCriteriaSrcExpr(info, conv).map(
+      msc_str => {
+        println(s"==>${info.head.getClass.getName}")
+        println(s"*=>${info}")
+        info.filterNot(x => x.getClass.getName.equals(
+          "org.bireme.infob.parameters.MainSearchCriteria")).foldLeft[String](
+            s"$iahxUrl?start=0&rows=$maxDocs&sort=da+desc&wt=json" +
+            s"&q=tw:$msc_str%20AND%20(instance:%22regional%22)%20AND%20" +
+            "(fulltext:(%221%22))") {
+              case (str, sparam) => println(s"sparam=$sparam");str +
+              (sparam.toSrcExpression(conv) match {
+                case Some(str2) => s"%20AND%20$str2"
+                case None => "NADA"
+              })
+            }
+      }
+    )
   }
 
   private def MainSearchCriteriaSrcExpr(info: Seq[SearchParameter],
@@ -94,16 +99,20 @@ class InfobuttonServer(conv: MeshConverter,
         case str => Some(s"($str)")
       }
 
-  private def OtherSrcExpr[T: TypeTag](info: Seq[SearchParameter],
+  /*private def OtherSrcExpr[T: TypeTag](info: Seq[SearchParameter],
                                        conv: MeshConverter): String = {
-    val typeName = typeOf[T].typeSymbol.asClass.fullName
+    def getName(obj: Parser): String = {
+      val name = obj.getClass.getName
 
-    info.find(sp => sp.getClass.getName.equals(typeName)).
-                                            flatMap(_.toSrcExpression(conv)) match {
-      case Some(expr) => expr
-      case None => ""
+      name.substring(0, name.size-1) // remove the '$' character
     }
-  }
+    val typeName = typeOf[T].typeSymbol.asClass.fullName
+    info.foreach(name => println(s"name=$name"))
+info.foreach(name => println(s"name=${getName(name)} typeName=$typeName"))
+    info.find(sp => getName(sp).equals(typeName)).
+      flatMap(_.toSrcExpression(conv)).getOrElse("")
+
+  }*/
 
   private def search(expression: Option[String]): (Int, Seq[JsValue]) = {
     require(expression != null)
@@ -143,7 +152,7 @@ class InfobuttonServer(conv: MeshConverter,
         case (str, (msc, idx)) =>
           val msc2 = msc.asInstanceOf[MainSearchCriteria]
           str + (if (idx == 0) "" else " OR ") +
-          (if (msc2.displayName.isEmpty) msc2.code.get else msc2.displayName.get)
+          (msc2.displayName.getOrElse(msc2.code.getOrElse("")))
       }
     val categories:Seq[Category] = info.flatMap(_.getCategories)
     val id = s"urn:bvs:${expr.getOrElse("").hashCode}"
@@ -166,27 +175,20 @@ class InfobuttonServer(conv: MeshConverter,
     require(info != null)
 
     info.find(_.isInstanceOf[InfoRecipient]) match {
-      case Some(inf:InfoRecipient) => inf.lcode match {
-        case Some(lang) => lang
-        case None => info.find(_.isInstanceOf[Performer]) match {
-          case Some(per:Performer) => per.lcode match {
-            case Some(lang) => lang
-            case None => "en"
-          }
+      case Some(inf:InfoRecipient) => inf.lcode.getOrElse(
+        info.find(_.isInstanceOf[Performer]) match {
+          case Some(per:Performer) => per.lcode.getOrElse("en")
           case _ => "en"
         }
-      }
-      case Some(per:Performer) => per.lcode match {
-        case Some(lang) => lang
-        case None => "en"
-      }
+      )
+      case Some(per:Performer) => per.lcode.getOrElse("en")
       case _ => "en"
     }
   }
 }
 
 object InfoServer extends App {
-
+  val indexDir = "web/BVSInfoButton/indexes"
   val url =
 "representedOrganization.id.root=[OID of the organization submitting the " +
 "request]&taskContext.c.c=PROBLISTREV&mainSearchCriteria.v.c=C18.452.394.750.149&mainSea" +
@@ -200,7 +202,7 @@ object InfoServer extends App {
     foldLeft[Map[String,String]](Map()) {
       case (map,arr) => map + ((arr(0).trim,arr(1).trim))
     }
-  val conv = new MeshConverter()
+  val conv = new MeshConverter(indexDir)
   val server = new InfobuttonServer(conv)
 
   val info = server.getInfo(map)
@@ -217,9 +219,10 @@ object InfoServer extends App {
 
   if (args.length != 2) usage()
 
+  val indexDir = "web/BVSInfoButton/indexes"
   val msc1 = new MainSearchCriteria(code=Some(args(0)))
   val msc2 = new MainSearchCriteria(code=Some(args(1)))
-  val conv = new MeshConverter()
+  val conv = new MeshConverter(indexDir)
 
   val teste = new InfoRecipient(role=Some("PAT"), langCode=Some("pt"))
 

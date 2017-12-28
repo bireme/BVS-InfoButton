@@ -45,17 +45,10 @@ class Age(value: String,
   }
 
   override def toSrcExpression(conv: MeshConverter): Option[String] =
-    agroup match {
-      case Some(ag) => Some(s"%20AND%20(limit:(%22$ag%22))")
-      case None => None
-    }
+    agroup.map(ag => s"(limit:(%22$ag%22))")
 
-  override def getCategories: Seq[Category] = {
-    Seq(
-      Category("age.v.v", value),
-      Category("age.v.u", unit)
-    )
-  }
+  override def getCategories: Seq[Category] =
+    Seq(Category("age.v.v", value), Category("age.v.u", unit))
 
   override def toString =
     s"""Age(value: String = $value,
@@ -64,12 +57,7 @@ class Age(value: String,
 
 object Age extends Parser {
   override def parse(parameters: Map[String,String]): Option[Age] = {
-    parameters.get("age.v.v") match {
-      case Some(v) => parameters.get("age.v.u") match {
-        case Some(u) => Some(new Age(v,u))
-        case None => None
-      }
-      case None => None
-    }
+    parameters.get("age.v.v").flatMap(
+      v => parameters.get("age.v.u").map(u => new Age(v,u)))
   }
 }
