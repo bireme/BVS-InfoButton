@@ -22,13 +22,10 @@ class InfoRecipient(role: Option[String],
   val langN = lang2.map{case (k,v) => (v,k)}
 
   val lcode = langCodeSystem match {
-    case Some("ISO 639-1") =>
-      langCode.map(_.toLowerCase).flatMap(
-        la => if (lang2.contains(la)) Some(la) else None)
-    case _ => langDisplayName.map(_.toLowerCase) match {
-      case Some(la) => langN.get(la)
-      case None => langCode.map(_.toLowerCase).flatMap(
-        la => if (lang2.contains(la)) Some(la) else None)
+    case Some("ISO 639-1") => langCode.map(_.toLowerCase).
+        flatMap(la => if (lang2.contains(la)) Some(la) else None)
+    case _ => langDisplayName.map(_.toLowerCase) flatMap {
+      la => langN.get(la.toLowerCase)
     }
   }
 

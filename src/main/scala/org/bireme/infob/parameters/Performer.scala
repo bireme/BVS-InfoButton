@@ -21,11 +21,9 @@ class Performer(role: Option[String],
 
   val lcode = langCodeSystem match {
     case Some("ISO 639-1") => langCode.map(_.toLowerCase).
-        flatMap(la => if (lang2.contains(la)) Some(la) else None)
-    case _ => langDisplayName.map(_.toLowerCase) match {
-      case Some(la) => lang2.get(la)
-      case None => langCode.map(_.toLowerCase).
-        flatMap(la => if (lang2.contains(la)) Some(la) else None)
+      flatMap(la => if (lang2.contains(la)) Some(la) else None)
+    case _ => langDisplayName.map(_.toLowerCase) flatMap {
+      la => langN.get(la.toLowerCase)
     }
   }
 

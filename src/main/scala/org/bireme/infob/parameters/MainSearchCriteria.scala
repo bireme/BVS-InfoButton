@@ -14,23 +14,27 @@ class MainSearchCriteria(val code: Option[String] = None,
                          val displayName: Option[String] = None,
                          originalText: Option[String] = None)
                                                        extends SearchParameter {
+  private def replaceSpaces(in: String): String =
+    if (in == null) null else in.replace(" ", "%20")
+
   override def toSrcExpression(conv: MeshConverter): Option[String] = {
     val cSystem = codeSystem.getOrElse("MESH")
 
     code match {
       case Some(c) => println("vai converter");conv.convert(cSystem, c) match {
-        case Right(co) => Some(co.map(cod => s"(mh:($cod))").mkString("%20OR%20"))
+        case Right(co) => Some(co.map(
+          cod => s"(mh:(%22${replaceSpaces(cod)}%22))").mkString("%20OR%20"))
         case Left(descr) => descr match {
-          case Some(des) => Some(s"(ti:$des)")
+          case Some(des) => Some(s"(ti:%22${replaceSpaces(des)}%22)")
           case None => displayName match {
-            case Some(dn) => Some(s"(ti:$dn)")
-            case None => originalText.map(ot => s"(tw:$ot)")
+            case Some(dn) => Some(s"(ti:%22${replaceSpaces(dn)}%22)")
+            case None => originalText.map(ot => s"(ti:%22${replaceSpaces(ot)}%22)")
           }
         }
       }
       case None => displayName match {
-        case Some(dn) => Some(s"(ti:$dn)")
-        case None => originalText.map(ot => s"(tw:$ot)")
+        case Some(dn) => Some(s"(mh:%22${replaceSpaces(dn)}%22)")
+        case None => originalText.map(ot => s"(ti:%22${replaceSpaces(ot)}")
       }
     }
   }

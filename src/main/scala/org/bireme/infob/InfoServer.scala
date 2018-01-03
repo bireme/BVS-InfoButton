@@ -79,9 +79,9 @@ class InfobuttonServer(conv: MeshConverter,
         info.filterNot(x => x.getClass.getName.equals(
           "org.bireme.infob.parameters.MainSearchCriteria")).foldLeft[String](
             s"$iahxUrl?start=0&rows=$maxDocs&sort=da+desc&wt=json" +
-            s"&q=tw:$msc_str%20AND%20(instance:%22regional%22)%20AND%20" +
+            s"&q=$msc_str%20AND%20(instance:%22regional%22)%20AND%20" +
             "(fulltext:(%221%22))") {
-              case (str, sparam) => println(s"sparam=$sparam");str +
+              case (str, sparam) => str +
               (sparam.toSrcExpression(conv) match {
                 case Some(str2) => s"%20AND%20$str2"
                 case None => "NADA"
@@ -121,6 +121,7 @@ info.foreach(name => println(s"name=${getName(name)} typeName=$typeName"))
       case Some(url) => {
         Try(Source.fromURL(url, "utf-8").getLines().mkString("\n")) match {
           case Success(ctt) =>
+println(s"ctt=$ctt")
             val json = Json.parse(ctt)
             val numFound = (json \ "response" \ "numFound").as[Int]
 
@@ -128,7 +129,7 @@ info.foreach(name => println(s"name=${getName(name)} typeName=$typeName"))
               case res: JsResult[JsArray] => (numFound, res.get.value)
               case _ => (0, Seq())
             }
-          case Failure(_) => (0, Seq())
+          case Failure(x) => println(s"FAILURE=$x");(0, Seq())
         }
       }
       case None => (0, Seq())
