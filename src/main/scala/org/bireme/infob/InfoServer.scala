@@ -51,7 +51,7 @@ class InfobuttonServer(conv: MeshConverter,
     val (info, oType, callbackFunc) = ParameterParser.parse(param)
     val outType = oType.getOrElse("application/json")
     val expr = convToSrcExpression(info, conv, maxDocs)
-    val (numFound, docs) = search(expr)
+    val docs = orderedSearch(expr, maxDocs)
 
     logger.debug(
       (param.foldLeft[String]("\nParameters: ") {
@@ -60,7 +60,7 @@ class InfobuttonServer(conv: MeshConverter,
       (expr match {
         case Some(expr) => s"\nSearch expression: \n\t$expr"
         case None => "\nNo search expression."
-      }) + s". \nFound documents: $numFound\n"
+      }) + s". \nFound documents: ${docs.size}\n"
     )
 
     convToInfoResponse(expr, info, docs, outType, callbackFunc)
@@ -99,40 +99,47 @@ class InfobuttonServer(conv: MeshConverter,
         case str => Some(s"($str)")
       }
 
-  /*private def OtherSrcExpr[T: TypeTag](info: Seq[SearchParameter],
-                                       conv: MeshConverter): String = {
-    def getName(obj: Parser): String = {
-      val name = obj.getClass.getName
+  private def orderedSearch(expression: Option[String],
+                            maxDocs: Int): Seq[JsValue] = {
 
-      name.substring(0, name.size-1) // remove the '$' character
+    def oSearch(typeOfStudy: Seq[String],
+                expr: String,
+                maxDocs: Int,
+                auxSeq: Seq[JsValue]): Seq[JsValue] = {
+      if (typeOfStudy.isEmpty) auxSeq
+      else (maxDocs - auxSeq.size) match {
+        case 0 => auxSeq
+        case num =>
+          val newExpr = s"$expr%20AND%20(type_of_study:(%22${typeOfStudy.head}%22))"
+          oSearch(typeOfStudy.tail, expr, maxDocs, auxSeq++search(newExpr, num))
+      }
     }
-    val typeName = typeOf[T].typeSymbol.asClass.fullName
-    info.foreach(name => println(s"name=$name"))
-info.foreach(name => println(s"name=${getName(name)} typeName=$typeName"))
-    info.find(sp => getName(sp).equals(typeName)).
-      flatMap(_.toSrcExpression(conv)).getOrElse("")
 
-  }*/
-
-  private def search(expression: Option[String]): (Int, Seq[JsValue]) = {
     require(expression != null)
+    require(maxDocs > 0)
+
+    val typeOfStudy = Seq("guideline", "systematic_reviews", "clinical_trials",
+      "cohort", "case_control", "case_reports")
 
     expression match {
-      case Some(url) => {
-        Try(Source.fromURL(url, "utf-8").getLines().mkString("\n")) match {
-          case Success(ctt) =>
-println(s"ctt=$ctt")
-            val json = Json.parse(ctt)
-            val numFound = (json \ "response" \ "numFound").as[Int]
+      case Some(url) => oSearch(typeOfStudy, url, maxDocs, Seq())
+      case None => Seq()
+    }
+  }
 
-            (json \ "response" \ "docs").validate[JsArray] match {
-              case res: JsResult[JsArray] => (numFound, res.get.value)
-              case _ => (0, Seq())
-            }
-          case Failure(x) => println(s"FAILURE=$x");(0, Seq())
+  private def search(expression: String,
+                     maxDocs: Int): Seq[JsValue] = {
+    require(expression != null)
+    require(maxDocs > 0)
+
+    Try(Source.fromURL(expression, "utf-8").getLines().mkString("\n")) match {
+      case Success(ctt) =>
+println(s"ctt=$ctt")
+        (Json.parse(ctt) \ "response" \ "docs").validate[JsArray] match {
+          case res: JsResult[JsArray] => res.get.value.take(maxDocs)
+          case _ => Seq()
         }
-      }
-      case None => (0, Seq())
+      case Failure(x) => println(s"FAILURE=$x"); Seq()
     }
   }
 
