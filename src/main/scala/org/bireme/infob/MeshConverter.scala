@@ -53,15 +53,15 @@ class MeshConverter(indexes: String) {
               code: String): Either[Option[String],Set[String]] = {
     val tcode = code.trim.toUpperCase
 
-    val mesh = codeSystem.toUpperCase match {
-      case "ICD9-CM" | "2.16.840.1.113883.6.103" => getMeshCodes("ICD9-CM", code)
-      case "ICD10-CM" | "2.16.840.1.113883.6.90" => getMeshCodes("ICD10-CM", code)
-      case "ICD10" | "2.16.840.1.113883.6.3" => getMeshCodes("ICD10", code)
-      case "SNOMED-CT" | "2.16.840.1.113883.6.96" => getMeshCodes("SNOMED-CT", code)
-      case "RXNORM" | "2.16.840.1.113883.6.88" => getMeshCodes("RXNORM", code)
-      case "MESH" | "2.16.840.1.113883.6.177" => Right(Set(tcode))
-      case "NDC" | "2.16.840.1.113883.6.69" => getMeshCodes("NDC", code)
-      case "LOINC" | "2.16.840.1.113883.6.1" => getMeshCodes("LOINC", code)
+    val mesh = codeSystem.trim.toUpperCase match {
+      case "2.16.840.1.113883.6.103" => getMeshCodes("ICD9-CM", tcode)
+      case "2.16.840.1.113883.6.90" => getMeshCodes("ICD10-CM", tcode)
+      case "2.16.840.1.113883.6.3" => getMeshCodes("ICD10", tcode)
+      case "2.16.840.1.113883.6.96" => getMeshCodes("SNOMED-CT", tcode)
+      case "2.16.840.1.113883.6.88" => getMeshCodes("RXNORM", tcode)
+      case "2.16.840.1.113883.6.177" => Right(Set(tcode))
+      case "2.16.840.1.113883.6.69" => getMeshCodes("NDC", tcode)
+      case "2.16.840.1.113883.6.1" => getMeshCodes("LOINC", tcode)
       case _ => Left(None)
     }
 

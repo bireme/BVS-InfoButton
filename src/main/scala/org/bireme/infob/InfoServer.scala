@@ -78,7 +78,7 @@ class InfobuttonServer(conv: MeshConverter,
         println(s"*=>${info}")
         info.filterNot(x => x.getClass.getName.equals(
           "org.bireme.infob.parameters.MainSearchCriteria")).foldLeft[String](
-            s"$iahxUrl?start=0&rows=$maxDocs&sort=da+desc&wt=json" +
+            s"$iahxUrl?source=bvs_infobutton&start=0&rows=$maxDocs&sort=da+desc&wt=json" +
             s"&q=$msc_str%20AND%20(instance:%22regional%22)%20AND%20" +
             "(fulltext:(%221%22))") {
               case (str, sparam) => str +
@@ -118,8 +118,9 @@ class InfobuttonServer(conv: MeshConverter,
     require(expression != null)
     require(maxDocs > 0)
 
+    // overview is present to grant that at least some document will be returned
     val typeOfStudy = Seq("guideline", "systematic_reviews", "clinical_trials",
-      "cohort", "case_control", "case_reports")
+      "cohort", "case_control", "case_reports", "overview")
 
     expression match {
       case Some(url) => oSearch(typeOfStudy, url, maxDocs, Seq())
@@ -131,7 +132,7 @@ class InfobuttonServer(conv: MeshConverter,
                      maxDocs: Int): Seq[JsValue] = {
     require(expression != null)
     require(maxDocs > 0)
-
+//println(s"Pesquisando ... [$expression]")
     Try(Source.fromURL(expression, "utf-8").getLines().mkString("\n")) match {
       case Success(ctt) =>
 println(s"ctt=$ctt")
@@ -163,7 +164,8 @@ println(s"ctt=$ctt")
           (msc2.displayName.getOrElse(msc2.code.getOrElse("")))
       }
     val categories:Seq[Category] = info.flatMap(_.getCategories)
-    val id = s"urn:bvs:${expr.getOrElse("").hashCode}"
+    //val id = s"urn:bvs:${expr.getOrElse("").hashCode}"
+    val id = s"urn:uuid:${java.util.UUID.randomUUID()}"
     val feed = AtomFeed(subtitle, categories, lang=lang, id=id)
     val entries = docs.foldLeft[Seq[AtomEntry]](Seq()) {
       case (seq, doc) => seq :+ AtomEntry(doc, lang, categories)

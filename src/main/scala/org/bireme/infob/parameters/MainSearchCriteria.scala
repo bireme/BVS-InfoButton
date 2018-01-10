@@ -18,7 +18,7 @@ class MainSearchCriteria(val code: Option[String] = None,
     if (in == null) null else in.replace(" ", "%20")
 
   override def toSrcExpression(conv: MeshConverter): Option[String] = {
-    val cSystem = codeSystem.getOrElse("MESH")
+    val cSystem = codeSystem.getOrElse("2.16.840.1.113883.6.177") // MESH
 
     code match {
       case Some(c) => println("vai converter");conv.convert(cSystem, c) match {
@@ -34,7 +34,7 @@ class MainSearchCriteria(val code: Option[String] = None,
       }
       case None => displayName match {
         case Some(dn) => Some(s"(mh:%22${replaceSpaces(dn)}%22)")
-        case None => originalText.map(ot => s"(ti:%22${replaceSpaces(ot)}")
+        case None => println("original text =>");originalText.map(ot => s"(ti:%22${replaceSpaces(ot)}%22)")
       }
     }
   }

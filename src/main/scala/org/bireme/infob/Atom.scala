@@ -61,19 +61,18 @@ case class AtomEntry(doc: JsValue,
 
   val entryDate = (doc \ "entry_date").asOpt[String]
   val updated = entryDate.flatMap(FormatDate.format1(_))
+  val fEntryDate = entryDate.flatMap(FormatDate.format3(_))
 
   val author = (doc \ "au").asOpt[Seq[String]]
   val link = (doc \ "ur").asOpt[Seq[String]].map(_.head)
-  val id = (doc \ "id").asOpt[String] match {
-    case Some(v) =>
-      Some(s"tag:www.paho.org/bireme,${entryDate.getOrElse("")}:$v")
-    case None => (doc \ "_version_").asOpt[String].map(
-      ver => s"tag:www.paho.org/bireme,$ver")
-  }
+  val docId = (doc \ "id").asOpt[String]
   val summary = (doc \ s"ab_$lang").asOpt[Seq[String]] match {
     case Some(seq) => Some(seq.head)
     case None => (doc \ "ab").asOpt[Seq[String]].map(_.head)
   }
+  val sumHash = summary.getOrElse(title.getOrElse("???")).hashCode.toString
+  val id = Some("tag:bvsalud.org," + fEntryDate.getOrElse("1970") + ":" +
+                 docId.getOrElse(sumHash))
   val source = (doc \ "fo").asOpt[Seq[String]].map(x => x.head.trim)
   val entryLang = (doc \ "la").asOpt[String]
   val docType = (doc \ "type").asOpt[Seq[String]].map(x => x.head.trim)
