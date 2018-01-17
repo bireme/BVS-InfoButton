@@ -27,7 +27,8 @@ class AdministrativeGenderCode(code: Option[String] = None,
     }
   }
 
-  override def toSrcExpression(conv: MeshConverter): Option[String] =     
+  override def toSrcExpression(conv: MeshConverter,
+                               env: Seq[SearchParameter]): Option[String] =
     agcode.map(agc => s"(limit:(%22$agc%22))")
 
   override def getCategories: Seq[Category] = {

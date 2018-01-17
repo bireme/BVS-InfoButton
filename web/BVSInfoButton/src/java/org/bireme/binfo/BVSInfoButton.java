@@ -119,6 +119,43 @@ public class BVSInfoButton extends HttpServlet {
         return ret;
     }
     
+    private MainSearchCriteria getMainSearchCriteriaX(Map<String,String[]> params,
+                                                      int number) {
+        assert number > 1;
+        
+        final String[] inputOption = params.get("inputOption" + number);
+        final String[] value = params.get("value" + number);
+        final String[] codeSystem = params.get("codeSystem" + number);
+        final Option<String> sCodeSystem = new Some<String>(codeSystem[0]);        
+        final Option<String> sCode;
+        final Option<String> sDisplayName;
+        final Option<String> sOriginalText;
+        final MainSearchCriteria ret;
+        
+        if ((value == null) || (value[0] == null) || (value[0].trim().isEmpty())) {
+            ret = null;
+        } else {
+            if (inputOption[0].equals("code")) {
+                sCode = new Some<String>(value[0]);
+                sDisplayName = Option.apply(null);
+                sOriginalText = Option.apply(null);
+            } else if (inputOption[0].equals("display_text")) {
+                sCode = Option.apply(null);
+                sDisplayName = new Some<String>(value[0]);
+                sOriginalText = Option.apply(null);
+            } else {
+                sCode = Option.apply(null);
+                sDisplayName = Option.apply(null);
+                sOriginalText = new Some<String>(value[0]);                
+            }
+            final Map<String,String> param = new HashMap();
+            
+            ret = new MainSearchCriteria(sCode, sCodeSystem, sDisplayName, 
+                                                                 sOriginalText);
+        }
+        return ret;
+    }
+    
     private AdministrativeGenderCode getAdministrativeGenderCode(Map<String,String[]> params) {
         final String[] admGenderCode = params.get("admGenderCode");
         final AdministrativeGenderCode ret;
@@ -305,10 +342,20 @@ public class BVSInfoButton extends HttpServlet {
     
     private String getDocuments(Map<String,String[]> params) {
         final Map<String,String> param = new HashMap<>();
-        final MainSearchCriteria msc = getMainSearchCriteria(params);
+        final MainSearchCriteria msc1 = getMainSearchCriteriaX(params, 1);
+        final MainSearchCriteria msc2 = getMainSearchCriteriaX(params, 2);
+        final boolean both = (msc1 != null) && (msc2 != null);
         
-        if (msc != null) {
-            addCategories(msc.getCategories(), param);
+        if (both) {
+            addCategories(msc1.getCategories(0), param);
+            addCategories(msc2.getCategories(1), param);
+        } else {
+            if (msc1 != null) {
+                addCategories(msc1.getCategories(), param);
+            }
+            if (msc2 != null) {
+                addCategories(msc2.getCategories(), param);
+            }
         }
         final AdministrativeGenderCode adg = getAdministrativeGenderCode(params);
         if (adg != null) {
@@ -326,7 +373,9 @@ public class BVSInfoButton extends HttpServlet {
         if (perf != null) {
             addCategories(perf.getCategories(), param);
         }
-        
+/*for (Map.Entry<String,String> entry : param.entrySet()) {
+    System.out.println("key=" + entry.getKey() + " value=" + entry.getValue());
+}*/        
         return info.getInfo(param, 10);
     }
     
@@ -335,6 +384,7 @@ public class BVSInfoButton extends HttpServlet {
         final List<Category> categ = JavaConverters.seqAsJavaList(categories);            
         
         for (Category cat:categ) {
+//System.out.println("Adcionando categoria key=" + cat.scheme() + " value=" + cat.term());            
             if (!cat.term().isEmpty()) param.put(cat.scheme(), cat.term());
         }
     }

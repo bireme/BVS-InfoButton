@@ -21,10 +21,10 @@
 <h1>BVS-Infobutton</h1>
 
 <form action="BVSInfoButton" method="post">
-  <h3>Main Search Criteria:</h3>
+  <h3>Main Search Criteria 1:</h3>
 
   <div>
-  Input Option: <select name="inputOption">
+  Input Option: <select name="inputOption1">
     <option value="code">code</option>
     <option value="display_text">display text</option>
     <option value="original_text">original text</option>
@@ -32,11 +32,38 @@
   </div>
 
   <div>
-  Value: <input type="text" name="value" size="60"></input>
+  Value: <input type="text" name="value1" size="60"></input>
   </div>
 
   <div>
-  Code System: <select name="codeSystem">
+  Code System: <select name="codeSystem1">
+   <option value="2.16.840.1.113883.6.177">MESH</option>
+   <option value="2.16.840.1.113883.6.3">ICD10</option>
+   <option disabled value="2.16.840.1.113883.6.90">ICD10-CM</option>
+   <option disabled value="2.16.840.1.113883.6.103">ICD9-CM</option>
+   <option disabled value="2.16.840.1.113883.6.96">SNOMED-CT</option>
+   <option disabled value="2.16.840.1.113883.6.88">RXNORM</option>
+   <option disabled value="2.16.840.1.113883.6.69">NDC</option>
+   <option disabled value="2.16.840.1.113883.6.1">LOINC</option>
+  </select>
+  </div>
+  
+  <h3>Main Search Criteria 2:</h3>
+  
+  <div>
+  Input Option: <select name="inputOption2">
+    <option value="code">code</option>
+    <option value="display_text">display text</option>
+    <option value="original_text">original text</option>
+    </select>
+  </div>
+
+  <div>
+  Value: <input type="text" name="value2" size="60"></input>
+  </div>
+
+  <div>
+  Code System: <select name="codeSystem2">
    <option value="2.16.840.1.113883.6.177">MESH</option>
    <option value="2.16.840.1.113883.6.3">ICD10</option>
    <option disabled value="2.16.840.1.113883.6.90">ICD10-CM</option>

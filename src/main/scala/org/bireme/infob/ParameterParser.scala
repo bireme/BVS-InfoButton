@@ -40,13 +40,14 @@ object ParameterParser {
     require(param != null)
 
     val (msc, others) = MainSearchCriteria.parse(param)
+//println(s"parse ==> \n\tparam=$param \n\tmsc=$msc \n\tothers=$others")
 
     val seqParam = parSeq.foldLeft[Seq[SearchParameter]] (msc) {
       case (seq,name) =>
         val clazz =  Class.forName("org.bireme.infob.parameters." + name + "$")
         val obj = clazz.getField("MODULE$").get(classOf[Parser]).asInstanceOf[Parser]
         val seq2 = seq ++ obj.parse(others)
-println(s"name=$clazz obj=$obj seq=$seq2 others=$others")
+//println(s"name=$clazz obj=$obj seq=$seq2 others=$others")
         seq2
     }
     val responseType = others.get("knowledgeResponseType").map(_.toLowerCase)

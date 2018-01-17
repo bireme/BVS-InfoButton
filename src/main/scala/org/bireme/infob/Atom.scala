@@ -64,8 +64,17 @@ case class AtomEntry(doc: JsValue,
   val fEntryDate = entryDate.flatMap(FormatDate.format3(_))
 
   val author = (doc \ "au").asOpt[Seq[String]]
-  val link = (doc \ "ur").asOpt[Seq[String]].map(_.head)
   val docId = (doc \ "id").asOpt[String]
+
+  //val link = (doc \ "ur").asOpt[Seq[String]].map(_.head)
+  val portal = "http://pesquisa.bvsalud.org/portal/resource"
+  val link = lang match {
+    case "es" => docId.map(id => s"$portal/es/$id")
+    case "pt" => docId.map(id => s"$portal/pt/$id")
+    case "fr" => docId.map(id => s"$portal/fr/$id")
+    case _ => docId.map(id => s"$portal/en/$id")
+  }
+
   val summary = (doc \ s"ab_$lang").asOpt[Seq[String]] match {
     case Some(seq) => Some(seq.head)
     case None => (doc \ "ab").asOpt[Seq[String]].map(_.head)

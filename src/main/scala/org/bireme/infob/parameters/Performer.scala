@@ -22,9 +22,7 @@ class Performer(role: Option[String],
   val lcode = langCodeSystem match {
     case Some("ISO 639-1") => langCode.map(_.toLowerCase).
       flatMap(la => if (lang2.contains(la)) Some(la) else None)
-    case _ => langDisplayName.map(_.toLowerCase) flatMap {
-      la => langN.get(la.toLowerCase)
-    }
+    case _ => langDisplayName.flatMap(la => langN.get(la.toLowerCase))
   }
 
   val role2 = role match {
@@ -34,9 +32,16 @@ class Performer(role: Option[String],
     case _ => None
   }
 
-  override def toSrcExpression(conv: MeshConverter): Option[String] = {
+  override def toSrcExpression(conv: MeshConverter,
+                               env: Seq[SearchParameter]): Option[String] = {
 //println(s"***lcode=$lcode")
-    lcode.map(lc => s"(la:(%22$lc%22))")
+    env.collectFirst({ case ir: InfoRecipient => ir}) match {
+      case Some(ir: InfoRecipient) => ir.lcode match {
+        case Some(lang) => Some(s"(la:(%22$lang%22))")
+        case _ => lcode.map(lc => s"(la:(%22$lc%22))")
+      }
+      case _ => lcode.map(lc => s"(la:(%22$lc%22))")
+    }
   }
 
   override def getCategories: Seq[Category] = {

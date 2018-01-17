@@ -84,7 +84,7 @@ object AtomOutput {
 
     entry.link.map(link => entryElem.addElement("link").
                               addAttribute("href", link).
-                              addAttribute("rel", "alternate").
+                              addAttribute("rel", "via").
                               addAttribute("type", "html").
                               addAttribute("hreflang", entry.lang).
                               addAttribute("title", entry.title.getOrElse("")))
@@ -166,7 +166,7 @@ object AtomOutput {
       "link" -> entry.link.map(lk => JsObject(List(
                                 "hreflang" -> JsString(entry.lang),
                                 "title" -> JsString(entry.title.getOrElse("")),
-                                "rel" -> JsString("alternate"),
+                                "rel" -> JsString("via"),
                                 "type" -> JsString("html"),
                                 "href" -> (JsString(lk))))),
       "lang" -> Some(JsString(entry.lang)),

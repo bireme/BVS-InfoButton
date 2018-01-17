@@ -47,23 +47,34 @@ class InfobuttonServer(conv: MeshConverter,
               maxDocs: Int = 10): String = {
     require(param != null)
     require(maxDocs > 0)
-
+//println(s">> getInfo - param=$param")
     val (info, oType, callbackFunc) = ParameterParser.parse(param)
     val outType = oType.getOrElse("application/json")
-    val expr = convToSrcExpression(info, conv, maxDocs)
-    val docs = orderedSearch(expr, maxDocs)
+    val exprAND = convToSrcExpression(info, conv, maxDocs, false)
+    val docsAND = orderedSearch(exprAND, maxDocs)
+    val remaining = maxDocs - docsAND.size
+    val exprOR = convToSrcExpression(info, conv, maxDocs, true)
+    val docsOR = if (remaining > 0) orderedSearch(exprOR, remaining) else Seq()
+    val docs = docsAND ++ docsOR
 
     logger.debug(
       (param.foldLeft[String]("\nParameters: ") {
         case(str,param) => s"$str \n\t[${param._1}: ${param._2}]"
-      }) +
-      (expr match {
-        case Some(expr) => s"\nSearch expression: \n\t$expr"
-        case None => "\nNo search expression."
-      }) + s". \nFound documents: ${docs.size}\n"
-    )
+      }))
+    logger.debug(
+      (exprAND match {
+        case Some(expr) => s"\nSearch expression (AND): \n\t$expr"
+        case None => "\nSearch expression (AND): \n\tNot Found"
+      }))
+    logger.debug(
+      (exprOR match {
+        case Some(expr) => s"\nSearch expression (OR): \n\t$expr"
+        case None => "\nSearch expression (OR): \n\tNot Found"
+      }))
+    logger.debug(". \nDocuments found:\n\t (AND) - " + docsAND.size +
+      "\n\t (OR) - " + docsOR.size)
 
-    convToInfoResponse(expr, info, docs, outType, callbackFunc)
+    convToInfoResponse(info, docs, outType, callbackFunc)
   }
 
 //http://basalto02.bireme.br:8986/solr5/portal/select?
@@ -71,20 +82,21 @@ class InfobuttonServer(conv: MeshConverter,
 //indent=true&start=0&rows=10&sort=da+desc
   private def convToSrcExpression(info: Seq[SearchParameter],
                                   conv: MeshConverter,
-                                  maxDocs: Int): Option[String] = {
-    MainSearchCriteriaSrcExpr(info, conv).map(
+                                  maxDocs: Int,
+                                  useOR: Boolean): Option[String] = {
+    MainSearchCriteriaSrcExpr(info, conv, useOR).map(
       msc_str => {
-        println(s"==>${info.head.getClass.getName}")
-        println(s"*=>${info}")
+        //println(s"==>${info.head.getClass.getName}")
+        //println(s"*=>${info}")
         info.filterNot(x => x.getClass.getName.equals(
           "org.bireme.infob.parameters.MainSearchCriteria")).foldLeft[String](
             s"$iahxUrl?source=bvs_infobutton&start=0&rows=$maxDocs&sort=da+desc&wt=json" +
             s"&q=$msc_str%20AND%20(instance:%22regional%22)%20AND%20" +
             "(fulltext:(%221%22))") {
               case (str, sparam) => str +
-              (sparam.toSrcExpression(conv) match {
+              (sparam.toSrcExpression(conv, info) match {
                 case Some(str2) => s"%20AND%20$str2"
-                case None => "NADA"
+                case None => ""
               })
             }
       }
@@ -92,12 +104,16 @@ class InfobuttonServer(conv: MeshConverter,
   }
 
   private def MainSearchCriteriaSrcExpr(info: Seq[SearchParameter],
-                                        conv: MeshConverter): Option[String] =
+                                        conv: MeshConverter,
+                                        useOR: Boolean): Option[String] = {
+    val connector = if (useOR) "OR" else "AND"
+
     info.filter(_.isInstanceOf[MainSearchCriteria]).
-      map(_.toSrcExpression(conv)).flatten.sorted.mkString("%20OR%20") match {
+      map(_.toSrcExpression(conv, info)).flatten.sorted.mkString(s"%20$connector%20") match {
         case "" => None
         case str => Some(s"($str)")
       }
+  }
 
   private def orderedSearch(expression: Option[String],
                             maxDocs: Int): Seq[JsValue] = {
@@ -135,21 +151,19 @@ class InfobuttonServer(conv: MeshConverter,
 //println(s"Pesquisando ... [$expression]")
     Try(Source.fromURL(expression, "utf-8").getLines().mkString("\n")) match {
       case Success(ctt) =>
-println(s"ctt=$ctt")
+//println(s"ctt=$ctt")
         (Json.parse(ctt) \ "response" \ "docs").validate[JsArray] match {
           case res: JsResult[JsArray] => res.get.value.take(maxDocs)
           case _ => Seq()
         }
-      case Failure(x) => println(s"FAILURE=$x"); Seq()
+      case Failure(_) => /*println(s"FAILURE=$x");*/ Seq()
     }
   }
 
-  private def convToInfoResponse(expr: Option[String],
-                                 info: Seq[SearchParameter],
+  private def convToInfoResponse(info: Seq[SearchParameter],
                                  docs: Seq[JsValue],
                                  outType: String,
                                  callbackFunc: Option[String]): String = {
-    require(expr != null)
     require(info != null)
     require(docs != null)
     require(outType != null)
@@ -164,7 +178,6 @@ println(s"ctt=$ctt")
           (msc2.displayName.getOrElse(msc2.code.getOrElse("")))
       }
     val categories:Seq[Category] = info.flatMap(_.getCategories)
-    //val id = s"urn:bvs:${expr.getOrElse("").hashCode}"
     val id = s"urn:uuid:${java.util.UUID.randomUUID()}"
     val feed = AtomFeed(subtitle, categories, lang=lang, id=id)
     val entries = docs.foldLeft[Seq[AtomEntry]](Seq()) {
@@ -191,8 +204,10 @@ println(s"ctt=$ctt")
           case _ => "en"
         }
       )
-      case Some(per:Performer) => per.lcode.getOrElse("en")
-      case _ => "en"
+      case _ => info.find(_.isInstanceOf[Performer]) match {
+        case Some(per:Performer) => per.lcode.getOrElse("en")
+        case _ => "en"
+      }
     }
   }
 }

@@ -66,11 +66,11 @@ class MeshConverter(indexes: String) {
     }
 
     // Try converting MeSH code or term into a DeCs code or term description
-println(s"mesh=$mesh")
+//println(s"mesh=$mesh")
     mesh match {
       case Right(codes) =>
         val cset = codes.map(mesh2DeCS(_)).flatten
-        println(s"cset=$cset")
+        //println(s"cset=$cset")
         if (cset.isEmpty) Left(None)
         else Right(cset)
       case Left(x) => Left(x)
@@ -81,16 +81,16 @@ println(s"mesh=$mesh")
                            code: String): Either[Option[String],Set[String]] = {
     thes2thesSearchers.get(codeSystem) match {
       case Some(searcher) =>
-println(s"codeSystem=$codeSystem code=$code searcher=$searcher")
+//println(s"codeSystem=$codeSystem code=$code searcher=$searcher")
         val parser = new QueryParser(codeSystem, analyzer)
         val query = parser.parse(code)
         val topDocs = searcher.search(query, 1)
-println(s"query=$query totalHits=${topDocs.totalHits}")
+//println(s"query=$query totalHits=${topDocs.totalHits}")
         if (topDocs.totalHits == 0) Left(None)
         else {
           val doc = searcher.doc(topDocs.scoreDocs.head.doc)
           val meshCodes = doc.getValues("MeSH")
-println(s"meshCodes=$meshCodes")
+//println(s"meshCodes=$meshCodes")
           if (meshCodes == null) {
             val meshDesc = doc.get("description")
             if (meshDesc == null) Left(None) else Left(Some(meshDesc))
@@ -104,7 +104,7 @@ println(s"meshCodes=$meshCodes")
     if (code.isEmpty) None
     else thes2thesSearchers.get("DeCS") flatMap {
       searcher =>
-       println(s"code=$code searcher=$searcher")
+       //println(s"code=$code searcher=$searcher")
         val booleanQuery = new BooleanQuery.Builder()
         .add(new TermQuery(new Term("MESH_ID", code.toUpperCase)),
              BooleanClause.Occur.SHOULD)
@@ -121,9 +121,9 @@ println(s"meshCodes=$meshCodes")
         val topDocs = searcher.search(booleanQuery, 1)
         if (topDocs.totalHits == 0) None
         else {
-          println(s"Achou algum documento. totalHits=${topDocs.totalHits}")
+          //println(s"Achou algum documento. totalHits=${topDocs.totalHits}")
           val doc = searcher.doc(topDocs.scoreDocs.head.doc)
-          println(s"doc=$doc")
+          //println(s"doc=$doc")
           val eDescr = doc.get("ENGLISH_DESCR")
           if (eDescr == null) {
             val sDescr = doc.get("SPANISH_DESCR")
