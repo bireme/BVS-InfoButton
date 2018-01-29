@@ -105,16 +105,17 @@ class MeshConverter(indexes: String) {
     else thes2thesSearchers.get("DeCS") flatMap {
       searcher =>
        //println(s"code=$code searcher=$searcher")
+        val ucCode = code.toUpperCase
         val booleanQuery = new BooleanQuery.Builder()
-        .add(new TermQuery(new Term("MESH_ID", code.toUpperCase)),
+        .add(new TermQuery(new Term("MESH_ID", ucCode)),
              BooleanClause.Occur.SHOULD)
-        .add(new TermQuery(new Term("HIERARCHICAL_CODE", code.toUpperCase)),
+        .add(new TermQuery(new Term("HIERARCHICAL_CODE", ucCode)),
              BooleanClause.Occur.SHOULD)
-        .add(new TermQuery(new Term("ENGLISH_DESCR_NORM", code.toUpperCase)),
+        .add(new TermQuery(new Term("ENGLISH_DESCR_NORM", ucCode)),
              BooleanClause.Occur.SHOULD)
-        .add(new TermQuery(new Term("SPANISH_DESCR_NORM", code.toUpperCase)),
+        .add(new TermQuery(new Term("SPANISH_DESCR_NORM", ucCode)),
              BooleanClause.Occur.SHOULD)
-        .add(new TermQuery(new Term("PORTUGUESE_DESCR_NORM", code.toUpperCase)),
+        .add(new TermQuery(new Term("PORTUGUESE_DESCR_NORM", ucCode)),
              BooleanClause.Occur.SHOULD)
         .build()
 
