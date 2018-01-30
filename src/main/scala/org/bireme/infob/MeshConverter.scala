@@ -33,7 +33,7 @@ class MeshConverter(indexes: String) {
   val thesauri = Map(
     "ICD9-CM" -> "ICD9CM",
     "ICD10-CM" -> "ICD10CM",
-    "ICD10" -> "IDC10",
+    "ICD10" -> "ICD10",
     "SNOMED-CT" -> "SNOMEDCT_US",
     "RXNORM" -> "RXNORM"
   )

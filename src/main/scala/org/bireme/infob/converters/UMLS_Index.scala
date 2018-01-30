@@ -35,7 +35,7 @@ object UMLS_Index extends App {
   val DEF_UMLS_YEAR = 2017
   val DEF_UMLS_MASTER = s"/bases/umls/${DEF_UMLS_YEAR}AA/decsnamecuisty"
 
-  val thesauri = HashSet("ICD9CM", "ICD10CM", "IDC10", "SNOMEDCT_US", "RXNORM")
+  val thesauri = HashSet("ICD9CM", "ICD10CM", "ICD10", "SNOMEDCT_US", "RXNORM")
 
   val TAG = 501
   val UMLS_CONCEPT_CODE_SUBFLD = '1'
