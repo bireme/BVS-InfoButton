@@ -13,8 +13,8 @@ class MainSearchCriteria(val code: Option[String] = None,
                          codeSystem: Option[String] = None,
                          val displayName: Option[String] = None,
                          originalText: Option[String] = None)
-    extends SearchParameter {
-  assert((!code.isEmpty) || (!displayName.isEmpty) || (!originalText.isEmpty))
+                                                       extends SearchParameter {
+  assert ((!code.isEmpty) || (!displayName.isEmpty) || (!originalText.isEmpty))
 
   private def replaceSpaces(in: String): String =
     if (in == null) null else in.replace(" ", "%20")
@@ -24,53 +24,41 @@ class MainSearchCriteria(val code: Option[String] = None,
     val cSystem = codeSystem.getOrElse("2.16.840.1.113883.6.177") // MESH
 
     code match {
-      case Some(c) =>
-        /*println("vai converter");*/
-        conv.convert(cSystem, c) match {
-          case Right(co) =>
-            Some(
-              co.map(cod => s"(mh:(%22${replaceSpaces(cod)}%22))")
-                .mkString("%20OR%20"))
-          case Left(descr) =>
-            descr match {
-              case Some(des) => Some(s"(ti:%22${replaceSpaces(des)}%22)")
-              case None =>
-                displayName match {
-                  case Some(dn) => Some(s"(ti:%22${replaceSpaces(dn)}%22)")
-                  case None =>
-                    originalText.map(ot => s"(ti:%22${replaceSpaces(ot)}%22)")
-                }
-            }
+      case Some(c) => /*println("vai converter");*/conv.convert(cSystem, c) match {
+        case Right(co) => Some(co.map(
+          cod => s"(mh:(%22${replaceSpaces(cod)}%22))").mkString("%20OR%20"))
+        case Left(descr) => descr match {
+          case Some(des) => Some(s"(ti:%22${replaceSpaces(des)}%22)")
+          case None => displayName match {
+            case Some(dn) => Some(s"(ti:%22${replaceSpaces(dn)}%22)")
+            case None => originalText.map(ot => s"(ti:%22${replaceSpaces(ot)}%22)")
+          }
         }
-      case None =>
-        displayName match {
-          case Some(dn) => Some(s"(mh:%22${replaceSpaces(dn)}%22)")
-          case None     =>
-            /*println("original text =>");*/
-            originalText.map(ot => s"(ti:%22${replaceSpaces(ot)}%22)")
-        }
+      }
+      case None => displayName match {
+        case Some(dn) => Some(s"(mh:%22${replaceSpaces(dn)}%22)")
+        case None => /*println("original text =>");*/originalText.map(ot => s"(ti:%22${replaceSpaces(ot)}%22)")
+      }
     }
   }
 
   override def getCategories: Seq[Category] = {
     Seq(
-      Category("mainSearchCriteria.v.c", code.getOrElse("")),
-      Category("mainSearchCriteria.v.cs",
-               codeSystem.getOrElse("2.16.840.1.113883.6.177")),
+      Category("mainSearchCriteria.v.c",  code.getOrElse("")),
+      Category("mainSearchCriteria.v.cs", codeSystem.getOrElse("2.16.840.1.113883.6.177")),
       Category("mainSearchCriteria.v.dn", displayName.getOrElse("")),
       Category("mainSearchCriteria.v.ot", originalText.getOrElse(""))
     ).filter(!_.term.isEmpty)
   }
 
   def getCategories(index: Int): Seq[Category] = {
-    require(index >= 0)
+    require (index >= 0)
 
     if (index == 0) getCategories
     else
       Seq(
-        Category(s"mainSearchCriteria.v.c$index", code.getOrElse("")),
-        Category(s"mainSearchCriteria.v.cs$index",
-                 codeSystem.getOrElse("2.16.840.1.113883.6.177")),
+        Category(s"mainSearchCriteria.v.c$index",  code.getOrElse("")),
+        Category(s"mainSearchCriteria.v.cs$index", codeSystem.getOrElse("2.16.840.1.113883.6.177")),
         Category(s"mainSearchCriteria.v.dn$index", displayName.getOrElse("")),
         Category(s"mainSearchCriteria.v.ot$index", originalText.getOrElse(""))
       ).filter(!_.term.isEmpty)
@@ -84,35 +72,28 @@ class MainSearchCriteria(val code: Option[String] = None,
 }
 
 object MainSearchCriteria {
-  def parse(parameters: Map[String, String])
-    : (Seq[SearchParameter], Map[String, String]) = {
-    val (msc, other) =
-      parameters.partition(_._1.startsWith("mainSearchCriteria.v."))
+  def parse(parameters: Map[String,String]): (Seq[SearchParameter],
+                                              Map[String,String]) = {
+    val (msc,other) = parameters.partition(_._1.startsWith("mainSearchCriteria.v."))
 
     (getMSC(msc, 0, Seq()), other)
   }
 
-  private def getMSC(msc: Map[String, String],
+  private def getMSC(msc: Map[String,String],
                      cardinality: Int,
                      auxSeq: Seq[MainSearchCriteria]): Seq[SearchParameter] = {
 //println(s"*** getMSC msc=$msc cardinality=$cardinality auxSeq=$auxSeq")
 
     val cardi = if (cardinality == 0) "" else cardinality.toString
-    val (mscCard, other) = msc.partition(
-      p =>
-        p._1 matches
-          s"mainSearchCriteria.v.(c|cs|dn|ot)$cardi")
+    val (mscCard,other) = msc.partition(p => p._1 matches
+                                     s"mainSearchCriteria.v.(c|cs|dn|ot)$cardi")
     if (mscCard.isEmpty) auxSeq
-    else
-      getMSC(
-        other,
-        cardinality + 1,
-        auxSeq :+ (new MainSearchCriteria(
-          mscCard.get(s"mainSearchCriteria.v.c$cardi"),
-          mscCard.get(s"mainSearchCriteria.v.cs$cardi"),
-          mscCard.get(s"mainSearchCriteria.v.dn$cardi"),
-          mscCard.get(s"mainSearchCriteria.v.ot$cardi")
-        ))
-      )
+    else getMSC(other,
+                cardinality + 1,
+                auxSeq :+ (new MainSearchCriteria(
+                  mscCard.get(s"mainSearchCriteria.v.c$cardi"),
+                  mscCard.get(s"mainSearchCriteria.v.cs$cardi"),
+                  mscCard.get(s"mainSearchCriteria.v.dn$cardi"),
+                  mscCard.get(s"mainSearchCriteria.v.ot$cardi"))))
   }
 }

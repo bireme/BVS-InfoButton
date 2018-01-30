@@ -10,9 +10,11 @@ package org.bireme.infob
 import java.util.Date
 import play.api.libs.json.JsValue
 
-case class Category(scheme: String, term: String)
+case class Category(scheme: String,
+                    term: String)
 
-case class Atom(feed: AtomFeed, entry: Seq[AtomEntry])
+case class Atom(feed: AtomFeed,
+                entry: Seq[AtomEntry])
 
 case class AtomFeed(subtitle: String,
                     categories: Seq[Category],
@@ -27,12 +29,11 @@ case class AtomFeed(subtitle: String,
     case _    => "VHL - Virtual Health Library"
   }
   val author = lang match {
-    case "es" | "pt" | "fr" => ("BIREME/OPS/OMS", "http://www.paho.org/bireme")
-    case _                  => ("BIREME/PAHO/WHO", "http://www.paho.org/bireme")
+    case "es"|"pt"|"fr" => ("BIREME/OPS/OMS", "http://www.paho.org/bireme")
+    case _    => ("BIREME/PAHO/WHO", "http://www.paho.org/bireme")
   }
-  val rights =
-    ("BVS-InfoButton © Pan American Health Organization, 2017.",
-     "https://github.com/bireme/BVS-InfoButton/blob/master/LICENSE.txt")
+  val rights = ("BVS-InfoButton © Pan American Health Organization, 2017.",
+             "https://github.com/bireme/BVS-InfoButton/blob/master/LICENSE.txt")
 
   val prefix = "http://bvsalud.org/wp-content/themes/vhl-search-portal/images"
   val suffix = "logo_bvs.jpg"
@@ -46,14 +47,16 @@ case class AtomFeed(subtitle: String,
   val updated = FormatDate.format2(new Date())
 }
 
-case class AtomEntry(doc: JsValue, lang: String, categories: Seq[Category]) {
-  require(doc != null)
-  require(lang != null)
-  require(categories != null)
+case class AtomEntry(doc: JsValue,
+                     lang: String,
+                     categories: Seq[Category]) {
+  require (doc != null)
+  require (lang != null)
+  require (categories != null)
 
   val title = (doc \ s"ti_$lang").asOpt[Seq[String]] match {
     case Some(seq) => Some(seq.head)
-    case None      => (doc \ "ti").asOpt[Seq[String]].map(_.head)
+    case None => (doc \ "ti").asOpt[Seq[String]].map(_.head)
   }
 
   val entryDate = (doc \ "entry_date").asOpt[String]
@@ -69,17 +72,16 @@ case class AtomEntry(doc: JsValue, lang: String, categories: Seq[Category]) {
     case "es" => docId.map(id => s"$portal/es/$id")
     case "pt" => docId.map(id => s"$portal/pt/$id")
     case "fr" => docId.map(id => s"$portal/fr/$id")
-    case _    => docId.map(id => s"$portal/en/$id")
+    case _ => docId.map(id => s"$portal/en/$id")
   }
 
   val summary = (doc \ s"ab_$lang").asOpt[Seq[String]] match {
     case Some(seq) => Some(seq.head)
-    case None      => (doc \ "ab").asOpt[Seq[String]].map(_.head)
+    case None => (doc \ "ab").asOpt[Seq[String]].map(_.head)
   }
   val sumHash = summary.getOrElse(title.getOrElse("???")).hashCode.toString
-  val id = Some(
-    "tag:bvsalud.org," + fEntryDate.getOrElse("1970") + ":" +
-      docId.getOrElse(sumHash))
+  val id = Some("tag:bvsalud.org," + fEntryDate.getOrElse("1970") + ":" +
+                 docId.getOrElse(sumHash))
   val source = (doc \ "fo").asOpt[Seq[String]].map(x => x.head.trim)
   val entryLang = (doc \ "la").asOpt[String]
   val docType = (doc \ "type").asOpt[Seq[String]].map(x => x.head.trim)

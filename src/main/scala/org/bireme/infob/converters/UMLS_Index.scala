@@ -12,8 +12,8 @@ import bruma.master._
 import java.io.File
 
 import org.apache.lucene.analysis.core.KeywordAnalyzer
-import org.apache.lucene.document.{Document,Field,StringField}
-import org.apache.lucene.index.{IndexWriter,IndexWriterConfig}
+import org.apache.lucene.document.{Document, Field, StringField}
+import org.apache.lucene.index.{IndexWriter, IndexWriterConfig}
 import org.apache.lucene.store.FSDirectory
 
 import org.bireme.infob.Tools._
@@ -34,7 +34,7 @@ object UMLS_Index extends App {
 
   val DEF_UMLS_INDEX = "web/BVSInfoButton/indexes/UMLS"
   val DEF_UMLS_YEAR = 2017
-  val DEF_UMLS_MASTER = s"/bases/umls/${DEF_UMLS_YEAR}AA"
+  val DEF_UMLS_MASTER = s"/bases/umls/${DEF_UMLS_YEAR}AA/decsnamecuisty"
 
   val TAG = 501
   val UMLS_CONCEPT_CODE_SUBFLD = '1'
@@ -42,8 +42,8 @@ object UMLS_Index extends App {
   val TERM_CODE_SUBFLD = 'c'
   val TERM_LABEL_SUBFLD = 'q'
 
-  val parameters = args.foldLeft[Map[String,String]](Map()) {
-    case (map,par) =>
+  val parameters = args.foldLeft[Map[String, String]](Map()) {
+    case (map, par) =>
       val split = par.split(" *= *", 2)
       map + ((split(0).substring(1), split(1)))
   }
@@ -52,8 +52,7 @@ object UMLS_Index extends App {
 
   createIndex(mstPath, index)
 
-  def createIndex(umlsMaster: String,
-                  umlsIndex: String): Unit =  {
+  def createIndex(umlsMaster: String, umlsIndex: String): Unit = {
 
     val mst = MasterFactory.getInstance(umlsMaster).open()
     val analyzer = new KeywordAnalyzer()
@@ -72,36 +71,66 @@ object UMLS_Index extends App {
     mst.close()
   }
 
-  private def writeRecord(rec: Record,
-                          indexWriter: IndexWriter): Unit = {
-    val thesauri = HashSet("ICD9CM", "ICD10CM", "IDC10", "SNOMEDCT_US", "RXNORM")
+  private def writeRecord(rec: Record, indexWriter: IndexWriter): Unit = {
+    val thesauri =
+      HashSet("ICD9CM", "ICD10CM", "IDC10", "SNOMEDCT_US", "RXNORM")
 
     parseRecord(rec).map {
       _.groupBy[String](_.umlsConceptCode).foreach {
         case (code, etSeq) =>
-          val mesh = etSeq.groupBy[String](
-            et => if (et.thesaurus.startsWith("MSH")) "MESH" else "NO_MESH")
-          mesh.get("MESH").map {
-            mshSeq =>
-              val meshCode = mshSeq.head.termCode
-              mesh.get("NO_MESH").map {
-                noMshSeq => thesauri.foreach {
-                  thes =>
-                    val tseq = noMshSeq.filter(_.thesaurus.equals(thes))
-                    if (!tseq.isEmpty) {
-                      val first = tseq.head
-                      val doc = new Document()
+          val mesh = etSeq.groupBy[String](et =>
+            if (et.thesaurus.startsWith("MSH")) "MESH" else "NO_MESH")
+          mesh.get("MESH").map { mshSeq =>
+            if (!mshSeq.isEmpty) {
+              val first = mshSeq.head
+              val meshCode = first.termCode
+              val doc = new Document()
 
-                      doc.add(new StringField("umlsCode", code, Field.Store.YES))
-                      doc.add(new StringField("thesaurus", thes, Field.Store.YES))
-                      doc.add(new StringField("termCode", first.termCode, Field.Store.YES))
-                      doc.add(new StringField("meshCode", meshCode, Field.Store.YES))
-                      doc.add(new StringField("termLabel", uniformString(first.termLabel), Field.Store.YES))
-                      tseq.tail.foreach(et => doc.add(new StringField("termLabel", uniformString(et.termLabel), Field.Store.YES)))
-                      indexWriter.addDocument(doc)
-                    }
+              doc.add(new StringField("umlsCode", code, Field.Store.YES))
+              doc.add(new StringField("thesaurus", "MESH", Field.Store.YES))
+              doc.add(
+                new StringField("termCode", meshCode, Field.Store.YES))
+              doc.add(
+                new StringField("meshCode", meshCode, Field.Store.YES))
+              doc.add(
+                new StringField("termLabel",
+                                uniformString(first.termLabel),
+                                Field.Store.YES))
+              mshSeq.tail.foreach(
+                et =>
+                  doc.add(new StringField("termLabel",
+                                          uniformString(et.termLabel),
+                                          Field.Store.YES)))
+              indexWriter.addDocument(doc)
+              mesh.get("NO_MESH").map { noMshSeq =>
+                thesauri.foreach { thes =>
+                  val tseq = noMshSeq.filter(_.thesaurus.equals(thes))
+                  if (!tseq.isEmpty) {
+                    val first = tseq.head
+                    val doc = new Document()
+
+                    doc.add(new StringField("umlsCode", code, Field.Store.YES))
+                    doc.add(new StringField("thesaurus", thes, Field.Store.YES))
+                    doc.add(
+                      new StringField("termCode",
+                                      first.termCode,
+                                      Field.Store.YES))
+                    doc.add(
+                      new StringField("meshCode", meshCode, Field.Store.YES))
+                    doc.add(
+                      new StringField("termLabel",
+                                      uniformString(first.termLabel),
+                                      Field.Store.YES))
+                    tseq.tail.foreach(
+                      et =>
+                        doc.add(new StringField("termLabel",
+                                                uniformString(et.termLabel),
+                                                Field.Store.YES)))
+                    indexWriter.addDocument(doc)
+                  }
                 }
               }
+            }
           }
       }
     }
@@ -109,14 +138,17 @@ object UMLS_Index extends App {
 
   private def parseRecord(rec: Record): Option[Seq[EntryTerm]] = {
     if (rec.isActive()) {
-      val et = rec.iterator.asScala.filter(_.getId == TAG).foldLeft[Seq[EntryTerm]](Seq()) {
-        case (seq,fld) => seq :+ EntryTerm(
-          fld.getSubfield(UMLS_CONCEPT_CODE_SUBFLD, 1).getContent,
-          fld.getSubfield(THESAURUS_SUBFLD, 1).getContent,
-          fld.getSubfield(TERM_CODE_SUBFLD, 1).getContent,
-          fld.getSubfield(TERM_LABEL_SUBFLD, 1).getContent
-        )
-      }
+      val et = rec.iterator.asScala
+        .filter(_.getId == TAG)
+        .foldLeft[Seq[EntryTerm]](Seq()) {
+          case (seq, fld) =>
+            seq :+ EntryTerm(
+              fld.getSubfield(UMLS_CONCEPT_CODE_SUBFLD, 1).getContent,
+              fld.getSubfield(THESAURUS_SUBFLD, 1).getContent,
+              fld.getSubfield(TERM_CODE_SUBFLD, 1).getContent,
+              fld.getSubfield(TERM_LABEL_SUBFLD, 1).getContent
+            )
+        }
       Some(et)
     } else None
   }

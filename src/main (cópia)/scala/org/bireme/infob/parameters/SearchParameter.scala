@@ -7,6 +7,10 @@
 
 package org.bireme.infob.parameters
 
-trait Parser {
-  def parse(parameters: Map[String, String]): Option[SearchParameter]
+import org.bireme.infob.{Category, MeshConverter}
+
+trait SearchParameter {
+  def toSrcExpression(conv: MeshConverter,
+                      env: Seq[SearchParameter]): Option[String]
+  def getCategories: Seq[Category]
 }

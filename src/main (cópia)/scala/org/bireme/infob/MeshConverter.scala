@@ -10,17 +10,12 @@ package org.bireme.infob
 import java.io.File
 
 import org.apache.lucene.analysis.core.KeywordAnalyzer
-import org.apache.lucene.index.{DirectoryReader, Term}
+import org.apache.lucene.index.{DirectoryReader,Term}
 import org.apache.lucene.queryparser.classic.QueryParser
-import org.apache.lucene.search.{
-  BooleanClause,
-  BooleanQuery,
-  IndexSearcher,
-  TermQuery
-}
+import org.apache.lucene.search.{BooleanClause,BooleanQuery,IndexSearcher,TermQuery}
 import org.apache.lucene.store.FSDirectory
 
-import scala.util.{Either, Left, Right}
+import scala.util.{Either,Left,Right}
 
 /**
   * Class to convert term codes from different thesaurus into correspondent
@@ -37,7 +32,7 @@ class MeshConverter(indexes: String) {
 
   // Lucene index searchers to convert one system into another
   val thes2thesSearchers = thes2thes.map {
-    case (k, v) =>
+    case (k,v) =>
       val directory = FSDirectory.open(new File(v).toPath())
       val ireader = DirectoryReader.open(directory)
       (k, new IndexSearcher(ireader))
@@ -55,19 +50,19 @@ class MeshConverter(indexes: String) {
     *         or the string describing the term associated with the code (left)
     */
   def convert(codeSystem: String,
-              code: String): Either[Option[String], Set[String]] = {
+              code: String): Either[Option[String],Set[String]] = {
     val tcode = code.trim.toUpperCase
 
     val mesh = codeSystem.trim.toUpperCase match {
       case "2.16.840.1.113883.6.103" => getMeshCodes("ICD9-CM", tcode)
-      case "2.16.840.1.113883.6.90"  => getMeshCodes("ICD10-CM", tcode)
-      case "2.16.840.1.113883.6.3"   => getMeshCodes("ICD10", tcode)
-      case "2.16.840.1.113883.6.96"  => getMeshCodes("SNOMED-CT", tcode)
-      case "2.16.840.1.113883.6.88"  => getMeshCodes("RXNORM", tcode)
+      case "2.16.840.1.113883.6.90" => getMeshCodes("ICD10-CM", tcode)
+      case "2.16.840.1.113883.6.3" => getMeshCodes("ICD10", tcode)
+      case "2.16.840.1.113883.6.96" => getMeshCodes("SNOMED-CT", tcode)
+      case "2.16.840.1.113883.6.88" => getMeshCodes("RXNORM", tcode)
       case "2.16.840.1.113883.6.177" => Right(Set(tcode))
-      case "2.16.840.1.113883.6.69"  => getMeshCodes("NDC", tcode)
-      case "2.16.840.1.113883.6.1"   => getMeshCodes("LOINC", tcode)
-      case _                         => Left(None)
+      case "2.16.840.1.113883.6.69" => getMeshCodes("NDC", tcode)
+      case "2.16.840.1.113883.6.1" => getMeshCodes("LOINC", tcode)
+      case _ => Left(None)
     }
 
     // Try converting MeSH code or term into a DeCs code or term description
@@ -82,9 +77,8 @@ class MeshConverter(indexes: String) {
     }
   }
 
-  private def getMeshCodes(
-      codeSystem: String,
-      code: String): Either[Option[String], Set[String]] = {
+  private def getMeshCodes(codeSystem: String,
+                           code: String): Either[Option[String],Set[String]] = {
     thes2thesSearchers.get(codeSystem) match {
       case Some(searcher) =>
 //println(s"codeSystem=$codeSystem code=$code searcher=$searcher")
@@ -108,22 +102,22 @@ class MeshConverter(indexes: String) {
 
   private def mesh2DeCS(code: String): Option[String] = {
     if (code.isEmpty) None
-    else
-      thes2thesSearchers.get("DeCS") flatMap { searcher =>
-        //println(s"code=$code searcher=$searcher")
+    else thes2thesSearchers.get("DeCS") flatMap {
+      searcher =>
+       //println(s"code=$code searcher=$searcher")
         val ucCode = code.toUpperCase
         val booleanQuery = new BooleanQuery.Builder()
-          .add(new TermQuery(new Term("MESH_ID", ucCode)),
-               BooleanClause.Occur.SHOULD)
-          .add(new TermQuery(new Term("HIERARCHICAL_CODE", ucCode)),
-               BooleanClause.Occur.SHOULD)
-          .add(new TermQuery(new Term("ENGLISH_DESCR_NORM", ucCode)),
-               BooleanClause.Occur.SHOULD)
-          .add(new TermQuery(new Term("SPANISH_DESCR_NORM", ucCode)),
-               BooleanClause.Occur.SHOULD)
-          .add(new TermQuery(new Term("PORTUGUESE_DESCR_NORM", ucCode)),
-               BooleanClause.Occur.SHOULD)
-          .build()
+        .add(new TermQuery(new Term("MESH_ID", ucCode)),
+             BooleanClause.Occur.SHOULD)
+        .add(new TermQuery(new Term("HIERARCHICAL_CODE", ucCode)),
+             BooleanClause.Occur.SHOULD)
+        .add(new TermQuery(new Term("ENGLISH_DESCR_NORM", ucCode)),
+             BooleanClause.Occur.SHOULD)
+        .add(new TermQuery(new Term("SPANISH_DESCR_NORM", ucCode)),
+             BooleanClause.Occur.SHOULD)
+        .add(new TermQuery(new Term("PORTUGUESE_DESCR_NORM", ucCode)),
+             BooleanClause.Occur.SHOULD)
+        .build()
 
         val topDocs = searcher.search(booleanQuery, 1)
         if (topDocs.totalHits == 0) None
@@ -138,6 +132,6 @@ class MeshConverter(indexes: String) {
             else Some(sDescr)
           } else Some(eDescr)
         }
-      }
+    }
   }
 }

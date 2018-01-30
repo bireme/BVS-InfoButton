@@ -29,12 +29,12 @@ object FormatDate {
     * @return possibly the formated output date string
     */
   def format1(date: String): Option[String] = {
-    Try(dateFmtOut.format(dateFmtIn.parse(date))) match {
+    Try (dateFmtOut.format(dateFmtIn.parse(date))) match {
       case Success(dt) => Some(dt)
       case Failure(_) =>
-        Try(dateFmtOut.format(dateFmtOut2.parse(date))) match {
+        Try (dateFmtOut.format(dateFmtOut2.parse(date))) match {
           case Success(dt) => Some(dt)
-          case Failure(_)  => None
+          case Failure(_) => None
         }
     }
   }
@@ -54,13 +54,13 @@ object FormatDate {
     * @return the formated output date string
     */
   def format3(date: String): Option[String] = {
-    Try(dateFmtOut2.format(dateFmtIn.parse(date))) match {
+    Try (dateFmtOut2.format(dateFmtIn.parse(date))) match {
       case Success(dt) => Some(dt)
       case Failure(_) =>
-        Try(dateFmtOut2.format(dateFmtOut2.parse(date))) match {
-          case Success(dt) => Some(dt)
-          case Failure(_)  => None
-        }
+      Try (dateFmtOut2.format(dateFmtOut2.parse(date))) match {
+        case Success(dt) => Some(dt)
+        case Failure(_) => None
+      }
     }
   }
 }
