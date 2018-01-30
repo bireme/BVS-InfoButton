@@ -111,7 +111,7 @@ public class BVSInfoButton extends HttpServlet {
                 sDisplayName = Option.apply(null);
                 sOriginalText = new Some<String>(value[0]);                
             }
-            final Map<String,String> param = new HashMap();
+            final Map<String,String> param = new HashMap<String,String>();
             
             ret = new MainSearchCriteria(sCode, sCodeSystem, sDisplayName, 
                                                                  sOriginalText);
@@ -148,7 +148,7 @@ public class BVSInfoButton extends HttpServlet {
                 sDisplayName = Option.apply(null);
                 sOriginalText = new Some<String>(value[0]);                
             }
-            final Map<String,String> param = new HashMap();
+            final Map<String,String> param = new HashMap<String,String>();
             
             ret = new MainSearchCriteria(sCode, sCodeSystem, sDisplayName, 
                                                                  sOriginalText);
