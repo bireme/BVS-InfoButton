@@ -16,8 +16,6 @@ import org.apache.lucene.document.{Document, Field, StringField}
 import org.apache.lucene.index.{IndexWriter, IndexWriterConfig}
 import org.apache.lucene.store.FSDirectory
 
-import org.bireme.infob.Tools._
-
 import scala.collection.JavaConverters._
 import scala.collection.immutable.HashSet
 
@@ -110,10 +108,10 @@ object UMLS_Index extends App {
       }
       preferedTerm match {
         case Some(et) =>
-          doc.add(new StringField("termLabel", uniformString(et.termLabel),
+          doc.add(new StringField("termLabel", et.termLabel,
             Field.Store.YES))
         case None =>
-          doc.add(new StringField("termLabel", uniformString(head.termLabel),
+          doc.add(new StringField("termLabel", head.termLabel,
             Field.Store.YES))
       }
       indexWriter.addDocument(doc)
