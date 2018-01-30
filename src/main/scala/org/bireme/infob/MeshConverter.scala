@@ -29,10 +29,19 @@ import scala.util.{Either, Left, Right}
   * @author Heitor Barbieri
   */
 class MeshConverter(indexes: String) {
+  //"ICD9CM", "ICD10CM", "IDC10", "SNOMEDCT_US", "RXNORM"
+  val thesauri = Map(
+    "ICD9-CM" -> "ICD9CM",
+    "ICD10-CM" -> "ICD10CM",
+    "ICD10" -> "IDC10",
+    "SNOMED-CT" -> "SNOMEDCT_US",
+    "RXNORM" -> "RXNORM"
+  )
+
   // Names of Lucene indexes to convert one thesaurus into another
   val thes2thes = Map(
     "DeCS" -> s"$indexes/DeCS",
-    "ICD10" -> s"$indexes/ICD10"
+    "UMLS" -> s"$indexes/UMLS"
   )
 
   // Lucene index searchers to convert one system into another
@@ -45,63 +54,72 @@ class MeshConverter(indexes: String) {
 
   val analyzer = new KeywordAnalyzer()
 
+  def close(): Unit = {
+    thes2thesSearchers.foreach {
+      case (_, src) => src.getIndexReader().close()
+    }
+  }
+
   /**
     * Convert one term code from a particular thesaurus to the code of the
     * same term but in a different thesaurus
     *
     * @param codeSystem the code of the thesaurus name
     * @param code the term code
-    * @return the a sequence of term codes (right) if the conversion is possible
+    * @return a term code (right) if the conversion is possible
     *         or the string describing the term associated with the code (left)
     */
   def convert(codeSystem: String,
-              code: String): Either[Option[String], Set[String]] = {
+              code: String): Either[Option[String], String] = {
     val tcode = code.trim.toUpperCase
 
     val mesh = codeSystem.trim.toUpperCase match {
-      case "2.16.840.1.113883.6.103" => getMeshCodes("ICD9-CM", tcode)
-      case "2.16.840.1.113883.6.90"  => getMeshCodes("ICD10-CM", tcode)
-      case "2.16.840.1.113883.6.3"   => getMeshCodes("ICD10", tcode)
-      case "2.16.840.1.113883.6.96"  => getMeshCodes("SNOMED-CT", tcode)
-      case "2.16.840.1.113883.6.88"  => getMeshCodes("RXNORM", tcode)
+      case "2.16.840.1.113883.6.103" => getMeshCode("ICD9-CM", tcode)
+      case "2.16.840.1.113883.6.90"  => getMeshCode("ICD10-CM", tcode)
+      case "2.16.840.1.113883.6.3"   => getMeshCode("ICD10", tcode)
+      case "2.16.840.1.113883.6.96"  => getMeshCode("SNOMED-CT", tcode)
+      case "2.16.840.1.113883.6.88"  => getMeshCode("RXNORM", tcode)
       case "2.16.840.1.113883.6.177" => Right(Set(tcode))
-      case "2.16.840.1.113883.6.69"  => getMeshCodes("NDC", tcode)
-      case "2.16.840.1.113883.6.1"   => getMeshCodes("LOINC", tcode)
+      case "2.16.840.1.113883.6.69"  => getMeshCode("NDC", tcode)
+      case "2.16.840.1.113883.6.1"   => getMeshCode("LOINC", tcode)
       case _                         => Left(None)
     }
 
     // Try converting MeSH code or term into a DeCs code or term description
 //println(s"mesh=$mesh")
     mesh match {
-      case Right(codes) =>
-        val cset = codes.map(mesh2DeCS(_)).flatten
-        //println(s"cset=$cset")
-        if (cset.isEmpty) Left(None)
-        else Right(cset)
+      case Right(mcode) =>
+        mesh2DeCS(mcode.toString) match {
+          case Some(dcode) => Right(dcode)
+          case None => Left(None)
+        }
       case Left(x) => Left(x)
     }
   }
 
-  private def getMeshCodes(
+  private def getMeshCode(
       codeSystem: String,
-      code: String): Either[Option[String], Set[String]] = {
-    thes2thesSearchers.get(codeSystem) match {
-      case Some(searcher) =>
-//println(s"codeSystem=$codeSystem code=$code searcher=$searcher")
-        val parser = new QueryParser(codeSystem, analyzer)
-        val query = parser.parse(code)
-        val topDocs = searcher.search(query, 1)
-//println(s"query=$query totalHits=${topDocs.totalHits}")
-        if (topDocs.totalHits == 0) Left(None)
-        else {
-          val doc = searcher.doc(topDocs.scoreDocs.head.doc)
-          val meshCodes = doc.getValues("MeSH")
-//println(s"meshCodes=$meshCodes")
-          if (meshCodes == null) {
-            val meshDesc = doc.get("description")
-            if (meshDesc == null) Left(None) else Left(Some(meshDesc))
-          } else Right(meshCodes.toSet)
-        }
+      code: String): Either[Option[String], String] = {
+    thesauri.get(codeSystem) match {
+      case Some(cSystem) => thes2thesSearchers.get("UMLS") match {
+        case Some(searcher) =>
+    //println(s"codeSystem=$cSystem code=$code searcher=$searcher")
+          val parser = new QueryParser(cSystem, analyzer)
+          val query = parser.parse(code)
+          val topDocs = searcher.search(query, 1)
+    //println(s"query=$query totalHits=${topDocs.totalHits}")
+          if (topDocs.totalHits == 0) Left(None)
+          else {
+            val doc = searcher.doc(topDocs.scoreDocs.head.doc)
+            val meshCode = doc.get("meshCode")
+    //println(s"meshCode=$meshCode")
+            if (meshCode == null) {
+              val meshDesc = doc.get("termLabel")
+              if (meshDesc == null) Left(None) else Left(Some(meshDesc))
+            } else Right(meshCode)
+          }
+        case None => Left(None)
+      }
       case None => Left(None)
     }
   }

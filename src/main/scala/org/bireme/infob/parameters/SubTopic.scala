@@ -36,10 +36,7 @@ case class SubTopic(
     code match {
       case Some(c) =>
         conv.convert(codeSystem.get, c) match {
-          case Right(co) =>
-            Some(
-              co.map(cod => s"(mh:(%22${replaceSpaces(cod)}%22))")
-                .mkString("%20OR%20"))
+          case Right(code) => Some(s"(mh:(%22${replaceSpaces(code)}%22))")
           case Left(descr) =>
             descr match {
               case Some(des) =>

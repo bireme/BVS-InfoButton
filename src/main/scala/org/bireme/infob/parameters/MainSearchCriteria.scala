@@ -27,10 +27,8 @@ class MainSearchCriteria(val code: Option[String] = None,
       case Some(c) =>
         /*println("vai converter");*/
         conv.convert(cSystem, c) match {
-          case Right(co) =>
-            Some(
-              co.map(cod => s"(mh:(%22${replaceSpaces(cod)}%22))")
-                .mkString("%20OR%20"))
+          case Right(cod) =>
+            Some(s"(mh:(%22${replaceSpaces(cod)}%22))")
           case Left(descr) =>
             descr match {
               case Some(des) => Some(s"(ti:%22${replaceSpaces(des)}%22)")
