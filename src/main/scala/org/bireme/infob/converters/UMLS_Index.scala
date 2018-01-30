@@ -80,59 +80,43 @@ object UMLS_Index extends App {
         case (code, etSeq) =>
           val mesh = etSeq.groupBy[String](et =>
             if (et.thesaurus.startsWith("MSH")) "MESH" else "NO_MESH")
+
           mesh.get("MESH").map { mshSeq =>
-            if (!mshSeq.isEmpty) {
-              val first = mshSeq.head
-              val meshCode = first.termCode
-              val doc = new Document()
-
-              doc.add(new StringField("umlsCode", code, Field.Store.YES))
-              doc.add(new StringField("thesaurus", "MESH", Field.Store.YES))
-              doc.add(
-                new StringField("termCode", meshCode, Field.Store.YES))
-              doc.add(
-                new StringField("meshCode", meshCode, Field.Store.YES))
-              doc.add(
-                new StringField("termLabel",
-                                uniformString(first.termLabel),
-                                Field.Store.YES))
-              mshSeq.tail.foreach(
-                et =>
-                  doc.add(new StringField("termLabel",
-                                          uniformString(et.termLabel),
-                                          Field.Store.YES)))
-              indexWriter.addDocument(doc)
-              mesh.get("NO_MESH").map { noMshSeq =>
-                thesauri.foreach { thes =>
-                  val tseq = noMshSeq.filter(_.thesaurus.equals(thes))
-                  if (!tseq.isEmpty) {
-                    val first = tseq.head
-                    val doc = new Document()
-
-                    doc.add(new StringField("umlsCode", code, Field.Store.YES))
-                    doc.add(new StringField("thesaurus", thes, Field.Store.YES))
-                    doc.add(
-                      new StringField("termCode",
-                                      first.termCode,
-                                      Field.Store.YES))
-                    doc.add(
-                      new StringField("meshCode", meshCode, Field.Store.YES))
-                    doc.add(
-                      new StringField("termLabel",
-                                      uniformString(first.termLabel),
-                                      Field.Store.YES))
-                    tseq.tail.foreach(
-                      et =>
-                        doc.add(new StringField("termLabel",
-                                                uniformString(et.termLabel),
-                                                Field.Store.YES)))
-                    indexWriter.addDocument(doc)
-                  }
-                }
+            writeDocument(mshSeq, code, mshSeq.head.termCode, indexWriter)
+            mesh.get("NO_MESH").map { noMshSeq =>
+              thesauri.foreach { thes =>
+                val tSeq = noMshSeq.filter(_.thesaurus.equals(thes))
+                writeDocument(tSeq, code, mshSeq.head.termCode, indexWriter)
               }
             }
           }
       }
+    }
+  }
+
+  private def writeDocument(etSeq: Seq[EntryTerm],
+                            umlsCode: String,
+                            meshTermCode: String,
+                            indexWriter: IndexWriter): Unit = {
+    if (!etSeq.isEmpty) {
+      val head = etSeq.head
+      val tail = etSeq.tail
+      val meshCode = head.termCode
+      val headLabel = Set(uniformString(head.termLabel))
+      val termLabels = if (tail.isEmpty) headLabel
+        else tail.foldLeft[Set[String]](headLabel) {
+          case (seq, et) => seq + uniformString(et.termLabel)
+        }
+      val doc = new Document()
+
+      doc.add(new StringField("umlsCode", umlsCode, Field.Store.YES))
+      doc.add(new StringField("thesaurus", etSeq.head.thesaurus, Field.Store.YES))
+      doc.add(new StringField("termCode", meshCode, Field.Store.YES))
+      doc.add(new StringField("meshCode", meshTermCode, Field.Store.YES))
+      termLabels.foreach { lbl =>
+        doc.add(new StringField("termLabel", lbl, Field.Store.YES))
+      }
+      indexWriter.addDocument(doc)
     }
   }
 
