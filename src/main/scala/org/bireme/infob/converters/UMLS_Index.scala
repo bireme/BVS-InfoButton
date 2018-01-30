@@ -30,17 +30,21 @@ object UMLS_Index extends App {
   case class EntryTerm(umlsConceptCode: String,
                        thesaurus: String,
                        termCode: String,
-                       termLabel: String)
+                       termLabel: String,
+                       termType: String)
 
   val DEF_UMLS_INDEX = "web/BVSInfoButton/indexes/UMLS"
   val DEF_UMLS_YEAR = 2017
   val DEF_UMLS_MASTER = s"/bases/umls/${DEF_UMLS_YEAR}AA/decsnamecuisty"
+
+  val thesauri = HashSet("ICD9CM", "ICD10CM", "IDC10", "SNOMEDCT_US", "RXNORM")
 
   val TAG = 501
   val UMLS_CONCEPT_CODE_SUBFLD = '1'
   val THESAURUS_SUBFLD = 'd'
   val TERM_CODE_SUBFLD = 'c'
   val TERM_LABEL_SUBFLD = 'q'
+  val TERM_TYPE_SUBFLD = 't'
 
   val parameters = args.foldLeft[Map[String, String]](Map()) {
     case (map, par) =>
@@ -72,53 +76,49 @@ object UMLS_Index extends App {
   }
 
   private def writeRecord(rec: Record, indexWriter: IndexWriter): Unit = {
-    val thesauri =
-      HashSet("ICD9CM", "ICD10CM", "IDC10", "SNOMEDCT_US", "RXNORM")
-
     parseRecord(rec).map {
       _.groupBy[String](_.umlsConceptCode).foreach {
         case (code, etSeq) =>
-          val mesh = etSeq.groupBy[String](et =>
+          val seqs = etSeq.groupBy[String](et =>
             if (et.thesaurus.startsWith("MSH")) "MESH" else "NO_MESH")
+          val meshCode = seqs.get("MESH").map(_.head.termCode)
 
-          mesh.get("MESH").map { mshSeq =>
-            writeDocument(mshSeq, code, mshSeq.head.termCode, indexWriter)
-            mesh.get("NO_MESH").map { noMshSeq =>
-              thesauri.foreach { thes =>
-                val tSeq = noMshSeq.filter(_.thesaurus.equals(thes))
-                writeDocument(tSeq, code, mshSeq.head.termCode, indexWriter)
-              }
+          seqs.get("NO_MESH").map { noMshSeq =>
+            thesauri.foreach { thes =>
+              val tSeq = noMshSeq.filter(_.thesaurus.equals(thes))
+              writeDocuments(tSeq, code, meshCode, indexWriter)
             }
           }
       }
     }
   }
 
-  private def writeDocument(etSeq: Seq[EntryTerm],
-                            umlsCode: String,
-                            meshTermCode: String,
-                            indexWriter: IndexWriter): Unit = {
+  private def writeDocuments(etSeq: Seq[EntryTerm],
+                             umlsCode: String,
+                             meshTermCode: Option[String],
+                             indexWriter: IndexWriter): Unit = {
     if (!etSeq.isEmpty) {
       val head = etSeq.head
-      val tail = etSeq.tail
-      val meshCode = head.termCode
-      val headLabel = Set(uniformString(head.termLabel))
-      val termLabels = if (tail.isEmpty) headLabel
-        else tail.foldLeft[Set[String]](headLabel) {
-          case (seq, et) => seq + uniformString(et.termLabel)
-        }
+      val preferedTerm = etSeq.find(_.termType.equals("PF"))
       val doc = new Document()
 
       doc.add(new StringField("umlsCode", umlsCode, Field.Store.YES))
-      doc.add(new StringField("thesaurus", etSeq.head.thesaurus, Field.Store.YES))
-      doc.add(new StringField("termCode", meshCode, Field.Store.YES))
-      doc.add(new StringField("meshCode", meshTermCode, Field.Store.YES))
-      termLabels.foreach { lbl =>
-        doc.add(new StringField("termLabel", lbl, Field.Store.YES))
+      doc.add(new StringField("thesaurus", head.thesaurus, Field.Store.YES))
+      doc.add(new StringField("termCode", head.termCode, Field.Store.YES))
+      meshTermCode.map { mtc =>
+        doc.add(new StringField("meshCode", mtc, Field.Store.YES))
+      }
+      preferedTerm match {
+        case Some(et) =>
+          doc.add(new StringField("termLabel", uniformString(et.termLabel),
+            Field.Store.YES))
+        case None =>
+          doc.add(new StringField("termLabel", uniformString(head.termLabel),
+            Field.Store.YES))
       }
       indexWriter.addDocument(doc)
-    }
   }
+}
 
   private def parseRecord(rec: Record): Option[Seq[EntryTerm]] = {
     if (rec.isActive()) {
@@ -130,7 +130,8 @@ object UMLS_Index extends App {
               fld.getSubfield(UMLS_CONCEPT_CODE_SUBFLD, 1).getContent,
               fld.getSubfield(THESAURUS_SUBFLD, 1).getContent,
               fld.getSubfield(TERM_CODE_SUBFLD, 1).getContent,
-              fld.getSubfield(TERM_LABEL_SUBFLD, 1).getContent
+              fld.getSubfield(TERM_LABEL_SUBFLD, 1).getContent,
+              fld.getSubfield(TERM_TYPE_SUBFLD, 1).getContent
             )
         }
       Some(et)
