@@ -39,10 +39,10 @@
   Code System: <select name="codeSystem1">
    <option value="2.16.840.1.113883.6.177">MESH</option>
    <option value="2.16.840.1.113883.6.3">ICD10</option>
-   <option disabled value="2.16.840.1.113883.6.90">ICD10-CM</option>
-   <option disabled value="2.16.840.1.113883.6.103">ICD9-CM</option>
-   <option disabled value="2.16.840.1.113883.6.96">SNOMED-CT</option>
-   <option disabled value="2.16.840.1.113883.6.88">RXNORM</option>
+   <option value="2.16.840.1.113883.6.90">ICD10-CM</option>
+   <option value="2.16.840.1.113883.6.103">ICD9-CM</option>
+   <option value="2.16.840.1.113883.6.96">SNOMED-CT</option>
+   <option value="2.16.840.1.113883.6.88">RXNORM</option>
    <option disabled value="2.16.840.1.113883.6.69">NDC</option>
    <option disabled value="2.16.840.1.113883.6.1">LOINC</option>
   </select>
@@ -66,10 +66,10 @@
   Code System: <select name="codeSystem2">
    <option value="2.16.840.1.113883.6.177">MESH</option>
    <option value="2.16.840.1.113883.6.3">ICD10</option>
-   <option disabled value="2.16.840.1.113883.6.90">ICD10-CM</option>
-   <option disabled value="2.16.840.1.113883.6.103">ICD9-CM</option>
-   <option disabled value="2.16.840.1.113883.6.96">SNOMED-CT</option>
-   <option disabled value="2.16.840.1.113883.6.88">RXNORM</option>
+   <option value="2.16.840.1.113883.6.90">ICD10-CM</option>
+   <option value="2.16.840.1.113883.6.103">ICD9-CM</option>
+   <option value="2.16.840.1.113883.6.96">SNOMED-CT</option>
+   <option value="2.16.840.1.113883.6.88">RXNORM</option>
    <option disabled value="2.16.840.1.113883.6.69">NDC</option>
    <option disabled value="2.16.840.1.113883.6.1">LOINC</option>
   </select>
@@ -89,16 +89,16 @@
   <div>
   Age Group: <select name="ageGroup">
    <option value="do_not_use">---do not use---</option>    
-   <option value="infant_newborn">infant, newborn</option>
+   <option value="infant, newborn">infant, newborn</option>
    <option value="infant">infant</option>
-   <option value="child_preschool">child, preschool</option>
+   <option value="child, preschool">child, preschool</option>
    <option value="child">child</option>
    <option value="adolescent">adolescent</option>
-   <option value="young_adult">young adult</option>
+   <option value="young adult">young adult</option>
    <option value="adult">adult</option>
-   <option value="middle_aged">middle aged</option>
+   <option value="middle aged">middle aged</option>
    <option value="aged">aged</option>
-   <option value="aged_80_older">aged, 80 and older</option>
+   <option value="aged, 80 and older">aged, 80 and older</option>
   </select>
   </div>
 
@@ -157,6 +157,32 @@
    <option disabled value="danish">danish</option>
    <option disabled value="italian">italian</option>
    <option disabled value="norwegian">norwegian</option>
+  </select>
+  </div>
+  
+  <div>
+  SubTopic: <select name="subTopic">
+   <option value="do_not_use">---do not use---</option>    
+   <option value="Q000008">administration & dosage (MeSH)</option>
+   <option value="Q000744">contraindications (MeSH)</option>
+   <option value="Q000009">adverse effects (MeSH)</option>
+   <option value="D004347">drug interaction (MeSH)</option>
+   <option value="Q000145">classification (MeSH)</option>
+   <option value="Q000209">etiology (MeSH)</option>
+   <option value="Q000175">diagnosis (MeSH)</option>
+   <option value="Q000628">therapy (MeSH)</option>
+   <option value="D011379">prognosis (MeSH)</option>
+   <option value="Q000627">therapeutic use (MeSH)</option>
+   <option value="Q000493">pharmacokinetics (MeSH)</option>
+   <option value="Q000494">pharmacology (MeSH)</option>
+   <option value="Q000633">toxicity (MeSH)</option>
+   <option value="Q000506">poisoning (MeSH)</option>
+   
+   <option value="79899007">Drug Interactions (SNOMED_CT)</option>
+   <option value="47965005">Diagnosis, Differential (SNOMED_CT)</option>
+   <option value="404204005">Drug interaction with drug (SNOMED_CT)</option>
+   <option value="95907004">Drug interaction with food (SNOMED_CT)</option>   
+   <option disabled value="95906008">Drug interaction with alcohol (SNOMED_CT)</option>   
   </select>
   </div>
 

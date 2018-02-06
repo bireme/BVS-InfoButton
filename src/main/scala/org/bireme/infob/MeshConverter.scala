@@ -86,7 +86,7 @@ class MeshConverter(indexes: String) {
     }
 
     // Try converting MeSH code or term into a DeCs code or term description
-//println(s"mesh=$mesh")
+println(s"mesh=$mesh")
     mesh match {
       case Right(mcode) =>
         mesh2DeCS(mcode.toString) match {
@@ -103,16 +103,16 @@ class MeshConverter(indexes: String) {
     thesauri.get(codeSystem) match {
       case Some(cSystem) => thes2thesSearchers.get("UMLS") match {
         case Some(searcher) =>
-    //println(s"codeSystem=$cSystem code=$code searcher=$searcher")
-          val parser = new QueryParser(cSystem, analyzer)
-          val query = parser.parse(code)
+    println(s"codeSystem=$cSystem code=$code searcher=$searcher")
+          val parser = new QueryParser("thesaurus", analyzer)
+          val query = parser.parse(s"thesaurus:$cSystem AND termCode:$code")
           val topDocs = searcher.search(query, 1)
-    //println(s"query=$query totalHits=${topDocs.totalHits}")
+    println(s"query=$query totalHits=${topDocs.totalHits}")
           if (topDocs.totalHits == 0) Left(None)
           else {
             val doc = searcher.doc(topDocs.scoreDocs.head.doc)
             val meshCode = doc.get("meshCode")
-    //println(s"meshCode=$meshCode")
+    println(s"++meshCode=$meshCode")
             if (meshCode == null) {
               val meshDesc = doc.get("termLabel")
               if (meshDesc == null) Left(None) else Left(Some(meshDesc))

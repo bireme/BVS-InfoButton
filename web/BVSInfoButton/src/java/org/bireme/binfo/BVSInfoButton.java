@@ -29,6 +29,7 @@ import org.bireme.infob.parameters.AgeGroup;
 import org.bireme.infob.parameters.MainSearchCriteria;
 import org.bireme.infob.parameters.InfoRecipient;
 import org.bireme.infob.parameters.Performer;
+import org.bireme.infob.parameters.SubTopic;
 
 import scala.Option;
 import scala.Some;
@@ -89,7 +90,7 @@ public class BVSInfoButton extends HttpServlet {
         final String[] inputOption = params.get("inputOption");
         final String[] value = params.get("value");
         final String[] codeSystem = params.get("codeSystem");
-        final Option<String> sCodeSystem = new Some<String>(codeSystem[0]);        
+        final Option<String> sCodeSystem = new Some<>(codeSystem[0]);        
         final Option<String> sCode;
         final Option<String> sDisplayName;
         final Option<String> sOriginalText;
@@ -99,17 +100,17 @@ public class BVSInfoButton extends HttpServlet {
             ret = null;
         } else {
             if (inputOption[0].equals("code")) {
-                sCode = new Some<String>(value[0]);
+                sCode = new Some<>(value[0]);
                 sDisplayName = Option.apply(null);
                 sOriginalText = Option.apply(null);
             } else if (inputOption[0].equals("display_text")) {
                 sCode = Option.apply(null);
-                sDisplayName = new Some<String>(value[0]);
+                sDisplayName = new Some<>(value[0]);
                 sOriginalText = Option.apply(null);
             } else {
                 sCode = Option.apply(null);
                 sDisplayName = Option.apply(null);
-                sOriginalText = new Some<String>(value[0]);                
+                sOriginalText = new Some<>(value[0]);                
             }
             final Map<String,String> param = new HashMap<String,String>();
             
@@ -126,7 +127,7 @@ public class BVSInfoButton extends HttpServlet {
         final String[] inputOption = params.get("inputOption" + number);
         final String[] value = params.get("value" + number);
         final String[] codeSystem = params.get("codeSystem" + number);
-        final Option<String> sCodeSystem = new Some<String>(codeSystem[0]);        
+        final Option<String> sCodeSystem = new Some<>(codeSystem[0]);        
         final Option<String> sCode;
         final Option<String> sDisplayName;
         final Option<String> sOriginalText;
@@ -136,17 +137,17 @@ public class BVSInfoButton extends HttpServlet {
             ret = null;
         } else {
             if (inputOption[0].equals("code")) {
-                sCode = new Some<String>(value[0]);
+                sCode = new Some<>(value[0]);
                 sDisplayName = Option.apply(null);
                 sOriginalText = Option.apply(null);
             } else if (inputOption[0].equals("display_text")) {
                 sCode = Option.apply(null);
-                sDisplayName = new Some<String>(value[0]);
+                sDisplayName = new Some<>(value[0]);
                 sOriginalText = Option.apply(null);
             } else {
                 sCode = Option.apply(null);
                 sDisplayName = Option.apply(null);
-                sOriginalText = new Some<String>(value[0]);                
+                sOriginalText = new Some<>(value[0]);                
             }
             final Map<String,String> param = new HashMap<String,String>();
             
@@ -169,9 +170,9 @@ public class BVSInfoButton extends HttpServlet {
             } else if (admGenderCode[0].equals("undifferentiated")) {
                 code = Option.apply(null);
             } else if (admGenderCode[0].equals("male")) {
-                code = new Some<String>("male");
+                code = new Some<>("male");
             } else if (admGenderCode[0].equals("female")) {
-                code = new Some<String>("female");    
+                code = new Some<>("female");    
             } else {
                 code = Option.apply(null);
             }
@@ -191,26 +192,26 @@ public class BVSInfoButton extends HttpServlet {
             final Option<String> code;
             if (ageGroup[0].equals("---do not use---")) {
                 code = Option.apply(null);
-            } else if (ageGroup[0].equals("infant_newborn")) {
-                code = new Some<String>("infant_newborn");
+            } else if (ageGroup[0].equals("infant, newborn")) {
+                code = new Some<>("infant, newborn");
             } else if (ageGroup[0].equals("infant")) {
-                code = new Some<String>("infant");
-            } else if (ageGroup[0].equals("child_preschool")) {
-                code = new Some<String>("child_preschool");    
+                code = new Some<>("infant");
+            } else if (ageGroup[0].equals("child, preschool")) {
+                code = new Some<>("child, preschool");    
             } else if (ageGroup[0].equals("child")) {
-                code = new Some<String>("child");
+                code = new Some<>("child");
             } else if (ageGroup[0].equals("adolescent")) {
-                code = new Some<String>("adolescent");
-            } else if (ageGroup[0].equals("young_adult")) {
-                code = new Some<String>("young_adult");    
+                code = new Some<>("adolescent");
+            } else if (ageGroup[0].equals("young adult")) {
+                code = new Some<>("young adult");    
             } else if (ageGroup[0].equals("adult")) {
-                code = new Some<String>("adult");
-            } else if (ageGroup[0].equals("middle_aged")) {
-                code = new Some<String>("middle_aged");            
+                code = new Some<>("adult");
+            } else if (ageGroup[0].equals("middle aged")) {
+                code = new Some<>("middle aged");            
             } else if (ageGroup[0].equals("aged")) {
-                code = new Some<String>("aged");
-            } else if (ageGroup[0].equals("aged_80_older")) {
-                code = new Some<String>("aged_80_older");                
+                code = new Some<>("aged");
+            } else if (ageGroup[0].equals("aged, 80 and older")) {
+                code = new Some<>("aged, 80 and older");                
             } else {
                 code = Option.apply(null);
             }
@@ -232,11 +233,11 @@ public class BVSInfoButton extends HttpServlet {
             if (infoRecipientRole[0].equals("---do not use---")) {
                 infoRole = Option.apply(null);
             } else if (infoRecipientRole[0].equals("PAT")) {
-                infoRole = new Some<String>("PAT");
+                infoRole = new Some<>("PAT");
             } else if (infoRecipientRole[0].equals("PROV")) {
-                infoRole = new Some<String>("PROV");
+                infoRole = new Some<>("PROV");
             } else if (infoRecipientRole[0].equals("PAYOR")) {
-                infoRole = new Some<String>("PAYOR");    
+                infoRole = new Some<>("PAYOR");    
             } else {
                 infoRole = Option.apply(null);
             }
@@ -244,33 +245,33 @@ public class BVSInfoButton extends HttpServlet {
             if (infoRecipientLanguage[0].equals("---do not use---")) {
                 infoLang = Option.apply(null);
             } else if (infoRecipientLanguage[0].equals("english")) {
-                infoLang = new Some<String>("english");
+                infoLang = new Some<>("english");
             } else if (infoRecipientLanguage[0].equals("spanish")) {
-                infoLang = new Some<String>("spanish");
+                infoLang = new Some<>("spanish");
             } else if (infoRecipientLanguage[0].equals("portuguese")) {
-                infoLang = new Some<String>("portuguese");    
+                infoLang = new Some<>("portuguese");    
             } else if (infoRecipientLanguage[0].equals("french")) {
-                infoLang = new Some<String>("french");
+                infoLang = new Some<>("french");
             } else if (infoRecipientLanguage[0].equals("chinese")) {
-                infoLang = new Some<String>("chinese");
+                infoLang = new Some<>("chinese");
             } else if (infoRecipientLanguage[0].equals("german")) {
-                infoLang = new Some<String>("german");    
+                infoLang = new Some<>("german");    
             } else if (infoRecipientLanguage[0].equals("russian")) {
-                infoLang = new Some<String>("russian");
+                infoLang = new Some<>("russian");
             } else if (infoRecipientLanguage[0].equals("japanese")) {
-                infoLang = new Some<String>("japanese");
+                infoLang = new Some<>("japanese");
             } else if (infoRecipientLanguage[0].equals("dutch")) {
-                infoLang = new Some<String>("dutch");    
+                infoLang = new Some<>("dutch");    
             } else if (infoRecipientLanguage[0].equals("arabic")) {
-                infoLang = new Some<String>("arabic");
+                infoLang = new Some<>("arabic");
             } else if (infoRecipientLanguage[0].equals("polish")) {
-                infoLang = new Some<String>("polish");
+                infoLang = new Some<>("polish");
             } else if (infoRecipientLanguage[0].equals("danish")) {
-                infoLang = new Some<String>("danish");    
+                infoLang = new Some<>("danish");    
             } else if (infoRecipientLanguage[0].equals("italian")) {
-                infoLang = new Some<String>("italian");
+                infoLang = new Some<>("italian");
             } else if (infoRecipientLanguage[0].equals("norwegian")) {
-                infoLang = new Some<String>("norwegian");
+                infoLang = new Some<>("norwegian");
             } else {
                 infoLang = Option.apply(null);
             }                        
@@ -292,11 +293,11 @@ public class BVSInfoButton extends HttpServlet {
             if (performerRole[0].equals("---do not use---")) {
                 perfRole = Option.apply(null);
             } else if (performerRole[0].equals("PAT")) {
-                perfRole = new Some<String>("PAT");
+                perfRole = new Some<>("PAT");
             } else if (performerRole[0].equals("PROV")) {
-                perfRole = new Some<String>("PROV");
+                perfRole = new Some<>("PROV");
             } else if (performerRole[0].equals("PAYOR")) {
-                perfRole = new Some<String>("PAYOR");    
+                perfRole = new Some<>("PAYOR");    
             } else {
                 perfRole = Option.apply(null);
             }
@@ -304,38 +305,61 @@ public class BVSInfoButton extends HttpServlet {
             if (performerLanguage[0].equals("---do not use---")) {
                 performerLang = Option.apply(null);
             } else if (performerLanguage[0].equals("english")) {
-                performerLang = new Some<String>("english");
+                performerLang = new Some<>("english");
             } else if (performerLanguage[0].equals("spanish")) {
-                performerLang = new Some<String>("spanish");
+                performerLang = new Some<>("spanish");
             } else if (performerLanguage[0].equals("portuguese")) {
-                performerLang = new Some<String>("portuguese");    
+                performerLang = new Some<>("portuguese");    
             } else if (performerLanguage[0].equals("french")) {
-                performerLang = new Some<String>("french");
+                performerLang = new Some<>("french");
             } else if (performerLanguage[0].equals("chinese")) {
-                performerLang = new Some<String>("chinese");
+                performerLang = new Some<>("chinese");
             } else if (performerLanguage[0].equals("german")) {
-                performerLang = new Some<String>("german");    
+                performerLang = new Some<>("german");    
             } else if (performerLanguage[0].equals("russian")) {
-                performerLang = new Some<String>("russian");
+                performerLang = new Some<>("russian");
             } else if (performerLanguage[0].equals("japanese")) {
-                performerLang = new Some<String>("japanese");
+                performerLang = new Some<>("japanese");
             } else if (performerLanguage[0].equals("dutch")) {
-                performerLang = new Some<String>("dutch");    
+                performerLang = new Some<>("dutch");    
             } else if (performerLanguage[0].equals("arabic")) {
-                performerLang = new Some<String>("arabic");
+                performerLang = new Some<>("arabic");
             } else if (performerLanguage[0].equals("polish")) {
-                performerLang = new Some<String>("polish");
+                performerLang = new Some<>("polish");
             } else if (performerLanguage[0].equals("danish")) {
-                performerLang = new Some<String>("danish");    
+                performerLang = new Some<>("danish");    
             } else if (performerLanguage[0].equals("italian")) {
-                performerLang = new Some<String>("italian");
+                performerLang = new Some<>("italian");
             } else if (performerLanguage[0].equals("norwegian")) {
-                performerLang = new Some<String>("norwegian");
+                performerLang = new Some<>("norwegian");
             } else {
                 performerLang = Option.apply(null);
             }                        
             ret = new Performer(perfRole, Option.apply(null), 
                                     Option.apply(null), performerLang);
+        }
+        return ret;
+    }
+    
+    private SubTopic getSubTopic(Map<String,String[]> params) {
+        final String[] subTopic = params.get("subTopic");
+        final SubTopic ret;
+        
+        if (subTopic == null) {
+            ret = null;
+        } else {
+            final String opt = subTopic[0];            
+            if (opt.equals("---do not use---")) {
+                ret = null;
+            } else {
+                final Option<String> codeSystem = new Some<>(
+                    (Character.isLetter(opt.charAt(0))) ?
+                    "2.16.840.1.113883.6.177" : "2.16.840.1.113883.6.96");
+                final Option<String> code = new Some<>(opt);
+                ret = opt.isEmpty() ? null :
+                    new SubTopic(codeSystem, code, Option.apply(null),
+                                                             Option.apply(null));           
+            }            
         }
         return ret;
     }
@@ -372,6 +396,10 @@ public class BVSInfoButton extends HttpServlet {
         final Performer perf = getPerformer(params);
         if (perf != null) {
             addCategories(perf.getCategories(), param);
+        }
+        final SubTopic sub = getSubTopic(params);
+        if (sub != null) {
+            addCategories(sub.getCategories(), param);
         }
 /*for (Map.Entry<String,String> entry : param.entrySet()) {
     System.out.println("key=" + entry.getKey() + " value=" + entry.getValue());

@@ -46,13 +46,15 @@ class InfobuttonServer(
   def getInfo(param: Map[String, String], maxDocs: Int = 10): String = {
     require(param != null)
     require(maxDocs > 0)
-//println(s">> getInfo - param=$param")
+//println("Antes do ParameterParser")
     val (info, oType, callbackFunc) = ParameterParser.parse(param)
+//println(s">> getInfo - param=$param  info=$info")
     val outType = oType.getOrElse("application/json")
     val exprAND = convToSrcExpression(info, conv, maxDocs, false)
-    val docsAND = orderedSearch(exprAND, maxDocs)
-    val remaining = maxDocs - docsAND.size
     val exprOR = convToSrcExpression(info, conv, maxDocs, true)
+    val docsAND = orderedSearch(exprAND, maxDocs)
+    val useORExpression = !exprAND.equals(exprOR)  // There are more than one MainSearchCriteria
+    val remaining =  if (useORExpression) 0 else maxDocs - docsAND.size
     val docsOR = if (remaining > 0) orderedSearch(exprOR, remaining) else Seq()
     val docs = docsAND ++ docsOR
 
@@ -61,15 +63,14 @@ class InfobuttonServer(
     }))
     logger.debug((exprAND match {
       case Some(expr) => s"\nSearch expression (AND): \n\t$expr"
-      case None       => "\nSearch expression (AND): \n\tNot Found"
+      case None       => "\nSearch expression (AND): Not Found"
     }))
-    logger.debug((exprOR match {
+    if (useORExpression) logger.debug((exprOR match {
       case Some(expr) => s"\nSearch expression (OR): \n\t$expr"
-      case None       => "\nSearch expression (OR): \n\tNot Found"
+      case None       => "\nSearch expression (OR): Not Found."
     }))
-    logger.debug(
-      ". \nDocuments found:\n\t (AND) - " + docsAND.size +
-        "\n\t (OR) - " + docsOR.size)
+    logger.debug("\nDocuments found:\n\t (AND) - " + docsAND.size)
+    if (useORExpression) logger.debug("\n\t (OR) - " + docsOR.size)
 
     convToInfoResponse(info, docs, outType, callbackFunc)
   }
@@ -84,11 +85,12 @@ class InfobuttonServer(
     MainSearchCriteriaSrcExpr(info, conv, useOR).map(
       msc_str => {
         //println(s"==>${info.head.getClass.getName}")
-        //println(s"*=>${info}")
+        println(s"*=>${info}")
         info
-          .filterNot(x =>
+          /*.filterNot(x =>
             x.getClass.getName.equals(
-              "org.bireme.infob.parameters.MainSearchCriteria"))
+              "org.bireme.infob.parameters.MainSearchCriteria"))*/
+          .filterNot(_.isInstanceOf[MainSearchCriteria])
           .foldLeft[String](
             s"$iahxUrl?source=bvs_infobutton&start=0&rows=$maxDocs&sort=da+desc&wt=json" +
               s"&q=$msc_str%20AND%20(instance:%22regional%22)%20AND%20" +
@@ -115,9 +117,9 @@ class InfobuttonServer(
       .flatten
       .sorted
       .mkString(s"%20$connector%20") match {
-      case ""  => None
-      case str => Some(s"($str)")
-    }
+        case ""  => None
+        case str => Some(s"($str)")
+      }
   }
 
   private def orderedSearch(expression: Option[String],

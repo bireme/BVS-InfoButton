@@ -115,8 +115,9 @@ object UMLS_Index extends App {
             Field.Store.YES))
       }
       indexWriter.addDocument(doc)
+      ()
+    }
   }
-}
 
   private def parseRecord(rec: Record): Option[Seq[EntryTerm]] = {
     if (rec.isActive()) {

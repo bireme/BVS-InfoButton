@@ -82,8 +82,10 @@ class AgeGroup(code: Option[String] = None,
 
 object AgeGroup extends Parser {
   override def parse(parameters: Map[String, String]): Option[AgeGroup] = {
+println(s"parameters=$parameters")    
     parameters.find(_._1.startsWith("ageGroup.v.")) match {
       case Some(_) =>
+      println("AgeGroup Parser ===")
         Some(
           new AgeGroup(
             parameters.get("ageGroup.v.c"),
