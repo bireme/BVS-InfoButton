@@ -8,11 +8,11 @@
 package org.bireme.infob.parameters
 
 import org.bireme.infob.{Category, MeshConverter}
+import scala.util.{Try, Success, Failure}
 
 class AgeGroup(code: Option[String] = None,
                codeSystem: Option[String] = None,
-               displayName: Option[String] = None)
-    extends SearchParameter {
+               displayName: Option[String] = None) extends SearchParameter {
   require(!code.isEmpty || !displayName.isEmpty)
 
   val csystem = codeSystem.getOrElse("2.16.840.1.113883.6.177").trim
@@ -81,18 +81,22 @@ class AgeGroup(code: Option[String] = None,
 }
 
 object AgeGroup extends Parser {
-  override def parse(parameters: Map[String, String]): Option[AgeGroup] = {
-println(s"parameters=$parameters")    
-    parameters.find(_._1.startsWith("ageGroup.v.")) match {
-      case Some(_) =>
-      println("AgeGroup Parser ===")
-        Some(
-          new AgeGroup(
-            parameters.get("ageGroup.v.c"),
-            parameters.get("ageGroup.v.cs"),
-            parameters.get("ageGroup.v.dn")
-          ))
-      case None => None
+  override def parse(parameters: Map[String, String]) :(Seq[SearchParameter], Map[String, String]) = {
+
+    val (ag, others) = parameters.partition(_._1.startsWith("ageGroup.v."))
+
+    if (ag.isEmpty) (Seq(), others)
+    else {
+      Try (
+        new AgeGroup(
+          parameters.get("ageGroup.v.c"),
+          parameters.get("ageGroup.v.cs"),
+          parameters.get("ageGroup.v.dn")
+        )
+      ) match {
+        case Success(s) => (Seq(s), others)
+        case Failure(_) => (Seq(), others)
+      }
     }
   }
 }

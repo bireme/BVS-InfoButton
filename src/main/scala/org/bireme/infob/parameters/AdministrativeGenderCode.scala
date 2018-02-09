@@ -8,6 +8,7 @@
 package org.bireme.infob.parameters
 
 import org.bireme.infob.{Category, MeshConverter}
+import scala.util.{Try, Success, Failure}
 
 //The gender of a person used for administrative purposes.
 class AdministrativeGenderCode(code: Option[String] = None,
@@ -46,16 +47,23 @@ class AdministrativeGenderCode(code: Option[String] = None,
 }
 
 object AdministrativeGenderCode extends Parser {
-  override def parse(
-      parameters: Map[String, String]): Option[AdministrativeGenderCode] = {
-    parameters.find(_._1.startsWith("patientPerson.administrativeGenderCode.")) match {
-      case Some(_) =>
-        Some(
+  override def parse(parameters: Map[String, String])
+    :(Seq[SearchParameter], Map[String, String]) = {
+
+    val (agc, others) = parameters.partition(_._1.startsWith(
+      "patientPerson.administrativeGenderCode."))
+
+    if (agc.isEmpty) (Seq(), others)
+    else {
+      Try (
           new AdministrativeGenderCode(
-            parameters.get("patientPerson.administrativeGenderCode.c"),
-            parameters.get("patientPerson.administrativeGenderCode.dn")
-          ))
-      case None => None
+            agc.get("patientPerson.administrativeGenderCode.c"),
+            agc.get("patientPerson.administrativeGenderCode.dn")
+          )
+      ) match {
+        case Success(s) => (Seq(s), others)
+        case Failure(_) => (Seq(), others)
+      }
     }
   }
 }

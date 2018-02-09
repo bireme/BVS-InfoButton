@@ -8,6 +8,7 @@
 package org.bireme.infob.parameters
 
 import org.bireme.infob.{Category, MeshConverter}
+import scala.util.{Try, Success, Failure}
 
 class SubTopic(
     codeSystem: Option[String] = Some("2.16.840.1.113883.6.177"),
@@ -133,15 +134,23 @@ class SubTopic(
 }
 
 object SubTopic extends Parser {
-  override def parse(parameters: Map[String, String]): Option[SubTopic] = {
-//println(s"SubTopic parameters=$parameters")
-    parameters.find(_._1.startsWith("subTopic")) map {
-      _ => new SubTopic(
-        parameters.get("subTopic.v.cs"),
-        parameters.get("subTopic.v.c"),
-        parameters.get("subTopic.v.dn"),
-        parameters.get("subTopic.v.ot")
-      )
+  override def parse(parameters: Map[String, String])
+    :(Seq[SearchParameter], Map[String, String]) = {
+
+    val (sut, others) = parameters.partition(_._1.startsWith("subTopic"))
+
+    if (sut.isEmpty) (Seq(), others)
+    else {
+      Try (
+        new SubTopic(
+          parameters.get("subTopic.v.cs"),
+          parameters.get("subTopic.v.c"),
+          parameters.get("subTopic.v.dn"),
+          parameters.get("subTopic.v.ot"))
+      ) match {
+        case Success(s) => (Seq(s), others)
+        case Failure(_) => (Seq(), others)
+      }
     }
   }
 }

@@ -25,9 +25,11 @@ import org.bireme.infob.Category;
 import org.bireme.infob.InfobuttonServer;
 import org.bireme.infob.MeshConverter;
 import org.bireme.infob.parameters.AdministrativeGenderCode;
+import org.bireme.infob.parameters.Age;
 import org.bireme.infob.parameters.AgeGroup;
 import org.bireme.infob.parameters.MainSearchCriteria;
 import org.bireme.infob.parameters.InfoRecipient;
+import org.bireme.infob.parameters.LocationOfInterest;
 import org.bireme.infob.parameters.Performer;
 import org.bireme.infob.parameters.SubTopic;
 
@@ -84,40 +86,6 @@ public class BVSInfoButton extends HttpServlet {
             //out.println(getMainSearchCriteria(request.getParameterMap()));
             out.println(getDocuments(request.getParameterMap()));
         }                
-    }
-    
-    private MainSearchCriteria getMainSearchCriteria(Map<String,String[]> params) {
-        final String[] inputOption = params.get("inputOption");
-        final String[] value = params.get("value");
-        final String[] codeSystem = params.get("codeSystem");
-        final Option<String> sCodeSystem = new Some<>(codeSystem[0]);        
-        final Option<String> sCode;
-        final Option<String> sDisplayName;
-        final Option<String> sOriginalText;
-        final MainSearchCriteria ret;
-        
-        if (value == null) {
-            ret = null;
-        } else {
-            if (inputOption[0].equals("code")) {
-                sCode = new Some<>(value[0]);
-                sDisplayName = Option.apply(null);
-                sOriginalText = Option.apply(null);
-            } else if (inputOption[0].equals("display_text")) {
-                sCode = Option.apply(null);
-                sDisplayName = new Some<>(value[0]);
-                sOriginalText = Option.apply(null);
-            } else {
-                sCode = Option.apply(null);
-                sDisplayName = Option.apply(null);
-                sOriginalText = new Some<>(value[0]);                
-            }
-            final Map<String,String> param = new HashMap<String,String>();
-            
-            ret = new MainSearchCriteria(sCode, sCodeSystem, sDisplayName, 
-                                                                 sOriginalText);
-        }
-        return ret;
     }
     
     private MainSearchCriteria getMainSearchCriteriaX(Map<String,String[]> params,
@@ -189,7 +157,7 @@ public class BVSInfoButton extends HttpServlet {
         if (ageGroup == null) {
             ret = null;
         } else {
-            final Option<String> code;
+            final Option<String> code;                        
             if (ageGroup[0].equals("---do not use---")) {
                 code = Option.apply(null);
             } else if (ageGroup[0].equals("infant, newborn")) {
@@ -217,6 +185,31 @@ public class BVSInfoButton extends HttpServlet {
             }
             ret = code.isEmpty() ? null :
                         new AgeGroup(Option.apply(null),Option.apply(null), code);           
+        }
+        return ret;
+    }
+    
+    private Age getAge(Map<String,String[]> params) {
+        final String[] age = params.get("age");
+        final Age ret;
+        
+        if ((age == null) || (age[0].equals("do_not_use"))) {
+            ret = null;
+        } else {
+            final Option<String> code;
+            final String[]split = age[0].split(" ");
+            final String value;
+            final String unit;
+            
+            if (age[0].equals("---do not use---")) {
+                value = null;
+                unit = null;
+            } else {
+                value = split[0];
+                unit = split[1];
+            }
+            ret = (value == null) ? null 
+                                 : new Age(new Some<>(value), new Some<>(unit));           
         }
         return ret;
     }
@@ -364,6 +357,30 @@ public class BVSInfoButton extends HttpServlet {
         return ret;
     }
     
+    private LocationOfInterest getLocationOfInterestX(Map<String,String[]> params,
+                                                      int number) {
+        final String[] loi = params.get("locationOfInterest" + number);
+        final LocationOfInterest ret;
+        
+        if (loi == null) {
+            ret = null;
+        } else {
+            final String opt = loi[0];            
+            if (opt.equals("---do not use---")) {
+                ret = null;
+            } else {                
+                final Option<String> codeSystem = new Some<>("2.16.840.1.113883.5.16");
+                final Option<String> conceptCode = new Some<>("CNT");
+                final Option<String> code = new Some<>(opt);
+                ret = opt.isEmpty() ? null :
+                    new LocationOfInterest(codeSystem, conceptCode, code,
+                                                             Option.apply(null));
+System.out.println("LOI => " + ret.toString());
+            }            
+        }
+        return ret;
+    }
+    
     private String getDocuments(Map<String,String[]> params) {
         final Map<String,String> param = new HashMap<>();
         final MainSearchCriteria msc1 = getMainSearchCriteriaX(params, 1);
@@ -389,6 +406,10 @@ public class BVSInfoButton extends HttpServlet {
         if (ag != null) {
             addCategories(ag.getCategories(), param);
         }
+        final Age age = getAge(params);
+        if (age != null) {
+            addCategories(age.getCategories(), param);
+        }
         final InfoRecipient ir = getInfoRecipient(params);
         if (ir != null) {
             addCategories(ir.getCategories(), param);
@@ -401,6 +422,14 @@ public class BVSInfoButton extends HttpServlet {
         if (sub != null) {
             addCategories(sub.getCategories(), param);
         }
+        final LocationOfInterest loi1 = getLocationOfInterestX(params, 1);
+        if (loi1 != null) {
+            addCategories(loi1.getCategories(), param);
+        }
+        final LocationOfInterest loi2 = getLocationOfInterestX(params, 2);
+        if (loi2 != null) {
+            addCategories(loi2.getCategories(), param);
+        }
 /*for (Map.Entry<String,String> entry : param.entrySet()) {
     System.out.println("key=" + entry.getKey() + " value=" + entry.getValue());
 }*/        
@@ -412,8 +441,10 @@ public class BVSInfoButton extends HttpServlet {
         final List<Category> categ = JavaConverters.seqAsJavaList(categories);            
         
         for (Category cat:categ) {
-//System.out.println("Adcionando categoria key=" + cat.scheme() + " value=" + cat.term());            
-            if (!cat.term().isEmpty()) param.put(cat.scheme(), cat.term());
+            if (!cat.term().isEmpty() && !cat.term().equals("do_not_use")) {
+System.out.println("Adcionando categoria key=" + cat.scheme() + " value=" + cat.term());                
+                param.put(cat.scheme(), cat.term());
+            }
         }
     }
 

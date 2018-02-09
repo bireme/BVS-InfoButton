@@ -48,13 +48,15 @@ class InfobuttonServer(
     require(maxDocs > 0)
 //println("Antes do ParameterParser")
     val (info, oType, callbackFunc) = ParameterParser.parse(param)
-//println(s">> getInfo - param=$param  info=$info")
+println(s">> getInfo - param=$param  info=$info")
     val outType = oType.getOrElse("application/json")
     val exprAND = convToSrcExpression(info, conv, maxDocs, false)
     val exprOR = convToSrcExpression(info, conv, maxDocs, true)
+println("Antes do orderedSearch(exprAND, maxDocs)")
     val docsAND = orderedSearch(exprAND, maxDocs)
     val useORExpression = !exprAND.equals(exprOR)  // There are more than one MainSearchCriteria
     val remaining =  if (useORExpression) 0 else maxDocs - docsAND.size
+println("Antes do orderedSearch(exprOR, maxDocs)")
     val docsOR = if (remaining > 0) orderedSearch(exprOR, remaining) else Seq()
     val docs = docsAND ++ docsOR
 
@@ -74,6 +76,15 @@ class InfobuttonServer(
 
     convToInfoResponse(info, docs, outType, callbackFunc)
   }
+
+
+xxxxx => A funcao abaixo deve trocar a chamada explicita de
+MainSearchCriteriaSrcExpr por uma chamada geral SrcParam2SrcExpr()
+de todos os SearchParameters para que os que tiverem mais de uma
+ocorrencia no caso 'LocationOfInterest' possam usar os operadores
+AND e OR quando a cardinalidade for maior que 1. O problema é que
+a função SrcParam2SrcExpr precisa descobrir qual é a classe que
+vai ser chamada o type T não funciona, dá warning.
 
 //http://basalto02.bireme.br:8986/solr5/portal/select?
 //q=tw:((instance:%22regional%22)%20AND%20(%20mh:(c02.081.270)))&wt=json&
@@ -104,6 +115,22 @@ class InfobuttonServer(
           }
       }
     )
+  }
+
+  private def SrcParam2SrcExpr[T](info: Seq[SearchParameter],
+                                 conv: MeshConverter,
+                                 useOR: Boolean): Option[String] = {
+    val connector = if (useOR) "OR" else "AND"
+
+    info
+      .filter(_.isInstanceOf[T])
+      .map(_.toSrcExpression(conv, info))
+      .flatten
+      .sorted
+      .mkString(s"%20$connector%20") match {
+        case ""  => None
+        case str => Some(s"($str)")
+      }
   }
 
   private def MainSearchCriteriaSrcExpr(info: Seq[SearchParameter],

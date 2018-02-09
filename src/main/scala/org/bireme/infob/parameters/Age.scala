@@ -8,13 +8,15 @@
 package org.bireme.infob.parameters
 
 import org.bireme.infob.{Category, MeshConverter}
+import scala.util.{Try, Success, Failure}
 
-class Age(value: String, unit: String) extends SearchParameter {
-  require(value != null)
-  require(value.toInt > 0)
-  require(unit != null)
+class Age(value: Option[String],
+          unit: Option[String]) extends SearchParameter {
+  require(!value.isEmpty)
+  require(value.get.toInt > 0)
+  require(!unit.isEmpty)
 
-  val agroup = (convertToMonth(value, unit) match {
+  val agroup = (convertToMonth(value.get, unit.get) match {
     case Some(x) if ((x >= 0) && (x <= 1))    => Some("infant, newborn")
     case Some(x) if ((x > 1) && (x < 24))     => Some("infant")
     case Some(x) if ((x >= 24) && (x < 72))   => Some("child, preschool")
@@ -47,17 +49,30 @@ class Age(value: String, unit: String) extends SearchParameter {
     agroup.map(ag => s"(limit:(%22$ag%22))")
 
   override def getCategories: Seq[Category] =
-    Seq(Category("age.v.v", value), Category("age.v.u", unit))
+    Seq(Category("age.v.v", value.get), Category("age.v.u", unit.get))
 
   override def toString =
-    s"""Age(value: String = $value,
-            unit: String = $unit)"""
+    s"""Age(value: String = ${value.get},
+            unit: String = ${unit.get})"""
 }
 
 object Age extends Parser {
-  override def parse(parameters: Map[String, String]): Option[Age] = {
-    parameters
-      .get("age.v.v")
-      .flatMap(v => parameters.get("age.v.u").map(u => new Age(v, u)))
+  override def parse(parameters: Map[String, String])
+    :(Seq[SearchParameter], Map[String, String]) = {
+
+    val (age, others) = parameters.partition(_._1.startsWith("age.v."))
+
+    if (age.isEmpty) (Seq(), others)
+    else {
+      Try (
+          new Age(
+            age.get("age.v.v"),
+            age.get("age.v.u")
+          )
+      ) match {
+        case Success(s) => (Seq(s), others)
+        case Failure(_) => (Seq(), others)
+      }
+    }
   }
 }

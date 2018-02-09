@@ -8,12 +8,12 @@
 package org.bireme.infob.parameters
 
 import org.bireme.infob.{Category, MeshConverter}
+import scala.util.{Try, Success, Failure}
 
 class Performer(role: Option[String],
                 langCode: Option[String] = None,
                 langCodeSystem: Option[String] = None,
-                langDisplayName: Option[String] = None)
-    extends SearchParameter {
+                langDisplayName: Option[String] = None) extends SearchParameter {
   val lang2 = Map(
     "en" -> "english",
     "es" -> "spanish",
@@ -77,17 +77,24 @@ class Performer(role: Option[String],
 }
 
 object Performer extends Parser {
-  override def parse(parameters: Map[String, String]): Option[Performer] = {
-    parameters.find(_._1.startsWith("performer")) match {
-      case Some(_) =>
-        Some(
-          new Performer(
-            parameters.get("performer"),
-            parameters.get("performer.languageCode.c"),
-            parameters.get("performer.languageCode.cs"),
-            parameters.get("performer.languageCode.dn")
-          ))
-      case None => None
+  override def parse(parameters: Map[String, String])
+    :(Seq[SearchParameter], Map[String, String]) = {
+
+    val (per, others) = parameters.partition(_._1.startsWith("performer"))
+
+    if (per.isEmpty) (Seq(), others)
+    else {
+      Try (
+        new Performer(
+          parameters.get("performer"),
+          parameters.get("performer.languageCode.c"),
+          parameters.get("performer.languageCode.cs"),
+          parameters.get("performer.languageCode.dn")
+        )
+      ) match {
+        case Success(s) => (Seq(s), others)
+        case Failure(_) => (Seq(), others)
+      }
     }
   }
 }

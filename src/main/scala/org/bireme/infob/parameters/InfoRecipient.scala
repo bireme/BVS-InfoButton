@@ -8,12 +8,12 @@
 package org.bireme.infob.parameters
 
 import org.bireme.infob.{Category, MeshConverter}
+import scala.util.{Try, Success, Failure}
 
 class InfoRecipient(role: Option[String],
                     langCode: Option[String] = None,
                     langCodeSystem: Option[String] = None,
-                    langDisplayName: Option[String] = None)
-    extends SearchParameter {
+                    langDisplayName: Option[String] = None) extends SearchParameter {
   val lang2 = Map(
     "en" -> "english",
     "es" -> "spanish",
@@ -73,17 +73,24 @@ class InfoRecipient(role: Option[String],
 }
 
 object InfoRecipient extends Parser {
-  override def parse(parameters: Map[String, String]): Option[InfoRecipient] = {
-    parameters.find(_._1.startsWith("informationRecipient")) match {
-      case Some(_) =>
-        Some(
-          new InfoRecipient(
-            parameters.get("informationRecipient"),
-            parameters.get("informationRecipient.languageCode.c"),
-            parameters.get("informationRecipient.languageCode.cs"),
-            parameters.get("informationRecipient.languageCode.dn")
-          ))
-      case None => None
+  override def parse(parameters: Map[String, String])
+    :(Seq[SearchParameter], Map[String, String]) = {
+
+    val (ir, others) = parameters.partition(_._1.startsWith("informationRecipient"))
+
+    if (ir.isEmpty) (Seq(), others)
+    else {
+      Try (
+        new InfoRecipient(
+          parameters.get("informationRecipient"),
+          parameters.get("informationRecipient.languageCode.c"),
+          parameters.get("informationRecipient.languageCode.cs"),
+          parameters.get("informationRecipient.languageCode.dn")
+        )
+      ) match {
+        case Success(s) => (Seq(s), others)
+        case Failure(_) => (Seq(), others)
+      }
     }
   }
 }

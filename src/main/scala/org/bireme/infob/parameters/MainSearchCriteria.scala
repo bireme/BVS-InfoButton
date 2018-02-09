@@ -8,6 +8,7 @@
 package org.bireme.infob.parameters
 
 import org.bireme.infob.{Category, MeshConverter}
+import scala.util.{Try, Success, Failure}
 
 class MainSearchCriteria(val code: Option[String] = None,
                          codeSystem: Option[String] = None,
@@ -81,13 +82,18 @@ class MainSearchCriteria(val code: Option[String] = None,
                            originalText: Option[String] = $originalText)"""
 }
 
-object MainSearchCriteria {
-  def parse(parameters: Map[String, String])
+object MainSearchCriteria extends Parser {
+  override def parse(parameters: Map[String, String])
     : (Seq[SearchParameter], Map[String, String]) = {
-    val (msc, other) =
+    val (msc, others) =
       parameters.partition(_._1.startsWith("mainSearchCriteria.v."))
 
-    (getMSC(msc, 0, Seq()), other)
+    Try(
+      getMSC(msc, 0, Seq())
+    ) match {
+      case Success(s) => (s, others)
+      case Failure(_) => (Seq(), others)
+    }
   }
 
   private def getMSC(msc: Map[String, String],

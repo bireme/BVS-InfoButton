@@ -18,12 +18,14 @@ import org.bireme.infob.parameters._
 object ParameterParser {
   // Sequence of search parameter classes the url parameters will be converted to
   val parSeq = Seq(
+    "MainSearchCriteria",
     "AdministrativeGenderCode",
     "Age",
     "AgeGroup",
     "InfoRecipient",
     "Performer",
-    "SubTopic"
+    "SubTopic",
+    "LocationOfInterest"
   )
 
   /**
@@ -39,28 +41,34 @@ object ParameterParser {
     : (Seq[SearchParameter], Option[String], Option[String]) = {
     require(param != null)
 
-    val (msc, others) = MainSearchCriteria.parse(param)
-println(s"parse ==> \n\tparam=$param \n\tmsc=$msc \n\tothers=$others")
-
-    val seqParam = parSeq.foldLeft[Seq[SearchParameter]](msc) {
-      case (seq, name) =>
-//println(s"name=$name")
-        val clazz = Class.forName("org.bireme.infob.parameters." + name + "$")
-//println(s"name=$clazz")
-        val obj =
-          clazz.getField("MODULE$").get(classOf[Parser]).asInstanceOf[Parser]
-println(s"obj=$obj")
-        val seq2 = seq ++ obj.parse(others)
-println(s"name=$clazz obj=$obj  obj2=${obj.parse(others)} => seq=$seq2 others=$others")
-        seq2
-    }
+    val (spSeq, others) = parse(parSeq, param, Seq())
     val responseType = others.get("knowledgeResponseType").map(_.toLowerCase)
     val callbackFunc =
-      if (responseType.equals("application/javascript"))
-        others.get("jsonp")
+      if (responseType.equals("application/javascript")) others.get("jsonp")
       else None
 
-    (seqParam, responseType, callbackFunc)
+    (spSeq, responseType, callbackFunc)
+  }
+
+  private def parse(names: Seq[String],
+                    param: Map[String, String],
+                    auxSrcParam: Seq[SearchParameter])
+    : (Seq[SearchParameter], Map[String, String]) = {
+
+    if (names.isEmpty) (auxSrcParam, param)
+    else {
+      val name = names.head
+      val clazz = Class.forName("org.bireme.infob.parameters." + name + "$")
+      //println(s"name=$clazz")
+      val obj = clazz.getField("MODULE$").get(classOf[Parser]).asInstanceOf[Parser]
+      println(s"obj=$obj")
+      val (seq, others) = {
+        val (sp, oths) = obj.parse(param)
+        if (sp.isEmpty) (auxSrcParam, oths) else (auxSrcParam ++ sp, oths)
+      }
+      println(s"name=$clazz obj=$obj  obj=${obj} => seq=$seq others=$others")
+      parse(names.tail, others, seq)
+    }
   }
 }
 
