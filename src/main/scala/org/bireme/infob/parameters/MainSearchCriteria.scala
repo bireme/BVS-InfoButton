@@ -88,12 +88,7 @@ object MainSearchCriteria extends Parser {
     val (msc, others) =
       parameters.partition(_._1.startsWith("mainSearchCriteria.v."))
 
-    Try(
-      getMSC(msc, 0, Seq())
-    ) match {
-      case Success(s) => (s, others)
-      case Failure(_) => (Seq(), others)
-    }
+    (getMSC(msc, 0, Seq()), others)
   }
 
   private def getMSC(msc: Map[String, String],
@@ -107,16 +102,18 @@ object MainSearchCriteria extends Parser {
         p._1 matches
           s"mainSearchCriteria.v.(c|cs|dn|ot)$cardi")
     if (mscCard.isEmpty) auxSeq
-    else
-      getMSC(
-        other,
-        cardinality + 1,
-        auxSeq :+ (new MainSearchCriteria(
+    else {
+      val newAuxSeq = Try (
+        new MainSearchCriteria(
           mscCard.get(s"mainSearchCriteria.v.c$cardi"),
           mscCard.get(s"mainSearchCriteria.v.cs$cardi"),
           mscCard.get(s"mainSearchCriteria.v.dn$cardi"),
           mscCard.get(s"mainSearchCriteria.v.ot$cardi")
-        ))
-      )
+        )) match {
+          case Success(s) => auxSeq :+ s
+          case Failure(_) => auxSeq
+        }
+      getMSC(other, cardinality + 1, newAuxSeq)
+    }
   }
 }

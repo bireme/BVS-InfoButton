@@ -11,26 +11,13 @@ import org.bireme.infob.{Category, MeshConverter}
 import scala.util.{Try, Success, Failure}
 
 class InfoRecipient(role: Option[String],
+                    personCode: Option[String] = None,
+                    personCodeSystem: Option[String] = Some("2.16.840.1.113883.6.101"),
+                    personDisplayValue: Option[String] = None,
                     langCode: Option[String] = None,
                     langCodeSystem: Option[String] = None,
                     langDisplayName: Option[String] = None) extends SearchParameter {
-  val lang2 = Map(
-    "en" -> "english",
-    "es" -> "spanish",
-    "pt" -> "portuguese",
-    "fr" -> "french",
-    "zh" -> "chinese",
-    "de" -> "german",
-    "ru" -> "russian",
-    "jv" -> "japanese",
-    "nl" -> "dutch",
-    "ar" -> "arabic",
-    "pl" -> "polish",
-    "da" -> "danish",
-    "it" -> "italian",
-    "no" -> "norwegian"
-  )
-
+  val lang2 = ISO639_1_Codes.codes.map { case (k, v) => (k, v.head) }
   val langN = lang2.map { case (k, v) => (v, k) }
 
   val lcode: Option[String] = langCodeSystem match {
@@ -47,7 +34,7 @@ class InfoRecipient(role: Option[String],
     case Some("PAYOR") => Some("PAYOR") // payor
     case _             => None
   }
-
+  
   override def toSrcExpression(conv: MeshConverter,
                                env: Seq[SearchParameter]): Option[String] = {
 //println(s"***lcode=$lcode")

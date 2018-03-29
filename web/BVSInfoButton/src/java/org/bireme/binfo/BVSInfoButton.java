@@ -45,15 +45,15 @@ import scala.collection.Seq;
  */
 @WebServlet(name = "BVSInfoButton", urlPatterns = {"/BVSInfoButton"})
 public class BVSInfoButton extends HttpServlet {
-    
-    private InfobuttonServer info;    
+
+    private InfobuttonServer info;
     private String tpath;
     private MeshConverter mconverter;
-    
+
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
-        
+
         final ServletContext context = config.getServletContext();
         final String solrUrl = context.getInitParameter("BVS_SOLR_URL");
         if (solrUrl == null) throw new ServletException(
@@ -63,9 +63,9 @@ public class BVSInfoButton extends HttpServlet {
                                          "empty 'LUCENE_THESAURI_PATH' config");
         mconverter = new MeshConverter(tpath);
         info = new InfobuttonServer(mconverter, solrUrl);
-        
+
     }
-    
+
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
      * methods.
@@ -75,32 +75,33 @@ public class BVSInfoButton extends HttpServlet {
      * @throws ServletException if a servlet-specific error occurs
      * @throws IOException if an I/O error occurs
      */
-    protected void processRequest(HttpServletRequest request, 
+    protected void processRequest(HttpServletRequest request,
                                   HttpServletResponse response)
                                           throws ServletException, IOException {
         final String auxContentType = request.getParameter("knowledgeResponseType");
         final String contentType = (auxContentType == null) ? "application/json"
                                                  : auxContentType.toLowerCase();
-        
+System.out.println("processing Request");
         try (PrintWriter out = response.getWriter()) {
             //out.println(getMainSearchCriteria(request.getParameterMap()));
-            out.println(getDocuments(request.getParameterMap()));
-        }                
+            //out.println(getDocuments(request.getParameterMap()));
+            out.println(info.getInfo(request.getParameterMap(), 10));
+        }
     }
-    
+
     private MainSearchCriteria getMainSearchCriteriaX(Map<String,String[]> params,
                                                       int number) {
         assert number > 1;
-        
+
         final String[] inputOption = params.get("inputOption" + number);
         final String[] value = params.get("value" + number);
         final String[] codeSystem = params.get("codeSystem" + number);
-        final Option<String> sCodeSystem = new Some<>(codeSystem[0]);        
+        final Option<String> sCodeSystem = new Some<>(codeSystem[0]);
         final Option<String> sCode;
         final Option<String> sDisplayName;
         final Option<String> sOriginalText;
         final MainSearchCriteria ret;
-        
+
         if ((value == null) || (value[0] == null) || (value[0].trim().isEmpty())) {
             ret = null;
         } else {
@@ -115,20 +116,51 @@ public class BVSInfoButton extends HttpServlet {
             } else {
                 sCode = Option.apply(null);
                 sDisplayName = Option.apply(null);
-                sOriginalText = new Some<>(value[0]);                
+                sOriginalText = new Some<>(value[0]);
             }
             final Map<String,String> param = new HashMap<String,String>();
-            
-            ret = new MainSearchCriteria(sCode, sCodeSystem, sDisplayName, 
+
+            ret = new MainSearchCriteria(sCode, sCodeSystem, sDisplayName,
                                                                  sOriginalText);
         }
         return ret;
     }
-    
+
     private AdministrativeGenderCode getAdministrativeGenderCode(Map<String,String[]> params) {
-        final String[] admGenderCode = params.get("admGenderCode");
+      final AdministrativeGenderCode agc = getAdministrativeGenderCodeCC(params);
+
+      return (agc == null) ? getAdministrativeGenderCodeDN(params) : agc;
+    }
+
+    private AdministrativeGenderCode getAdministrativeGenderCodeCC(Map<String,String[]> params) {
+        final String[] admGenderCode = params.get("admGenderCode_conceptCode");
         final AdministrativeGenderCode ret;
-        
+
+        if (admGenderCode == null) {
+            ret = null;
+        } else {
+            final Option<String> code;
+            if (admGenderCode[0].equals("---do not use---")) {
+                code = Option.apply(null);
+            } else if (admGenderCode[0].equals("UN")) {
+                code = Option.apply(null);
+            } else if (admGenderCode[0].equals("M")) {
+                code = new Some<>("M");
+            } else if (admGenderCode[0].equals("F")) {
+                code = new Some<>("F");
+            } else {
+                code = Option.apply(null);
+            }
+            ret = code.isEmpty() ? null :
+                           new AdministrativeGenderCode(code, Option.apply(null));
+        }
+        return ret;
+    }
+
+    private AdministrativeGenderCode getAdministrativeGenderCodeDN(Map<String,String[]> params) {
+        final String[] admGenderCode = params.get("admGenderCode_displayName");
+        final AdministrativeGenderCode ret;
+
         if (admGenderCode == null) {
             ret = null;
         } else {
@@ -140,24 +172,24 @@ public class BVSInfoButton extends HttpServlet {
             } else if (admGenderCode[0].equals("male")) {
                 code = new Some<>("male");
             } else if (admGenderCode[0].equals("female")) {
-                code = new Some<>("female");    
+                code = new Some<>("female");
             } else {
                 code = Option.apply(null);
             }
             ret = code.isEmpty() ? null :
-                           new AdministrativeGenderCode(Option.apply(null),code);           
+                           new AdministrativeGenderCode(Option.apply(null),code);
         }
         return ret;
     }
-    
+
     private AgeGroup getAgeGroup(Map<String,String[]> params) {
         final String[] ageGroup = params.get("ageGroup");
         final AgeGroup ret;
-        
+
         if (ageGroup == null) {
             ret = null;
         } else {
-            final Option<String> code;                        
+            final Option<String> code;
             if (ageGroup[0].equals("---do not use---")) {
                 code = Option.apply(null);
             } else if (ageGroup[0].equals("infant, newborn")) {
@@ -165,34 +197,34 @@ public class BVSInfoButton extends HttpServlet {
             } else if (ageGroup[0].equals("infant")) {
                 code = new Some<>("infant");
             } else if (ageGroup[0].equals("child, preschool")) {
-                code = new Some<>("child, preschool");    
+                code = new Some<>("child, preschool");
             } else if (ageGroup[0].equals("child")) {
                 code = new Some<>("child");
             } else if (ageGroup[0].equals("adolescent")) {
                 code = new Some<>("adolescent");
             } else if (ageGroup[0].equals("young adult")) {
-                code = new Some<>("young adult");    
+                code = new Some<>("young adult");
             } else if (ageGroup[0].equals("adult")) {
                 code = new Some<>("adult");
             } else if (ageGroup[0].equals("middle aged")) {
-                code = new Some<>("middle aged");            
+                code = new Some<>("middle aged");
             } else if (ageGroup[0].equals("aged")) {
                 code = new Some<>("aged");
             } else if (ageGroup[0].equals("aged, 80 and older")) {
-                code = new Some<>("aged, 80 and older");                
+                code = new Some<>("aged, 80 and older");
             } else {
                 code = Option.apply(null);
             }
             ret = code.isEmpty() ? null :
-                        new AgeGroup(Option.apply(null),Option.apply(null), code);           
+                        new AgeGroup(Option.apply(null),Option.apply(null), code);
         }
         return ret;
     }
-    
+
     private Age getAge(Map<String,String[]> params) {
         final String[] age = params.get("age");
         final Age ret;
-        
+
         if ((age == null) || (age[0].equals("do_not_use"))) {
             ret = null;
         } else {
@@ -200,7 +232,7 @@ public class BVSInfoButton extends HttpServlet {
             final String[]split = age[0].split(" ");
             final String value;
             final String unit;
-            
+
             if (age[0].equals("---do not use---")) {
                 value = null;
                 unit = null;
@@ -208,17 +240,17 @@ public class BVSInfoButton extends HttpServlet {
                 value = split[0];
                 unit = split[1];
             }
-            ret = (value == null) ? null 
-                                 : new Age(new Some<>(value), new Some<>(unit));           
+            ret = (value == null) ? null
+                                 : new Age(new Some<>(value), new Some<>(unit));
         }
         return ret;
     }
-    
+
     private InfoRecipient getInfoRecipient(Map<String,String[]> params) {
         final String[] infoRecipientRole = params.get("infoRecipientRole");
         final String[] infoRecipientLanguage = params.get("infoRecipientLanguage");
         final InfoRecipient ret;
-        
+
         if ((infoRecipientRole == null) || (infoRecipientLanguage == null)) {
             ret = null;
         } else {
@@ -230,7 +262,7 @@ public class BVSInfoButton extends HttpServlet {
             } else if (infoRecipientRole[0].equals("PROV")) {
                 infoRole = new Some<>("PROV");
             } else if (infoRecipientRole[0].equals("PAYOR")) {
-                infoRole = new Some<>("PAYOR");    
+                infoRole = new Some<>("PAYOR");
             } else {
                 infoRole = Option.apply(null);
             }
@@ -242,43 +274,44 @@ public class BVSInfoButton extends HttpServlet {
             } else if (infoRecipientLanguage[0].equals("spanish")) {
                 infoLang = new Some<>("spanish");
             } else if (infoRecipientLanguage[0].equals("portuguese")) {
-                infoLang = new Some<>("portuguese");    
+                infoLang = new Some<>("portuguese");
             } else if (infoRecipientLanguage[0].equals("french")) {
                 infoLang = new Some<>("french");
             } else if (infoRecipientLanguage[0].equals("chinese")) {
                 infoLang = new Some<>("chinese");
             } else if (infoRecipientLanguage[0].equals("german")) {
-                infoLang = new Some<>("german");    
+                infoLang = new Some<>("german");
             } else if (infoRecipientLanguage[0].equals("russian")) {
                 infoLang = new Some<>("russian");
             } else if (infoRecipientLanguage[0].equals("japanese")) {
                 infoLang = new Some<>("japanese");
             } else if (infoRecipientLanguage[0].equals("dutch")) {
-                infoLang = new Some<>("dutch");    
+                infoLang = new Some<>("dutch");
             } else if (infoRecipientLanguage[0].equals("arabic")) {
                 infoLang = new Some<>("arabic");
             } else if (infoRecipientLanguage[0].equals("polish")) {
                 infoLang = new Some<>("polish");
             } else if (infoRecipientLanguage[0].equals("danish")) {
-                infoLang = new Some<>("danish");    
+                infoLang = new Some<>("danish");
             } else if (infoRecipientLanguage[0].equals("italian")) {
                 infoLang = new Some<>("italian");
             } else if (infoRecipientLanguage[0].equals("norwegian")) {
                 infoLang = new Some<>("norwegian");
             } else {
                 infoLang = Option.apply(null);
-            }                        
-            ret = new InfoRecipient(infoRole, Option.apply(null), 
-                                    Option.apply(null), infoLang);
+            }
+            ret = new InfoRecipient(infoRole, Option.apply(null),Option.apply(null),
+                                 Option.apply(null),Option.apply(null), 
+                                 Option.apply(null), infoLang);
         }
         return ret;
     }
-    
+
     private Performer getPerformer(Map<String,String[]> params) {
         final String[] performerRole = params.get("performerRole");
         final String[] performerLanguage = params.get("performerLanguage");
         final Performer ret;
-        
+
         if ((performerRole == null) || (performerLanguage == null)) {
             ret = null;
         } else {
@@ -290,7 +323,7 @@ public class BVSInfoButton extends HttpServlet {
             } else if (performerRole[0].equals("PROV")) {
                 perfRole = new Some<>("PROV");
             } else if (performerRole[0].equals("PAYOR")) {
-                perfRole = new Some<>("PAYOR");    
+                perfRole = new Some<>("PAYOR");
             } else {
                 perfRole = Option.apply(null);
             }
@@ -302,46 +335,46 @@ public class BVSInfoButton extends HttpServlet {
             } else if (performerLanguage[0].equals("spanish")) {
                 performerLang = new Some<>("spanish");
             } else if (performerLanguage[0].equals("portuguese")) {
-                performerLang = new Some<>("portuguese");    
+                performerLang = new Some<>("portuguese");
             } else if (performerLanguage[0].equals("french")) {
                 performerLang = new Some<>("french");
             } else if (performerLanguage[0].equals("chinese")) {
                 performerLang = new Some<>("chinese");
             } else if (performerLanguage[0].equals("german")) {
-                performerLang = new Some<>("german");    
+                performerLang = new Some<>("german");
             } else if (performerLanguage[0].equals("russian")) {
                 performerLang = new Some<>("russian");
             } else if (performerLanguage[0].equals("japanese")) {
                 performerLang = new Some<>("japanese");
             } else if (performerLanguage[0].equals("dutch")) {
-                performerLang = new Some<>("dutch");    
+                performerLang = new Some<>("dutch");
             } else if (performerLanguage[0].equals("arabic")) {
                 performerLang = new Some<>("arabic");
             } else if (performerLanguage[0].equals("polish")) {
                 performerLang = new Some<>("polish");
             } else if (performerLanguage[0].equals("danish")) {
-                performerLang = new Some<>("danish");    
+                performerLang = new Some<>("danish");
             } else if (performerLanguage[0].equals("italian")) {
                 performerLang = new Some<>("italian");
             } else if (performerLanguage[0].equals("norwegian")) {
                 performerLang = new Some<>("norwegian");
             } else {
                 performerLang = Option.apply(null);
-            }                        
-            ret = new Performer(perfRole, Option.apply(null), 
+            }
+            ret = new Performer(perfRole, Option.apply(null),
                                     Option.apply(null), performerLang);
         }
         return ret;
     }
-    
+
     private SubTopic getSubTopic(Map<String,String[]> params) {
         final String[] subTopic = params.get("subTopic");
         final SubTopic ret;
-        
+
         if (subTopic == null) {
             ret = null;
         } else {
-            final String opt = subTopic[0];            
+            final String opt = subTopic[0];
             if (opt.equals("---do not use---")) {
                 ret = null;
             } else {
@@ -351,24 +384,24 @@ public class BVSInfoButton extends HttpServlet {
                 final Option<String> code = new Some<>(opt);
                 ret = opt.isEmpty() ? null :
                     new SubTopic(codeSystem, code, Option.apply(null),
-                                                             Option.apply(null));           
-            }            
+                                                             Option.apply(null));
+            }
         }
         return ret;
     }
-    
+
     private LocationOfInterest getLocationOfInterestX(Map<String,String[]> params,
                                                       int number) {
         final String[] loi = params.get("locationOfInterest" + number);
         final LocationOfInterest ret;
-        
+
         if (loi == null) {
             ret = null;
         } else {
-            final String opt = loi[0];            
+            final String opt = loi[0];
             if (opt.equals("---do not use---")) {
                 ret = null;
-            } else {                
+            } else {
                 final Option<String> codeSystem = new Some<>("2.16.840.1.113883.5.16");
                 final Option<String> conceptCode = new Some<>("CNT");
                 final Option<String> code = new Some<>(opt);
@@ -376,17 +409,17 @@ public class BVSInfoButton extends HttpServlet {
                     new LocationOfInterest(codeSystem, conceptCode, code,
                                                              Option.apply(null));
 System.out.println("LOI => " + ret.toString());
-            }            
+            }
         }
         return ret;
     }
-    
-    private String getDocuments(Map<String,String[]> params) {
+
+   /* private String getDocuments(Map<String,String[]> params) {
         final Map<String,String> param = new HashMap<>();
         final MainSearchCriteria msc1 = getMainSearchCriteriaX(params, 1);
         final MainSearchCriteria msc2 = getMainSearchCriteriaX(params, 2);
         final boolean both = (msc1 != null) && (msc2 != null);
-        
+
         if (both) {
             addCategories(msc1.getCategories(0), param);
             addCategories(msc2.getCategories(1), param);
@@ -430,19 +463,20 @@ System.out.println("LOI => " + ret.toString());
         if (loi2 != null) {
             addCategories(loi2.getCategories(), param);
         }
-/*for (Map.Entry<String,String> entry : param.entrySet()) {
-    System.out.println("key=" + entry.getKey() + " value=" + entry.getValue());
-}*/        
+//for (Map.Entry<String,String> entry : param.entrySet()) {
+//    System.out.println("key=" + entry.getKey() + " value=" + entry.getValue());
+//}
         return info.getInfo(param, 10);
     }
+*/
     
     private void addCategories(final Seq<Category> categories,
                                final Map<String,String> param) {
-        final List<Category> categ = JavaConverters.seqAsJavaList(categories);            
-        
+        final List<Category> categ = JavaConverters.seqAsJavaList(categories);
+
         for (Category cat:categ) {
             if (!cat.term().isEmpty() && !cat.term().equals("do_not_use")) {
-System.out.println("Adcionando categoria key=" + cat.scheme() + " value=" + cat.term());                
+System.out.println("Adcionando categoria key=" + cat.scheme() + " value=" + cat.term());
                 param.put(cat.scheme(), cat.term());
             }
         }

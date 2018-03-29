@@ -14,22 +14,7 @@ class Performer(role: Option[String],
                 langCode: Option[String] = None,
                 langCodeSystem: Option[String] = None,
                 langDisplayName: Option[String] = None) extends SearchParameter {
-  val lang2 = Map(
-    "en" -> "english",
-    "es" -> "spanish",
-    "pt" -> "portuguese",
-    "fr" -> "french",
-    "zh" -> "chinese",
-    "de" -> "german",
-    "ru" -> "russian",
-    "jv" -> "japanese",
-    "nl" -> "dutch",
-    "ar" -> "arabic",
-    "pl" -> "polish",
-    "da" -> "danish",
-    "it" -> "italian",
-    "no" -> "norwegian"
-  )
+  val lang2 = ISO639_1_Codes.codes.map { case (k, v) => (k, v.head) }
   val langN = lang2.map { case (k, v) => (v, k) }
 
   val lcode = langCodeSystem match {

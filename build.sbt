@@ -1,7 +1,7 @@
 lazy val commonSettings = Seq(
   organization := "org.bireme",
   version := "0.1.0",
-  scalaVersion := "2.12.4"
+  scalaVersion := "2.12.5"
 )
 
 lazy val root = (project in file(".")).
@@ -18,7 +18,7 @@ val scalaLoggingVersion = "3.7.2"
 val logbackVersion = "1.2.3"
 val scalaTestVersion = "3.0.4"
 val hairyfotrVersion = "0.1.17"
-val luceneVersion = "7.1.0" // "6.6.0"
+val luceneVersion = "7.2.1" // "6.6.0"
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http" % akkaVersion,

@@ -9,14 +9,15 @@ package org.bireme.infob
 
 import org.bireme.infob.parameters._
 
-import com.typesafe.scalalogging.Logger
-import org.slf4j.LoggerFactory
 import ch.qos.logback.classic.{Level, Logger => xLogger}
-
+import com.typesafe.scalalogging.Logger
+import java.net.{URL, URLDecoder, URLEncoder}
+import org.slf4j.LoggerFactory
 import play.api.libs.json._
 
 import scala.collection.JavaConverters._
 import scala.io.Source
+import scala.reflect._
 import scala.reflect.runtime.universe._
 import scala.util.{Try, Success, Failure}
 
@@ -40,8 +41,17 @@ class InfobuttonServer(
 
   val logger = Logger("BVS-InfoButton")
 
-  def getInfo(param: java.util.Map[String, String], maxDocs: Int): String =
-    getInfo(param.asScala.toMap, maxDocs)
+  def getInfo(param: java.util.Map[String, Array[String]], maxDocs: Int): String = {
+    val pmap = param.asScala.toMap.map { case (key, value) => (key, value(0)) }
+    getInfo(pmap, maxDocs)
+  }
+
+  def getInfo(url: String, maxDocs: Int): String = {
+    urlToParms(url) match {
+      case Some(param) => getInfo(param, maxDocs)
+      case None => ""
+    }
+  }
 
   def getInfo(param: Map[String, String], maxDocs: Int = 10): String = {
     require(param != null)
@@ -77,15 +87,6 @@ println("Antes do orderedSearch(exprOR, maxDocs)")
     convToInfoResponse(info, docs, outType, callbackFunc)
   }
 
-
-xxxxx => A funcao abaixo deve trocar a chamada explicita de
-MainSearchCriteriaSrcExpr por uma chamada geral SrcParam2SrcExpr()
-de todos os SearchParameters para que os que tiverem mais de uma
-ocorrencia no caso 'LocationOfInterest' possam usar os operadores
-AND e OR quando a cardinalidade for maior que 1. O problema é que
-a função SrcParam2SrcExpr precisa descobrir qual é a classe que
-vai ser chamada o type T não funciona, dá warning.
-
 //http://basalto02.bireme.br:8986/solr5/portal/select?
 //q=tw:((instance:%22regional%22)%20AND%20(%20mh:(c02.081.270)))&wt=json&
 //indent=true&start=0&rows=10&sort=da+desc
@@ -93,19 +94,24 @@ vai ser chamada o type T não funciona, dá warning.
                                   conv: MeshConverter,
                                   maxDocs: Int,
                                   useOR: Boolean): Option[String] = {
-    MainSearchCriteriaSrcExpr(info, conv, useOR).map(
-      msc_str => {
-        //println(s"==>${info.head.getClass.getName}")
-        println(s"*=>${info}")
-        info
-          /*.filterNot(x =>
-            x.getClass.getName.equals(
-              "org.bireme.infob.parameters.MainSearchCriteria"))*/
-          .filterNot(_.isInstanceOf[MainSearchCriteria])
-          .foldLeft[String](
-            s"$iahxUrl?source=bvs_infobutton&start=0&rows=$maxDocs&sort=da+desc&wt=json" +
-              s"&q=$msc_str%20AND%20(instance:%22regional%22)%20AND%20" +
-              "(fulltext:(%221%22))") {
+    // Processing MainSearchCriteria
+    val (s1,s2) = partition[MainSearchCriteria](info)
+
+    srcParam2SrcExpr(s1, conv, useOR) map {
+      msc_str =>
+        // Processing LocationOfInterest
+        val (s3,s4) = partition[LocationOfInterest](s2)
+        val loi = srcParam2SrcExpr(s3, conv, true) match {
+          case Some(src) => s"%20AND%20$src"
+          case None => ""
+        }
+        println(s"*=>${info},$s1,$s3,$s4")
+
+        //Processing other parameters
+        s4.foldLeft[String](
+          s"$iahxUrl?source=bvs_infobutton&start=0&rows=$maxDocs&sort=da+desc&wt=json" +
+          s"&q=$msc_str%20AND%20(instance:%22regional%22)%20AND%20" +
+          s"(fulltext:(%221%22))$loi") {
             case (str, sparam) =>
               str +
                 (sparam.toSrcExpression(conv, info) match {
@@ -113,33 +119,25 @@ vai ser chamada o type T não funciona, dá warning.
                   case None       => ""
                 })
           }
-      }
-    )
+    }
   }
 
-  private def SrcParam2SrcExpr[T](info: Seq[SearchParameter],
-                                 conv: MeshConverter,
-                                 useOR: Boolean): Option[String] = {
-    val connector = if (useOR) "OR" else "AND"
-
-    info
-      .filter(_.isInstanceOf[T])
-      .map(_.toSrcExpression(conv, info))
-      .flatten
-      .sorted
-      .mkString(s"%20$connector%20") match {
-        case ""  => None
-        case str => Some(s"($str)")
+  private def partition[T <: SearchParameter](info: Seq[SearchParameter])
+                                             (implicit ev: ClassTag[T]): // https://stackoverflow.com/questions/29886246/scala-filter-by-type
+                                              (Seq[T], Seq[SearchParameter]) = {
+    info.foldLeft[(Seq[T], Seq[SearchParameter])] ((Seq(), Seq())) {
+      case (seq, t) => t match {
+        case t: T => (seq._1 :+ t, seq._2)
+        case _    => (seq._1, seq._2 :+ t)
       }
+    }
   }
 
-  private def MainSearchCriteriaSrcExpr(info: Seq[SearchParameter],
-                                        conv: MeshConverter,
-                                        useOR: Boolean): Option[String] = {
+  private def srcParam2SrcExpr[T <: SearchParameter](info: Seq[T],
+                               conv: MeshConverter,
+                               useOR: Boolean) : Option[String] = {
     val connector = if (useOR) "OR" else "AND"
-
     info
-      .filter(_.isInstanceOf[MainSearchCriteria])
       .map(_.toSrcExpression(conv, info))
       .flatten
       .sorted
@@ -181,7 +179,6 @@ vai ser chamada o type T não funciona, dá warning.
                           "case_control",
                           "case_reports",
                           "overview")
-
     expression match {
       case Some(url) => oSearch(typeOfStudy, url, maxDocs, Seq())
       case None      => Seq()
@@ -257,6 +254,43 @@ vai ser chamada o type T não funciona, dá warning.
           case Some(per: Performer) => per.lcode.getOrElse("en")
           case _                    => "en"
         }
+    }
+  }
+
+  def paramsToUrl(info: Seq[SearchParameter],
+                  infoUrl: String): Option[String] = {
+    Try (new URL(infoUrl)) match {
+      case Success(u) => {
+        val uStr = u.toString
+        val url2 = (if (uStr.endsWith("/")) uStr.substring(0, uStr.size-1)
+                   else uStr) + "?"
+        val params = info.zipWithIndex.foldLeft[String]("") {
+          case (out, (par, idx)) => par.getCategories.foldLeft[String](out) {
+            case (out2, cat) => out2 + (if (idx == 0) "" else "&") +
+                                cat.scheme + "&" + cat.term
+          }
+        }
+        Some(url2 + URLEncoder.encode(params, "UTF-8"))
+      }
+      case Failure(_) => None
+    }
+  }
+
+  def urlToParms(urlStr: String): Option[Map[String, String]] = {
+    Try (new URL(urlStr)) match {
+      case Success(u) =>
+        Try {
+          URLDecoder.decode(u.getQuery, "utf-8")
+            .split("\\&")
+            .map(_.split("="))
+            .foldLeft[Map[String, String]](Map()) {
+              case (map, arr) => map + ((arr(0).trim, arr(1).trim))
+            }
+        } match {
+          case Success(u) => Some(u)
+          case Failure(_) => None
+        }
+      case Failure(_) => None
     }
   }
 }
