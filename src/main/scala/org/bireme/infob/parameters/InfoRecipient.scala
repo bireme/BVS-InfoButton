@@ -15,9 +15,9 @@ class InfoRecipient(role: Option[String],
                     personCodeSystem: Option[String] = Some("2.16.840.1.113883.6.101"),
                     personDisplayValue: Option[String] = None,
                     langCode: Option[String] = None,
-                    langCodeSystem: Option[String] = None,
+                    langCodeSystem: Option[String] = Some("ISO 639-1"),
                     langDisplayName: Option[String] = None) extends SearchParameter {
-  val lang2 = ISO639_1_Codes.codes.map { case (k, v) => (k, v.head) }
+  val lang2 = ISO639_1_Codes.codes.map { case (k, v) => (k, v.head.toLowerCase) }
   val langN = lang2.map { case (k, v) => (v, k) }
 
   val lcode: Option[String] = langCodeSystem match {
@@ -34,10 +34,10 @@ class InfoRecipient(role: Option[String],
     case Some("PAYOR") => Some("PAYOR") // payor
     case _             => None
   }
-  
+
   override def toSrcExpression(conv: MeshConverter,
                                env: Seq[SearchParameter]): Option[String] = {
-//println(s"***lcode=$lcode")
+println(s"***lcode=$lcode")
     lcode.map(lc => s"(la:(%22$lc%22))")
   }
 
@@ -67,12 +67,13 @@ object InfoRecipient extends Parser {
 
     if (ir.isEmpty) (Seq(), others)
     else {
+println("ir=" + ir)
       Try (
         new InfoRecipient(
-          parameters.get("informationRecipient"),
-          parameters.get("informationRecipient.languageCode.c"),
-          parameters.get("informationRecipient.languageCode.cs"),
-          parameters.get("informationRecipient.languageCode.dn")
+          role = ir.get("informationRecipient"),
+          langCode = ir.get("informationRecipient.languageCode.c"),
+          langCodeSystem = ir.get("informationRecipient.languageCode.cs"),
+          langDisplayName = ir.get("informationRecipient.languageCode.dn")
         )
       ) match {
         case Success(s) => (Seq(s), others)

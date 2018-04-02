@@ -14,7 +14,7 @@ class Performer(role: Option[String],
                 langCode: Option[String] = None,
                 langCodeSystem: Option[String] = None,
                 langDisplayName: Option[String] = None) extends SearchParameter {
-  val lang2 = ISO639_1_Codes.codes.map { case (k, v) => (k, v.head) }
+  val lang2 = ISO639_1_Codes.codes.map { case (k, v) => (k, v.head.toLowerCase) }
   val langN = lang2.map { case (k, v) => (v, k) }
 
   val lcode = langCodeSystem match {
@@ -34,7 +34,7 @@ class Performer(role: Option[String],
 
   override def toSrcExpression(conv: MeshConverter,
                                env: Seq[SearchParameter]): Option[String] = {
-//println(s"***lcode=$lcode")
+println(s"***lcode=$lcode")
     env.collectFirst({ case ir: InfoRecipient => ir }) match {
       case Some(ir: InfoRecipient) =>
         ir.lcode match {
@@ -71,10 +71,10 @@ object Performer extends Parser {
     else {
       Try (
         new Performer(
-          parameters.get("performer"),
-          parameters.get("performer.languageCode.c"),
-          parameters.get("performer.languageCode.cs"),
-          parameters.get("performer.languageCode.dn")
+          role = per.get("performer"),
+          langCode = per.get("performer.languageCode.c"),
+          langCodeSystem = per.get("performer.languageCode.cs"),
+          langDisplayName = per.get("performer.languageCode.dn")
         )
       ) match {
         case Success(s) => (Seq(s), others)

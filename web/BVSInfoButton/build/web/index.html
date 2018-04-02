@@ -87,8 +87,8 @@ function getParamUrl() {
   url = addElements(["ageGroup.v.c"], url);
   url = addElements(["ageGroup.v.dn"], url);
   url = addElements(["informationRecipient"], url);
-  url = addElements(["infoRecipient.languageCode.c"], url);
-  url = addElements(["infoRecipient.languageCode.dn"], url);
+  url = addElements(["informationRecipient.languageCode.c"], url);
+  url = addElements(["informationRecipient.languageCode.dn"], url);
   url = addElements(["locationOfInterest.addr.CNT"], url);
   url = addElements(["performer"], url);
   url = addElements(["performer.languageCode.c"], url);
@@ -98,7 +98,7 @@ function getParamUrl() {
   return url;
 }
 
-function buildUrl() {  
+function buildUrl() {
   var prefix = "http://localhost:8084/BVSInfoButton?";
   var parameters = getParamUrl();
   if (parameters.length == 0) {
@@ -330,7 +330,7 @@ function getUrlParameters(url) {
   <hr/>
 
   <div>
-  Info Recipient Role Type: <select name="informationRecipient" onchange="buildUrl()">
+  Info Recipient Role: <select name="informationRecipient" onchange="buildUrl()">
     <option value="">---do not use---</option>
     <option disabled value="PAT">patient</option>
     <option disabled value="PROV">health care provider</option>
@@ -339,7 +339,7 @@ function getUrlParameters(url) {
   </div>
 
   <div>
-  Info Recipient Language (Concept Code): <select name="infoRecipient.languageCode.c" onchange="buildUrl()">
+  Info Recipient Language (Concept Code): <select name="informationRecipient.languageCode.c" onchange="buildUrl()">
    <option value="">---do not use---</option>
    <option value="en">en</option>
    <option value="es">es</option>
@@ -359,7 +359,7 @@ function getUrlParameters(url) {
   </div>
 
   <div>
-  Info Recipient Language (Display Name): <select name="infoRecipient.languageCode.dn" onchange="buildUrl()"">
+  Info Recipient Language (Display Name): <select name="informationRecipient.languageCode.dn" onchange="buildUrl()">
    <option value="">---do not use---</option>
    <option value="english">english</option>
    <option value="spanish">spanish</option>

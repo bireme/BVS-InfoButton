@@ -188,16 +188,16 @@ println("Antes do orderedSearch(exprOR, maxDocs)")
   private def search(expression: String, maxDocs: Int): Seq[JsValue] = {
     require(expression != null)
     require(maxDocs > 0)
-//println(s"Pesquisando ... [$expression]")
+println(s"Pesquisando ... [$expression]")
     Try(Source.fromURL(expression, "utf-8").getLines().mkString("\n")) match {
       case Success(ctt) =>
-//println(s"ctt=$ctt")
+println(s"ctt=$ctt")
         (Json.parse(ctt) \ "response" \ "docs").validate[JsArray] match {
           case res: JsResult[JsArray] => res.get.value.take(maxDocs)
           case _                      => Seq()
         }
-      case Failure(_) =>
-        /*println(s"FAILURE=$x");*/
+      case Failure(x) =>
+        println(s"FAILURE=$x")
         Seq()
     }
   }

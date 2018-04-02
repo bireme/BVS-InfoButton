@@ -61,12 +61,11 @@ object ParameterParser {
       val clazz = Class.forName("org.bireme.infob.parameters." + name + "$")
       //println(s"name=$clazz")
       val obj = clazz.getField("MODULE$").get(classOf[Parser]).asInstanceOf[Parser]
-      println(s"obj=$obj")
       val (seq, others) = {
         val (sp, oths) = obj.parse(param)
         if (sp.isEmpty) (auxSrcParam, oths) else (auxSrcParam ++ sp, oths)
       }
-      println(s"name=$clazz obj=$obj  obj=${obj} => seq=$seq others=$others")
+      println(s"name=$clazz ${obj} => seq=$seq others=$others")
       parse(names.tail, others, seq)
     }
   }
