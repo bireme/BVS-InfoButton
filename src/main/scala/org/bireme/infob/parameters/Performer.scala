@@ -22,13 +22,21 @@ class Performer(role: Option[String],
       langCode
         .map(_.toLowerCase)
         .flatMap(la => if (lang2.contains(la)) Some(la) else None)
+    case Some("") =>
+      langCode
+        .map(_.toLowerCase)
+        .flatMap(la => if (lang2.contains(la)) Some(la) else None)
+    case None =>
+      langCode
+        .map(_.toLowerCase)
+        .flatMap(la => if (lang2.contains(la)) Some(la) else None)
     case _ => langDisplayName.flatMap(la => langN.get(la.toLowerCase))
   }
 
   val role2 = role match {
-    case Some("PAT")   => Some("PAT")
-    case Some("PROV")  => Some("PROV")
-    case Some("PAYOR") => Some("PAYOR")
+    case Some("PAT")   => Some("PAT")   // patient
+    case Some("PROV")  => Some("PROV")  // healthCareProvider
+    case Some("PAYOR") => Some("PAYOR") // payor
     case _             => None
   }
 

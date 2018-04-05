@@ -12,9 +12,11 @@ import scala.util.{Try, Success, Failure}
 
 class Age(value: Option[String],
           unit: Option[String]) extends SearchParameter {
-  require(!value.isEmpty)
-  require(value.get.toInt > 0)
-  require(!unit.isEmpty)
+  val value2 = value.getOrElse("0").toInt
+  require(value2 > 0)
+  val unit2 = unit.getOrElse("").toLowerCase
+  require(unit2.equals("min") || unit2.equals("h") || unit2.equals("d") ||
+          unit2.equals("wk") || unit2.equals("mo") || unit2.equals("a"))
 
   val agroup = (convertToMonth(value.get, unit.get) match {
     case Some(x) if ((x >= 0) && (x <= 1))    => Some("infant, newborn")

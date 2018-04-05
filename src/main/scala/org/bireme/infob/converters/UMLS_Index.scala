@@ -16,6 +16,8 @@ import org.apache.lucene.document.{Document, Field, StringField}
 import org.apache.lucene.index.{IndexWriter, IndexWriterConfig}
 import org.apache.lucene.store.FSDirectory
 
+import org.bireme.infob.Tools
+
 import scala.collection.JavaConverters._
 import scala.collection.immutable.HashSet
 
@@ -44,10 +46,13 @@ object UMLS_Index extends App {
   val TERM_LABEL_SUBFLD = 'q'
   val TERM_TYPE_SUBFLD = 't'
 
-  val parameters = args.foldLeft[Map[String, String]](Map()) {
-    case (map, par) =>
-      val split = par.split(" *= *", 2)
-      map + ((split(0).substring(1), split(1)))
+  val parameters = args.size match {
+    case 0 => Map[String, String]()
+    case _ => args.foldLeft[Map[String, String]](Map()) {
+      case (map, par) =>
+        val split = par.split(" *= *", 2)
+        map + ((split(0).substring(1), split(1)))
+    }
   }
   val index = parameters.getOrElse("index", DEF_UMLS_INDEX)
   val mstPath = parameters.getOrElse("mst", DEF_UMLS_MASTER)
@@ -110,9 +115,13 @@ object UMLS_Index extends App {
         case Some(et) =>
           doc.add(new StringField("termLabel", et.termLabel,
             Field.Store.YES))
+          doc.add(new StringField("termLabelNorm",
+            Tools.uniformString(et.termLabel), Field.Store.YES))
         case None =>
           doc.add(new StringField("termLabel", head.termLabel,
             Field.Store.YES))
+          doc.add(new StringField("termLabelNorm",
+            Tools.uniformString(head.termLabel), Field.Store.YES))
       }
       indexWriter.addDocument(doc)
       ()

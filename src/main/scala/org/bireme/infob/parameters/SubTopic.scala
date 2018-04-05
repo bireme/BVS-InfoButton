@@ -117,6 +117,13 @@ class SubTopic(
     }
   }
 
+  /*private def getMeshCodeSrcExpr(code: String,
+                                 conv: MeshConverter): String = {
+    conv.convert("MESH", code) match {
+      case Right(str) =>
+    }: Either[Option[String], String]
+  }*/
+
   override def getCategories: Seq[Category] = {
     Seq(
       Category("subTopic.v.c", code.getOrElse("")),

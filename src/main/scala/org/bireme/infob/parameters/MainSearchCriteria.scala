@@ -23,31 +23,25 @@ class MainSearchCriteria(val code: Option[String] = None,
   override def toSrcExpression(conv: MeshConverter,
                                env: Seq[SearchParameter]): Option[String] = {
     val cSystem = codeSystem.getOrElse("2.16.840.1.113883.6.177") // MESH
+    val strCode = conv.convert(cSystem, code.getOrElse("")) match {
+      case Right(cod) => cod.trim
+      case Left(descr) => descr match {
+        case Some(des) => des.trim
+        case None => ""
+      }
+    }
+    val strDisplayName = displayName.getOrElse("").trim
+    val strOriginalText = originalText.getOrElse("").trim
+    val exprCode = if (strCode.isEmpty) ""
+      else s"mh:($strCode) OR ti:($strCode) OR ab:($strCode)"
+    val exprDisplayName = if (strDisplayName.isEmpty) ""
+      else s"mh:($strDisplayName) OR ti:($strDisplayName) OR ab:($strDisplayName)"
+    val exprOriginalText = if (strOriginalText.isEmpty) ""
+      else s"mh:($strOriginalText) OR ti:($strOriginalText) OR ab:($strOriginalText)"
 
-    code match {
-      case Some(c) =>
-        /*println("vai converter");*/
-        conv.convert(cSystem, c) match {
-          case Right(cod) =>
-            Some(s"(mh:(%22${replaceSpaces(cod)}%22))")
-          case Left(descr) =>
-            descr match {
-              case Some(des) => Some(s"(ti:%22${replaceSpaces(des)}%22)")
-              case None =>
-                displayName match {
-                  case Some(dn) => Some(s"(ti:%22${replaceSpaces(dn)}%22)")
-                  case None =>
-                    originalText.map(ot => s"(ti:%22${replaceSpaces(ot)}%22)")
-                }
-            }
-        }
-      case None =>
-        displayName match {
-          case Some(dn) => Some(s"(mh:%22${replaceSpaces(dn)}%22)")
-          case None     =>
-            /*println("original text =>");*/
-            originalText.map(ot => s"(ti:%22${replaceSpaces(ot)}%22)")
-        }
+    (exprCode + exprDisplayName + exprOriginalText) match {
+      case "" => None
+      case str => Some(replaceSpaces(str))
     }
   }
 
@@ -87,7 +81,7 @@ object MainSearchCriteria extends Parser {
     : (Seq[SearchParameter], Map[String, String]) = {
     val (msc, others) =
       parameters.partition(_._1.startsWith("mainSearchCriteria.v."))
-
+println(s"parameters=$parameters msc=$msc others=$others")
     (getMSC(msc, 0, Seq()), others)
   }
 
@@ -95,12 +89,12 @@ object MainSearchCriteria extends Parser {
                      cardinality: Int,
                      auxSeq: Seq[MainSearchCriteria]): Seq[SearchParameter] = {
 //println(s"*** getMSC msc=$msc cardinality=$cardinality auxSeq=$auxSeq")
-
-    val cardi = if (cardinality == 0) "" else cardinality.toString
+    val cardi = if ((cardinality == 0) &&
+      (msc.exists(p => p._1 matches("mainSearchCriteria.v.(c|cs|dn|ot)")))) ""
+      else cardinality.toString
     val (mscCard, other) = msc.partition(
-      p =>
-        p._1 matches
-          s"mainSearchCriteria.v.(c|cs|dn|ot)$cardi")
+      p => p._1 matches s"mainSearchCriteria.v.(c|cs|dn|ot)$cardi")
+
     if (mscCard.isEmpty) auxSeq
     else {
       val newAuxSeq = Try (
@@ -109,10 +103,11 @@ object MainSearchCriteria extends Parser {
           mscCard.get(s"mainSearchCriteria.v.cs$cardi"),
           mscCard.get(s"mainSearchCriteria.v.dn$cardi"),
           mscCard.get(s"mainSearchCriteria.v.ot$cardi")
-        )) match {
-          case Success(s) => auxSeq :+ s
-          case Failure(_) => auxSeq
-        }
+        )
+      ) match {
+        case Success(s) => auxSeq :+ s
+        case Failure(_) => auxSeq
+      }
       getMSC(other, cardinality + 1, newAuxSeq)
     }
   }

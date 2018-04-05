@@ -12,12 +12,8 @@ import java.io.File
 import org.apache.lucene.analysis.core.KeywordAnalyzer
 import org.apache.lucene.index.{DirectoryReader, Term}
 import org.apache.lucene.queryparser.classic.QueryParser
-import org.apache.lucene.search.{
-  BooleanClause,
-  BooleanQuery,
-  IndexSearcher,
-  TermQuery
-}
+import org.apache.lucene.search.{ BooleanClause, BooleanQuery, IndexSearcher,
+                                 TermQuery }
 import org.apache.lucene.store.FSDirectory
 
 import scala.util.{Either, Left, Right}
@@ -48,6 +44,7 @@ class MeshConverter(indexes: String) {
   val thes2thesSearchers = thes2thes.map {
     case (k, v) =>
       val directory = FSDirectory.open(new File(v).toPath())
+      require(DirectoryReader.indexExists(directory))
       val ireader = DirectoryReader.open(directory)
       (k, new IndexSearcher(ireader))
   }
@@ -79,17 +76,17 @@ class MeshConverter(indexes: String) {
       case "2.16.840.1.113883.6.3"   => getMeshCode("ICD10", tcode)
       case "2.16.840.1.113883.6.96"  => getMeshCode("SNOMED-CT", tcode)
       case "2.16.840.1.113883.6.88"  => getMeshCode("RXNORM", tcode)
-      case "2.16.840.1.113883.6.177" => Right(Set(tcode))
+      case "2.16.840.1.113883.6.177" => Right(tcode)
       case "2.16.840.1.113883.6.69"  => getMeshCode("NDC", tcode)
       case "2.16.840.1.113883.6.1"   => getMeshCode("LOINC", tcode)
       case _                         => Left(None)
     }
 
     // Try converting MeSH code or term into a DeCs code or term description
-println(s"mesh=$mesh")
+//println(s"mesh=$mesh")
     mesh match {
       case Right(mcode) =>
-        mesh2DeCS(mcode.toString) match {
+        mesh2DeCS(mcode) match {
           case Some(dcode) => Right(dcode)
           case None => Left(None)
         }
@@ -103,16 +100,29 @@ println(s"mesh=$mesh")
     thesauri.get(codeSystem) match {
       case Some(cSystem) => thes2thesSearchers.get("UMLS") match {
         case Some(searcher) =>
-    println(s"codeSystem=$cSystem code=$code searcher=$searcher")
+    //println(s"codeSystem=$cSystem code=$code searcher=$searcher")
           val parser = new QueryParser("thesaurus", analyzer)
           val query = parser.parse(s"thesaurus:$cSystem AND termCode:$code")
           val topDocs = searcher.search(query, 1)
-    println(s"query=$query totalHits=${topDocs.totalHits}")
-          if (topDocs.totalHits == 0) Left(None)
-          else {
+    //println(s"query=$query totalHits=${topDocs.totalHits}")
+          if (topDocs.totalHits == 0) {
+            val ucode = Tools.uniformString(code)
+            val query2 = parser.parse(s"thesaurus:$cSystem AND termLabelNorm:$ucode")
+            val topDocs2 = searcher.search(query2, 1)
+            if (topDocs2.totalHits == 0) Left(None)
+            else {
+              val doc = searcher.doc(topDocs.scoreDocs.head.doc)
+              val meshCode = doc.get("meshCode")
+      //println(s"++meshCode=$meshCode")
+              if (meshCode == null) {
+                val meshDesc = doc.get("termLabel")
+                if (meshDesc == null) Left(None) else Left(Some(meshDesc))
+              } else Right(meshCode)
+            }
+          } else {
             val doc = searcher.doc(topDocs.scoreDocs.head.doc)
             val meshCode = doc.get("meshCode")
-    println(s"++meshCode=$meshCode")
+    //println(s"++meshCode=$meshCode")
             if (meshCode == null) {
               val meshDesc = doc.get("termLabel")
               if (meshDesc == null) Left(None) else Left(Some(meshDesc))
@@ -130,19 +140,20 @@ println(s"mesh=$mesh")
       thes2thesSearchers.get("DeCS") flatMap { searcher =>
         //println(s"code=$code searcher=$searcher")
         val ucCode = code.toUpperCase
+        val uniCode = Tools.uniformString(code)
         val booleanQuery = new BooleanQuery.Builder()
           .add(new TermQuery(new Term("MESH_ID", ucCode)),
                BooleanClause.Occur.SHOULD)
           .add(new TermQuery(new Term("HIERARCHICAL_CODE", ucCode)),
                BooleanClause.Occur.SHOULD)
-          .add(new TermQuery(new Term("ENGLISH_DESCR_NORM", ucCode)),
+          .add(new TermQuery(new Term("ENGLISH_DESCR_NORM", uniCode)),
                BooleanClause.Occur.SHOULD)
-          .add(new TermQuery(new Term("SPANISH_DESCR_NORM", ucCode)),
+          .add(new TermQuery(new Term("SPANISH_DESCR_NORM", uniCode)),
                BooleanClause.Occur.SHOULD)
-          .add(new TermQuery(new Term("PORTUGUESE_DESCR_NORM", ucCode)),
+          .add(new TermQuery(new Term("PORTUGUESE_DESCR_NORM", uniCode)),
                BooleanClause.Occur.SHOULD)
           .build()
-
+//println(s"booleanQuery=${booleanQuery.toString()}")
         val topDocs = searcher.search(booleanQuery, 1)
         if (topDocs.totalHits == 0) None
         else {

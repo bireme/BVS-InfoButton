@@ -28,10 +28,16 @@ object AtomOutput {
     require(atom != null)
 
     val feed = feed2Json(atom.feed)
-    val entries = Seq("entry" -> JsArray(atom.entry.map(entry2Json(_))))
+    val atomEntry = atom.entry
 
-    Json.prettyPrint(JsObject(List("feed" -> JsObject(feed ++ entries))))
-    //Json.stringify(JsObject(List("feed" -> JsObject(feed ++ entries))))
+    if (atomEntry.isEmpty)
+      Json.prettyPrint(JsObject(List("feed" -> JsObject(feed))))
+    else {
+      val entries = Seq("entry" -> JsArray(atomEntry.map(entry2Json(_))))
+
+      Json.prettyPrint(JsObject(List("feed" -> JsObject(feed ++ entries))))
+      //Json.stringify(JsObject(List("feed" -> JsObject(feed ++ entries))))
+    }
   }
 
   private def feed2Xml(feed: AtomFeed, doc: Document): Element = {
@@ -169,7 +175,7 @@ object AtomOutput {
         Seq(
           JsObject(
             List("scheme" -> JsString("documentType"), "type" -> JsString(t))))
-      case None => Seq()
+      case _ => Seq()
     }
     val category = Some(
       JsArray(

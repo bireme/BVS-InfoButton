@@ -46,7 +46,10 @@ case class AtomFeed(subtitle: String,
   val updated = FormatDate.format2(new Date())
 }
 
-case class AtomEntry(doc: JsValue, lang: String, categories: Seq[Category]) {
+case class AtomEntry(dType: String,
+                     doc: JsValue,
+                     lang: String,
+                     categories: Seq[Category]) {
   require(doc != null)
   require(lang != null)
   require(categories != null)
@@ -82,5 +85,6 @@ case class AtomEntry(doc: JsValue, lang: String, categories: Seq[Category]) {
       docId.getOrElse(sumHash))
   val source = (doc \ "fo").asOpt[Seq[String]].map(x => x.head.trim)
   val entryLang = (doc \ "la").asOpt[String]
-  val docType = (doc \ "type").asOpt[Seq[String]].map(x => x.head.trim)
+  val docType = Some(dType.trim)
+  //val docType = (doc \ "type").asOpt[Seq[String]].map(x => x.head.trim)
 }

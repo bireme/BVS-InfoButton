@@ -58,15 +58,15 @@ class InfobuttonServer(
     require(maxDocs > 0)
 //println("Antes do ParameterParser")
     val (info, oType, callbackFunc) = ParameterParser.parse(param)
-println(s">> getInfo - param=$param  info=$info")
+//println(s">> getInfo - param=$param  info=$info")
     val outType = oType.getOrElse("application/json")
     val exprAND = convToSrcExpression(info, conv, maxDocs, false)
     val exprOR = convToSrcExpression(info, conv, maxDocs, true)
-println("Antes do orderedSearch(exprAND, maxDocs)")
+//println(s"Antes do orderedSearch(exprAND, maxDocs) exprAND=[$exprAND]")
     val docsAND = orderedSearch(exprAND, maxDocs)
     val useORExpression = !exprAND.equals(exprOR)  // There are more than one MainSearchCriteria
-    val remaining =  if (useORExpression) 0 else maxDocs - docsAND.size
-println("Antes do orderedSearch(exprOR, maxDocs)")
+    val remaining =  if (useORExpression) maxDocs - docsAND.size else 0
+//println(s"Antes do orderedSearch(exprOR, maxDocs) exprOR=[$exprOR] remaining=$remaining")
     val docsOR = if (remaining > 0) orderedSearch(exprOR, remaining) else Seq()
     val docs = docsAND ++ docsOR
 
@@ -96,6 +96,9 @@ println("Antes do orderedSearch(exprOR, maxDocs)")
                                   useOR: Boolean): Option[String] = {
     // Processing MainSearchCriteria
     val (s1,s2) = partition[MainSearchCriteria](info)
+println(s"info=$info s1=$s1 s2=$s2")
+    if (s1.isEmpty)
+      throw new IllegalArgumentException("missing MainSearchCriteria")
 
     srcParam2SrcExpr(s1, conv, useOR) map {
       msc_str =>
@@ -105,7 +108,7 @@ println("Antes do orderedSearch(exprOR, maxDocs)")
           case Some(src) => s"%20AND%20$src"
           case None => ""
         }
-        println(s"*=>${info},$s1,$s3,$s4")
+        println(s"*=>info=${info} s1=$s1 s3=$s3 s4=$s4")
 
         //Processing other parameters
         s4.foldLeft[String](
@@ -137,6 +140,7 @@ println("Antes do orderedSearch(exprOR, maxDocs)")
                                conv: MeshConverter,
                                useOR: Boolean) : Option[String] = {
     val connector = if (useOR) "OR" else "AND"
+//println(s"useOR=$useOR info=$info")
     info
       .map(_.toSrcExpression(conv, info))
       .flatten
@@ -148,23 +152,22 @@ println("Antes do orderedSearch(exprOR, maxDocs)")
   }
 
   private def orderedSearch(expression: Option[String],
-                            maxDocs: Int): Seq[JsValue] = {
+                            maxDocs: Int): Seq[(String, JsValue)] = {
 
     def oSearch(typeOfStudy: Seq[String],
                 expr: String,
                 maxDocs: Int,
-                auxSeq: Seq[JsValue]): Seq[JsValue] = {
-      if (typeOfStudy.isEmpty) auxSeq
-      else
-        (maxDocs - auxSeq.size) match {
-          case 0 => auxSeq
-          case num =>
-            val newExpr =
-              s"$expr%20AND%20(type_of_study:(%22${typeOfStudy.head}%22))"
-            oSearch(typeOfStudy.tail,
-                    expr,
-                    maxDocs,
-                    auxSeq ++ search(newExpr, num))
+                auxSeq: Seq[(String, JsValue)]): Seq[(String, JsValue)] = {
+      if (typeOfStudy.isEmpty) {
+        if (auxSeq.isEmpty) search(expr, maxDocs).map(elem => ("other", elem))
+        else auxSeq
+      } else {
+        val tos = typeOfStudy.head
+        val newExpr = s"$expr%20AND%20(type_of_study:(%22${tos}%22))"
+        oSearch(typeOfStudy.tail,
+                expr,
+                maxDocs,
+                auxSeq ++ (search(newExpr, maxDocs)).map(elem => (tos, elem)))
         }
     }
 
@@ -191,7 +194,7 @@ println("Antes do orderedSearch(exprOR, maxDocs)")
 println(s"Pesquisando ... [$expression]")
     Try(Source.fromURL(expression, "utf-8").getLines().mkString("\n")) match {
       case Success(ctt) =>
-println(s"ctt=$ctt")
+//println(s"ctt=$ctt")
         (Json.parse(ctt) \ "response" \ "docs").validate[JsArray] match {
           case res: JsResult[JsArray] => res.get.value.take(maxDocs)
           case _                      => Seq()
@@ -203,7 +206,7 @@ println(s"ctt=$ctt")
   }
 
   private def convToInfoResponse(info: Seq[SearchParameter],
-                                 docs: Seq[JsValue],
+                                 docs: Seq[(String, JsValue)],
                                  outType: String,
                                  callbackFunc: Option[String]): String = {
     require(info != null)
@@ -221,11 +224,12 @@ println(s"ctt=$ctt")
           str + (if (idx == 0) "" else " OR ") +
             (msc2.displayName.getOrElse(msc2.code.getOrElse("")))
       }
-    val categories: Seq[Category] = info.flatMap(_.getCategories)
+    val categories = getCategories(info, Seq())
     val id = s"urn:uuid:${java.util.UUID.randomUUID()}"
     val feed = AtomFeed(subtitle, categories, lang = lang, id = id)
     val entries = docs.foldLeft[Seq[AtomEntry]](Seq()) {
-      case (seq, doc) => seq :+ AtomEntry(doc, lang, categories)
+      case (seq, (docType, doc)) =>
+        seq :+ AtomEntry(docType, doc, lang, categories)
     }
     val atom = Atom(feed, entries)
     outType.toLowerCase match {
@@ -254,6 +258,27 @@ println(s"ctt=$ctt")
           case Some(per: Performer) => per.lcode.getOrElse("en")
           case _                    => "en"
         }
+    }
+  }
+
+  def getCategories(info: Seq[SearchParameter],
+                    aux: Seq[Category]): Seq[Category] = {
+    if (info.isEmpty) aux
+    else {
+      val className = info.head.getClass.getName
+      val (same, dif) = info.partition(_.getClass.getName.equals(className))
+
+      same.size match {
+        case 0 => aux
+        case 1 => getCategories(dif, aux ++ same.head.getCategories)
+        case _ =>
+          val aux2 = same.zipWithIndex.foldLeft[Seq[Category]] (aux) {
+            case (seq, (sparam, idx)) => sparam.getCategories.foldLeft[Seq[Category]] (seq) {
+              case (seq2, cat) => seq2 :+ Category(cat.scheme + idx, cat.term)
+            }
+          }
+          getCategories(dif, aux2)
+      }
     }
   }
 
@@ -317,7 +342,7 @@ object InfoServer extends App {
 
   val info = server.getInfo(map)
 
-  println(s"info = $info")
+  //println(s"info = $info")
 }
 
 /*

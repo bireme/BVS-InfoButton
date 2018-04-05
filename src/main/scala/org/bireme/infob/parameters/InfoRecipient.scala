@@ -15,7 +15,7 @@ class InfoRecipient(role: Option[String],
                     personCodeSystem: Option[String] = Some("2.16.840.1.113883.6.101"),
                     personDisplayValue: Option[String] = None,
                     langCode: Option[String] = None,
-                    langCodeSystem: Option[String] = Some("ISO 639-1"),
+                    langCodeSystem: Option[String] = None,
                     langDisplayName: Option[String] = None) extends SearchParameter {
   val lang2 = ISO639_1_Codes.codes.map { case (k, v) => (k, v.head.toLowerCase) }
   val langN = lang2.map { case (k, v) => (v, k) }
@@ -25,12 +25,20 @@ class InfoRecipient(role: Option[String],
       langCode
         .map(_.toLowerCase)
         .flatMap(la => if (lang2.contains(la)) Some(la) else None)
+    case Some("") =>
+      langCode
+        .map(_.toLowerCase)
+        .flatMap(la => if (lang2.contains(la)) Some(la) else None)
+    case None =>
+      langCode
+        .map(_.toLowerCase)
+        .flatMap(la => if (lang2.contains(la)) Some(la) else None)
     case _ => langDisplayName.flatMap(la => langN.get(la.toLowerCase))
   }
 
   val role2 = role match {
-    case Some("PAT")   => Some("PAT") // patient
-    case Some("PROV")  => Some("PROV") // healthCareProvider
+    case Some("PAT")   => Some("PAT")   // patient
+    case Some("PROV")  => Some("PROV")  // healthCareProvider
     case Some("PAYOR") => Some("PAYOR") // payor
     case _             => None
   }
