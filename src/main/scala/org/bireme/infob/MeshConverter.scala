@@ -76,14 +76,14 @@ class MeshConverter(indexes: String) {
       case "2.16.840.1.113883.6.3"   => getMeshCode("ICD10", tcode)
       case "2.16.840.1.113883.6.96"  => getMeshCode("SNOMED-CT", tcode)
       case "2.16.840.1.113883.6.88"  => getMeshCode("RXNORM", tcode)
-      case "2.16.840.1.113883.6.177" => Right(tcode)
+      case "2.16.840.1.113883.6.177" => Right(tcode) // MeSH
       case "2.16.840.1.113883.6.69"  => getMeshCode("NDC", tcode)
       case "2.16.840.1.113883.6.1"   => getMeshCode("LOINC", tcode)
       case _                         => Left(None)
     }
 
     // Try converting MeSH code or term into a DeCs code or term description
-//println(s"mesh=$mesh")
+//println(s"codeSystem=$codeSystem code=$code mesh=$mesh")
     mesh match {
       case Right(mcode) =>
         mesh2DeCS(mcode) match {
@@ -153,8 +153,8 @@ class MeshConverter(indexes: String) {
           .add(new TermQuery(new Term("PORTUGUESE_DESCR_NORM", uniCode)),
                BooleanClause.Occur.SHOULD)
           .build()
-//println(s"booleanQuery=${booleanQuery.toString()}")
         val topDocs = searcher.search(booleanQuery, 1)
+println(s"booleanQuery=${booleanQuery.toString()} totalHits=${topDocs.totalHits}")
         if (topDocs.totalHits == 0) None
         else {
           //println(s"Achou algum documento. totalHits=${topDocs.totalHits}")

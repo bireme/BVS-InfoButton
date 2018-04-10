@@ -7,18 +7,15 @@
 
 package org.bireme.infob.parameters
 
-import org.bireme.infob.{Category, MeshConverter}
+import org.bireme.infob.{Category, MeshConverter, Tools}
 import scala.util.{Try, Success, Failure}
 
 class MainSearchCriteria(val code: Option[String] = None,
                          codeSystem: Option[String] = None,
                          val displayName: Option[String] = None,
-                         originalText: Option[String] = None)
+                         val originalText: Option[String] = None)
     extends SearchParameter {
   assert((!code.isEmpty) || (!displayName.isEmpty) || (!originalText.isEmpty))
-
-  private def replaceSpaces(in: String): String =
-    if (in == null) null else in.replace(" ", "%20")
 
   override def toSrcExpression(conv: MeshConverter,
                                env: Seq[SearchParameter]): Option[String] = {
@@ -33,15 +30,15 @@ class MainSearchCriteria(val code: Option[String] = None,
     val strDisplayName = displayName.getOrElse("").trim
     val strOriginalText = originalText.getOrElse("").trim
     val exprCode = if (strCode.isEmpty) ""
-      else s"mh:($strCode) OR ti:($strCode) OR ab:($strCode)"
+      else s"mh:${'"'}$strCode${'"'} OR ti:${'"'}$strCode${'"'} OR ab:${'"'}$strCode${'"'}"
     val exprDisplayName = if (strDisplayName.isEmpty) ""
-      else s"mh:($strDisplayName) OR ti:($strDisplayName) OR ab:($strDisplayName)"
+      else s"mh:${'"'}$strDisplayName${'"'} OR ti:${'"'}$strDisplayName${'"'} OR ab:${'"'}$strDisplayName${'"'}"
     val exprOriginalText = if (strOriginalText.isEmpty) ""
       else s"mh:($strOriginalText) OR ti:($strOriginalText) OR ab:($strOriginalText)"
 
-    (exprCode + exprDisplayName + exprOriginalText) match {
+    (exprCode + exprDisplayName + exprOriginalText).trim match {
       case "" => None
-      case str => Some(replaceSpaces(str))
+      case str => Some(Tools.encodeUrl(str))  //Some(Tools.replaceSpaces(str))
     }
   }
 
@@ -81,7 +78,7 @@ object MainSearchCriteria extends Parser {
     : (Seq[SearchParameter], Map[String, String]) = {
     val (msc, others) =
       parameters.partition(_._1.startsWith("mainSearchCriteria.v."))
-println(s"parameters=$parameters msc=$msc others=$others")
+//println(s"parameters=$parameters msc=$msc others=$others")
     (getMSC(msc, 0, Seq()), others)
   }
 

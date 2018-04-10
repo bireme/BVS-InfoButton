@@ -80,6 +80,9 @@ function getParamUrl() {
   var url = addElements(["mainSearchCriteria.v.c", "mainSearchCriteria.v.cs",
                          "mainSearchCriteria.v.dn", "mainSearchCriteria.v.ot"] , url);
   //alert("getParamUrl() - url=[" + url + "]");
+  url = addElements(["subTopic.v.c"], url);
+  url = addElements(["subTopic.v.dn"], url);
+  url = addElements(["subTopic.v.cs"], url);
   url = addElements(["patientPerson.AdministrativeGenderCode.c"], url);
   url = addElements(["patientPerson.AdministrativeGenderCode.dn"], url);
   url = addElements(["age.v.v"], url);
@@ -93,7 +96,6 @@ function getParamUrl() {
   url = addElements(["performer"], url);
   url = addElements(["performer.languageCode.c"], url);
   url = addElements(["performer.languageCode.dn"], url);
-  url = addElements(["subTopic.v.c"], url);
 //alert("getParamUrl() - url=[" + url + "]");
   return url;
 }
@@ -255,6 +257,64 @@ function getUrlParameters(url) {
   <div>
   Main Search Criteria 3 (Original Text): <input type="text" name="mainSearchCriteria.v.ot" size="60" onchange="buildUrl()"></input>
   </div>
+  <hr/>
+
+  <div>
+  SubTopic (Concept Code): <select name="subTopic.v.c" onchange="buildUrl()">
+   <option value="">---do not use---</option>
+   <option value="Q000008">Q000008 - administration & dosage (MeSH)</option>
+   <option value="Q000744">Q000744 - contraindications (MeSH)</option>
+   <option value="Q000009">Q000009 - adverse effects (MeSH)</option>
+   <option value="D004347">D004347 - drug interaction (MeSH)</option>
+   <option value="Q000145">Q000145 - classification (MeSH)</option>
+   <option value="Q000209">Q000209 - etiology (MeSH)</option>
+   <option value="Q000175">Q000175 - diagnosis (MeSH)</option>
+   <option value="Q000628">Q000628 - therapy (MeSH)</option>
+   <option value="D011379">D011379 - prognosis (MeSH)</option>
+   <option value="Q000627">Q000627 - therapeutic use (MeSH)</option>
+   <option value="Q000493">Q000493 - pharmacokinetics (MeSH)</option>
+   <option value="Q000494">Q000494 - pharmacology (MeSH)</option>
+   <option value="Q000633">Q000633 - toxicity (MeSH)</option>
+   <option value="Q000506">Q000506 - poisoning (MeSH)</option>
+
+   <option value="79899007">79899007 - Drug Interactions (SNOMED_CT)</option>
+   <option value="47965005">47965005 - Diagnosis, Differential (SNOMED_CT)</option>
+   <option value="404204005">404204005 - Drug interaction with drug (SNOMED_CT)</option>
+   <option value="95907004">95907004 - Drug interaction with food (SNOMED_CT)</option>
+   <option value="95906008">95906008 - Drug interaction with alcohol (SNOMED_CT)</option>
+  </select>
+  &nbsp;&nbsp;Code System: <select name="subTopic.v.cs" onchange="buildUrl()">
+   <option value="">---do not use---</option>
+   <option value="2.16.840.1.113883.6.177">MESH</option>
+   <option value="2.16.840.1.113883.6.96">SNOMED-CT</option>
+  </select>
+  </div>
+
+  SubTopic (Display Name): <select name="subTopic.v.dn" onchange="buildUrl()">
+   <option value="">---do not use---</option>
+   <option value="administration & dosage">administration & dosage (MeSH)</option>
+   <option value="contraindications">contraindications (MeSH)</option>
+   <option value="adverse effects">adverse effects (MeSH)</option>
+   <option value="drug interaction">drug interaction (MeSH)</option>
+   <option value="classification">classification (MeSH)</option>
+   <option value="etiology">etiology (MeSH)</option>
+   <option value="diagnosis">diagnosis (MeSH)</option>
+   <option value="therapy">therapy (MeSH)</option>
+   <option value="prognosis">prognosis (MeSH)</option>
+   <option value="therapeutic use">therapeutic use (MeSH)</option>
+   <option value="pharmacokinetics">pharmacokinetics (MeSH)</option>
+   <option value="pharmacology">pharmacology (MeSH)</option>
+   <option value="toxicity">toxicity (MeSH)</option>
+   <option value="poisoning">poisoning (MeSH)</option>
+
+   <option value="Drug Interactions">Drug Interactions (SNOMED_CT)</option>
+   <option value="Diagnosis, Differential">Diagnosis, Differential (SNOMED_CT)</option>
+   <option value="Drug interaction with drug">Drug interaction with drug (SNOMED_CT)</option>
+   <option value="Drug interaction with food">Drug interaction with food (SNOMED_CT)</option>
+   <option value="Drug interaction with alcohol">Drug interaction with alcohol (SNOMED_CT)</option>
+  </select>
+  </div>
+
   <hr/>
 
   <div>
@@ -1198,40 +1258,12 @@ function getUrlParameters(url) {
 
   <hr/>
 
-  <div>
-  SubTopic: <select name="subTopic.v.c" onchange="buildUrl()">
-   <option value="">---do not use---</option>
-   <option value="Q000008">administration & dosage (MeSH)</option>
-   <option value="Q000744">contraindications (MeSH)</option>
-   <option value="Q000009">adverse effects (MeSH)</option>
-   <option value="D004347">drug interaction (MeSH)</option>
-   <option value="Q000145">classification (MeSH)</option>
-   <option value="Q000209">etiology (MeSH)</option>
-   <option value="Q000175">diagnosis (MeSH)</option>
-   <option value="Q000628">therapy (MeSH)</option>
-   <option value="D011379">prognosis (MeSH)</option>
-   <option value="Q000627">therapeutic use (MeSH)</option>
-   <option value="Q000493">pharmacokinetics (MeSH)</option>
-   <option value="Q000494">pharmacology (MeSH)</option>
-   <option value="Q000633">toxicity (MeSH)</option>
-   <option value="Q000506">poisoning (MeSH)</option>
-
-   <option value="79899007">Drug Interactions (SNOMED_CT)</option>
-   <option value="47965005">Diagnosis, Differential (SNOMED_CT)</option>
-   <option value="404204005">Drug interaction with drug (SNOMED_CT)</option>
-   <option value="95907004">Drug interaction with food (SNOMED_CT)</option>
-   <option disabled value="95906008">Drug interaction with alcohol (SNOMED_CT)</option>
-  </select>
-  </div>
-
-  <hr/>
-
   <p id="url"></p>
 
   <hr/>
 
   <div>
-     <input type="button" value="Send" onclick="post('http://localhost:8084/BVSInfoButton/BVSInfoButton', getUrlParameters(getParamUrl()))", "get" />
+     <input type="button" value="Send" onclick="post('http://localhost:8084/BVSInfoButton/BVSInfoButton', getUrlParameters(getParamUrl()))", "post" />
      <!--input type="button" value="Send" onclick="postX('', '', '')"/-->
   </div>
 

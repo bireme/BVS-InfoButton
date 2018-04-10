@@ -65,7 +65,7 @@ object ParameterParser {
         val (sp, oths) = obj.parse(param)
         if (sp.isEmpty) (auxSrcParam, oths) else (auxSrcParam ++ sp, oths)
       }
-      println(s"name=$clazz ${obj} => seq=$seq others=$others")
+      //println(s"name=$clazz ${obj} => seq=$seq others=$others")
       parse(names.tail, others, seq)
     }
   }

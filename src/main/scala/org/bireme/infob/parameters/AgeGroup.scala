@@ -7,7 +7,7 @@
 
 package org.bireme.infob.parameters
 
-import org.bireme.infob.{Category, MeshConverter}
+import org.bireme.infob.{Category, MeshConverter, Tools}
 import scala.util.{Try, Success, Failure}
 
 class AgeGroup(code: Option[String] = None,
@@ -53,7 +53,7 @@ class AgeGroup(code: Option[String] = None,
 
   override def toSrcExpression(conv: MeshConverter,
                                env: Seq[SearchParameter]): Option[String] =
-    agroup.map(ag => s"(limit:(%22${ag.replace(" ", "%20")}%22))")
+    agroup.map(ag => s"(limit:(%22${Tools.encodeUrl(ag)}%22))")
 
   override def getCategories: Seq[Category] = {
     Seq(

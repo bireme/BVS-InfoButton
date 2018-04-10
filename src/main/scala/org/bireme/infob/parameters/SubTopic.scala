@@ -7,7 +7,7 @@
 
 package org.bireme.infob.parameters
 
-import org.bireme.infob.{Category, MeshConverter}
+import org.bireme.infob.{Category, MeshConverter, Tools}
 import scala.util.{Try, Success, Failure}
 
 class SubTopic(
@@ -15,114 +15,50 @@ class SubTopic(
     code: Option[String] = None,
     displayName: Option[String] = None,
     originalText: Option[String] = None) extends SearchParameter {
+//println(s"SubTopic codeSystem=$codeSystem code=$code displayName=$displayName originalText=$originalText")
   assert(
     codeSystem.get.equals("2.16.840.1.113883.6.177") || // MeSH
       codeSystem.get.equals("2.16.840.1.113883.6.96")) // SNOMED CT
   assert((!code.isEmpty) || (!displayName.isEmpty) || (!originalText.isEmpty))
-
-  private val meshCode2DeCS = Map(
-    "Q000008" -> "/administration & dosage",
-    "Q000744" -> "/contraindications",
-    "Q000009" -> "/adverse effects",
-    "D004347" -> "Drug Interactions",
-    "Q000145" -> "/classification",
-    "Q000209" -> "/etiology",
-    "Q000175" -> "/diagnosis",
-    "Q000628" -> "/therapy",
-    "D011379" -> "Prognosis",
-    "Q000627" -> "/therapeutic use",
-    "Q000493" -> "/pharmacokinetics",
-    "Q000494" -> "/pharmacology",
-    "Q000633" -> "/toxicity",
-    "Q000506" -> "/poisoning"
-  )
-
-  private val meshDisplayName2DeCS = Map(
-    "administration & dosage" -> "/administration & dosage",
-    "contraindications"       -> "/contraindications",
-    "adverse effects"         -> "/adverse effects",
-    "drug interaction"        -> "Drug Interactions",
-    "classification"          -> "/classification",
-    "etiology"                -> "/etiology",
-    "diagnosis"               -> "/diagnosis",
-    "therapy"                 -> "/therapy",
-    "prognosis"               -> "Prognosis",
-    "therapeutic use"         -> "/therapeutic use",
-    "pharmacokinetics"        -> "/pharmacokinetics",
-    "pharmacology"            -> "/pharmacology",
-    "toxicity"                -> "/toxicity",
-    "poisoning"               -> "/poisoning"
-  )
-
-  private val snomedctCode2DeCS = Map(
-    "79899007"  -> "Drug Interactions",
-    "47965005"  -> "Diagnosis, Differential",
+//println("SubTopic depois")
+  private val snomedct2DeCS = Map(
     "404204005" -> "(\"drug-drug\" OR \"droga-droga\")",
-    "95907004"  -> "Food-Drug Interactions"
-    //"95906008"  -> ""  Drug interaction with alcohol
+    "95906008"  -> "(drug AND interaction AND alcohol)",
+    "drug interaction with alcohol" -> "(drug AND interaction AND alcohol)"
   )
-
-  private val snomedctDisplayName2DeCS = Map(
-    "drug interaction"           -> "Drug Interactions",
-    "differential diagnosis"     -> "Diagnosis, Differential",
-    "404204005"                  -> "(\"drug-drug\" OR \"droga-droga\")",
-    "drug interaction with food" -> "Food-Drug Interactions"
-    //"Drug interaction with alcohol" => ""
-  )
-
-  private def replaceSpaces(in: String): String =
-    if (in == null) null else in.replace(" ", "%20")
 
   override def toSrcExpression(conv: MeshConverter,
                                env: Seq[SearchParameter]): Option[String] = {
 //println("===Entrei no toSrcExpression")
-    val ret = codeSystem match {
-      case Some("2.16.840.1.113883.6.177") =>  // MeSH
-        getSrcExpression(meshCode2DeCS, meshDisplayName2DeCS)
-      case Some("2.16.840.1.113883.6.96") =>   // SNOMED CT
-        getSrcExpression(snomedctCode2DeCS, snomedctDisplayName2DeCS)
-      case _ => None
-    }
-//    println(s"ret=$ret")
-    ret
+    val codeSrcExpr = code.flatMap(x => getSrcExpr(x, conv))
+    val dplNameSrcExpr = displayName.flatMap(x => getSrcExpr(x, conv))
+    val oTextSrcExpr = originalText.flatMap(x => getSrcExpr(x, conv))
+  //println(s"codeSrcExpr=${codeSrcExpr.getOrElse("")} dplNameSrcExpr=${dplNameSrcExpr.getOrElse("")} oTextSrcExpr=${oTextSrcExpr.getOrElse("")}")
+    val aux1 = codeSrcExpr.getOrElse("")
+    val aux2 = if (dplNameSrcExpr.isEmpty) aux1
+               else if (aux1.isEmpty) dplNameSrcExpr.get else s"OR ${dplNameSrcExpr.get}"
+    val aux3 = if (oTextSrcExpr.isEmpty) aux2
+               else if (aux2.isEmpty) oTextSrcExpr.get else s"OR ${oTextSrcExpr.get}"
+    if (aux3.isEmpty) None else Some(Tools.encodeUrl(aux3))
   }
 
-  private def getSrcExpression(codeMap: Map[String,String],
-                               displayNameMap: Map[String, String]): Option[String] = {
-    code match {
-      case Some(c) =>
-        codeMap.get(c.toUpperCase) match {
-          case Some(expr) =>
-            val field = if (expr contains " OR ") "ti" else "mh"
-            Some(s"($field:(%22${replaceSpaces(expr)}%22))")
-          case None =>
-            displayName flatMap {
-              dn =>
-                displayNameMap.get(dn.toLowerCase) flatMap {
-                  expr =>
-                    val field = if (expr contains " OR ") "ti" else "mh"
-                    Some(s"($field:(%22${replaceSpaces(expr)}%22))")
-                }
-            }
-        }
-      case _ =>
-        displayName flatMap {
-          dn =>
-            displayNameMap.get(dn.toLowerCase).flatMap {
-              expr =>
-                val field = if (expr contains " OR ") "ti" else "mh"
-                Some(s"($field:(%22${replaceSpaces(expr)}%22))")
-            }
-        }
+  private def getSrcExpr(in: String,
+                         conv: MeshConverter): Option[String] = {
+    val intr = in.trim
+    val in2 = intr //if (intr.endsWith("*")) intr else intr + "*"
+    val ostr: Option[String] = conv.convert(codeSystem.get, in2) match {
+      case Right(str) => Some(str)
+      case Left(optStr) => optStr orElse snomedct2DeCS.get(intr.toLowerCase)
+    }
+//println(s"ostr=$ostr")
+    ostr.map {str => if (str(0) == '/') (true, str.substring(1))
+                     else (false, str)
+    }.map {
+      case (qual, expr) =>
+        val index = if (qual) "sh" else "mh"
+        s"($index:${'"'}$expr${'"'} OR ti:($expr) OR ab:($expr))"
     }
   }
-
-  /*private def getMeshCodeSrcExpr(code: String,
-                                 conv: MeshConverter): String = {
-    conv.convert("MESH", code) match {
-      case Right(str) =>
-    }: Either[Option[String], String]
-  }*/
 
   override def getCategories: Seq[Category] = {
     Seq(
@@ -143,20 +79,20 @@ class SubTopic(
 object SubTopic extends Parser {
   override def parse(parameters: Map[String, String])
     :(Seq[SearchParameter], Map[String, String]) = {
-
+//println(s"SubTopic parameters=$parameters")
     val (sut, others) = parameters.partition(_._1.startsWith("subTopic"))
-
+//println(s"SubTopic sut=$sut pthers=$others")
     if (sut.isEmpty) (Seq(), others)
     else {
-      Try (
+      Try {
         new SubTopic(
-          parameters.get("subTopic.v.cs"),
-          parameters.get("subTopic.v.c"),
-          parameters.get("subTopic.v.dn"),
-          parameters.get("subTopic.v.ot"))
-      ) match {
+          sut.get("subTopic.v.cs"),
+          sut.get("subTopic.v.c"),
+          sut.get("subTopic.v.dn"),
+          sut.get("subTopic.v.ot"))
+      } match {
         case Success(s) => (Seq(s), others)
-        case Failure(_) => (Seq(), others)
+        case Failure(x) => println(s"SubTopic failure=$x");(Seq(), others)
       }
     }
   }

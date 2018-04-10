@@ -7,7 +7,7 @@
 
 package org.bireme.infob.parameters
 
-import org.bireme.infob.{Category, MeshConverter}
+import org.bireme.infob.{Category, MeshConverter, Tools}
 import scala.util.{Try, Success, Failure}
 
 class InfoRecipient(role: Option[String],
@@ -46,7 +46,7 @@ class InfoRecipient(role: Option[String],
   override def toSrcExpression(conv: MeshConverter,
                                env: Seq[SearchParameter]): Option[String] = {
 println(s"***lcode=$lcode")
-    lcode.map(lc => s"(la:(%22$lc%22))")
+    lcode.map(lc => s"(la:(%22${Tools.encodeUrl(lc)}%22))")
   }
 
   override def getCategories: Seq[Category] = {

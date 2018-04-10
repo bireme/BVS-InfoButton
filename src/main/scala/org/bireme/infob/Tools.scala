@@ -7,6 +7,7 @@
 
 package org.bireme.infob
 
+import java.net.URLEncoder
 import java.text.Normalizer
 import java.text.Normalizer.Form
 
@@ -26,4 +27,9 @@ object Tools {
 
     s2.replaceAll("[^\\w]", "")
   }
+
+  def replaceSpaces(in: String): String =
+    if (in == null) null else in.replace(" ", "%20")
+
+  def encodeUrl(in: String): String =  URLEncoder.encode(in, "UTF-8")    
 }

@@ -7,7 +7,7 @@
 
 package org.bireme.infob.parameters
 
-import org.bireme.infob.{Category, MeshConverter}
+import org.bireme.infob.{Category, MeshConverter, Tools}
 import scala.util.{Try, Success, Failure}
 
 class Performer(role: Option[String],
@@ -49,7 +49,7 @@ println(s"***lcode=$lcode")
           case Some(lang) => Some(s"(la:(%22$lang%22))")
           case _          => lcode.map(lc => s"(la:(%22$lc%22))")
         }
-      case _ => lcode.map(lc => s"(la:(%22$lc%22))")
+      case _ => lcode.map(lc => s"(la:(%22${Tools.encodeUrl(lc)}%22))")
     }
   }
 

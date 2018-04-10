@@ -96,7 +96,7 @@ class InfobuttonServer(
                                   useOR: Boolean): Option[String] = {
     // Processing MainSearchCriteria
     val (s1,s2) = partition[MainSearchCriteria](info)
-println(s"info=$info s1=$s1 s2=$s2")
+//println(s"info=$info s1=$s1 s2=$s2")
     if (s1.isEmpty)
       throw new IllegalArgumentException("missing MainSearchCriteria")
 
@@ -108,7 +108,7 @@ println(s"info=$info s1=$s1 s2=$s2")
           case Some(src) => s"%20AND%20$src"
           case None => ""
         }
-        println(s"*=>info=${info} s1=$s1 s3=$s3 s4=$s4")
+        //println(s"*=>info=${info} s1=$s1 s3=$s3 s4=$s4")
 
         //Processing other parameters
         s4.foldLeft[String](
@@ -128,10 +128,11 @@ println(s"info=$info s1=$s1 s2=$s2")
   private def partition[T <: SearchParameter](info: Seq[SearchParameter])
                                              (implicit ev: ClassTag[T]): // https://stackoverflow.com/questions/29886246/scala-filter-by-type
                                               (Seq[T], Seq[SearchParameter]) = {
+//println(s"partition info=$info")
     info.foldLeft[(Seq[T], Seq[SearchParameter])] ((Seq(), Seq())) {
       case (seq, t) => t match {
-        case t: T => (seq._1 :+ t, seq._2)
-        case _    => (seq._1, seq._2 :+ t)
+        case tt: T => (seq._1 :+ tt, seq._2)
+        case other => (seq._1, seq._2 :+ t)
       }
     }
   }
@@ -192,7 +193,7 @@ println(s"info=$info s1=$s1 s2=$s2")
     require(expression != null)
     require(maxDocs > 0)
 println(s"Pesquisando ... [$expression]")
-    Try(Source.fromURL(expression, "utf-8").getLines().mkString("\n")) match {
+    val docs = Try(Source.fromURL(expression, "utf-8").getLines().mkString("\n")) match {
       case Success(ctt) =>
 //println(s"ctt=$ctt")
         (Json.parse(ctt) \ "response" \ "docs").validate[JsArray] match {
@@ -203,6 +204,8 @@ println(s"Pesquisando ... [$expression]")
         println(s"FAILURE=$x")
         Seq()
     }
+println(s"#Documentos:${docs.size}\n")
+    docs
   }
 
   private def convToInfoResponse(info: Seq[SearchParameter],
@@ -222,7 +225,7 @@ println(s"Pesquisando ... [$expression]")
         case (str, (msc, idx)) =>
           val msc2 = msc.asInstanceOf[MainSearchCriteria]
           str + (if (idx == 0) "" else " OR ") +
-            (msc2.displayName.getOrElse(msc2.code.getOrElse("")))
+            (msc2.displayName.getOrElse(msc2.code.getOrElse(msc2.originalText.getOrElse(""))))
       }
     val categories = getCategories(info, Seq())
     val id = s"urn:uuid:${java.util.UUID.randomUUID()}"
