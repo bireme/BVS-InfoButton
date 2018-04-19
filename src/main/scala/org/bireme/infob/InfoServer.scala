@@ -51,7 +51,7 @@ class InfobuttonServer(
     getInfo(pmap, maxDocs)
   }
 
-  def getInfo(url: String, maxDocs: Int = 10): String = {
+  def getInfo(url: String, maxDocs: Int): String = {
     urlToParms(url) match {
       case Some(param) => getInfo(param, maxDocs)
       case None => ""
@@ -409,7 +409,6 @@ object InfoServer extends App {
   val indexDir = "web/BVSInfoButton/indexes"
   val conv = new MeshConverter(indexDir)
   val server = new InfobuttonServer(conv)
-  val info = server.getInfo(url)
 
-  println(s"info = ${server.getInfo(url)}")
+  println(s"info = ${server.getInfo(url, 10)}")
 }
