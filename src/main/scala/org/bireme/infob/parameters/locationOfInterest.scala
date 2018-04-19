@@ -39,7 +39,7 @@ class LocationOfInterest(
   override def toSrcExpression(conv: MeshConverter,
                                env: Seq[SearchParameter]): Option[String] = {
 //println("===Entrei no toSrcExpression")
-    iahxCode.map(ic => s"pais_assunto:(%22${Tools.encodeUrl(ic)}%22)")
+    iahxCode.map(ic => s"(pais_assunto:${'"'}${Tools.encodeUrl(ic)}${'"'})")
   }
 
   override def getCategories: Seq[Category] = {

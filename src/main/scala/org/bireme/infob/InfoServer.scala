@@ -15,8 +15,13 @@ import java.net.{URL, URLDecoder, URLEncoder}
 import org.slf4j.LoggerFactory
 import play.api.libs.json._
 
+import org.apache.http.client.entity.UrlEncodedFormEntity
+import org.apache.http.client.methods.HttpPost
+import org.apache.http.impl.client.HttpClients
+import org.apache.http.message.BasicNameValuePair
+import org.apache.http.util.EntityUtils
+
 import scala.collection.JavaConverters._
-import scala.io.Source
 import scala.reflect._
 import scala.reflect.runtime.universe._
 import scala.util.{Try, Success, Failure}
@@ -46,7 +51,7 @@ class InfobuttonServer(
     getInfo(pmap, maxDocs)
   }
 
-  def getInfo(url: String, maxDocs: Int): String = {
+  def getInfo(url: String, maxDocs: Int = 10): String = {
     urlToParms(url) match {
       case Some(param) => getInfo(param, maxDocs)
       case None => ""
@@ -59,15 +64,18 @@ class InfobuttonServer(
 //println("Antes do ParameterParser")
     val (info, oType, callbackFunc) = ParameterParser.parse(param)
 //println(s">> getInfo - param=$param  info=$info")
-    val outType = oType.getOrElse("application/json")
+    val outType = oType.getOrElse("text/xml")
     val exprAND = convToSrcExpression(info, conv, maxDocs, false)
-    val exprOR = convToSrcExpression(info, conv, maxDocs, true)
+    val useORExpression = info.count(_.isInstanceOf[MainSearchCriteria]) > 1 // There are more than one MainSearchCriteria
 //println(s"Antes do orderedSearch(exprAND, maxDocs) exprAND=[$exprAND]")
     val docsAND = orderedSearch(exprAND, maxDocs)
-    val useORExpression = !exprAND.equals(exprOR)  // There are more than one MainSearchCriteria
     val remaining =  if (useORExpression) maxDocs - docsAND.size else 0
-//println(s"Antes do orderedSearch(exprOR, maxDocs) exprOR=[$exprOR] remaining=$remaining")
-    val docsOR = if (remaining > 0) orderedSearch(exprOR, remaining) else Seq()
+//println(s"Antes do orderedSearch(exprOR, maxDocs) remaining=$remaining")
+    val exprOR = if (remaining > 0) convToSrcExpression(info, conv, maxDocs, true)
+      else None
+    val docsOR = if (remaining > 0) {
+        orderedSearch(exprOR, remaining)
+      } else Seq()
     val docs = docsAND ++ docsOR
 
     logger.debug((param.foldLeft[String]("\nParameters: ") {
@@ -93,46 +101,59 @@ class InfobuttonServer(
   private def convToSrcExpression(info: Seq[SearchParameter],
                                   conv: MeshConverter,
                                   maxDocs: Int,
-                                  useOR: Boolean): Option[String] = {
+                                  useOR: Boolean): Option[Seq[(String, String)]] = {
     // Processing MainSearchCriteria
     val (s1,s2) = partition[MainSearchCriteria](info)
-//println(s"info=$info s1=$s1 s2=$s2")
+println(s"info=$info s1=$s1 s2=$s2")
     if (s1.isEmpty)
       throw new IllegalArgumentException("missing MainSearchCriteria")
-
+//println(s"srcParam2SrcExpr(s1, conv, useOR)=${srcParam2SrcExpr(s1, conv, useOR)}")
     srcParam2SrcExpr(s1, conv, useOR) map {
       msc_str =>
         // Processing LocationOfInterest
         val (s3,s4) = partition[LocationOfInterest](s2)
         val loi = srcParam2SrcExpr(s3, conv, true) match {
-          case Some(src) => s"%20AND%20$src"
+          case Some(src) => s" AND $src"
           case None => ""
         }
         //println(s"*=>info=${info} s1=$s1 s3=$s3 s4=$s4")
 
         //Processing other parameters
-        s4.foldLeft[String](
-          s"$iahxUrl?source=bvs_infobutton&start=0&rows=$maxDocs&sort=da+desc&wt=json" +
-          s"&q=$msc_str%20AND%20(instance:%22regional%22)%20AND%20" +
-          s"(fulltext:(%221%22))$loi") {
+        val srcParam = s4.foldLeft[String](s"$msc_str AND " +
+          "(instance:\"regional\") AND (fulltext:\"1\")" + loi) {
             case (str, sparam) =>
               str +
                 (sparam.toSrcExpression(conv, info) match {
-                  case Some(str2) => s"%20AND%20$str2"
+                  case Some(str2) => s" AND $str2"
                   case None       => ""
                 })
           }
+        Seq("source" -> "bvs_infobutton",
+            "start" -> "0",
+            "rows" -> maxDocs.toString,
+            "sort" -> "da desc",
+            "wt" -> "json",
+            "q" -> srcParam)
     }
   }
 
+  /**
+    * Given an input sequence of search parameters, returns two sequences:
+    * a sequence of SearchParameters of subtype T and another sequence with
+    * the other SearchParameters
+    *
+    * @param info the input sequence of SearchParameters
+    * @param ev see: https://stackoverflow.com/questions/29886246/scala-filter-by-type
+    * @return the resulting two sequences of SearchParameters
+    */
   private def partition[T <: SearchParameter](info: Seq[SearchParameter])
-                                             (implicit ev: ClassTag[T]): // https://stackoverflow.com/questions/29886246/scala-filter-by-type
+                                             (implicit ev: ClassTag[T]):
                                               (Seq[T], Seq[SearchParameter]) = {
 //println(s"partition info=$info")
     info.foldLeft[(Seq[T], Seq[SearchParameter])] ((Seq(), Seq())) {
       case (seq, t) => t match {
         case tt: T => (seq._1 :+ tt, seq._2)
-        case other => (seq._1, seq._2 :+ t)
+        case _ => (seq._1, seq._2 :+ t)
       }
     }
   }
@@ -141,35 +162,43 @@ class InfobuttonServer(
                                conv: MeshConverter,
                                useOR: Boolean) : Option[String] = {
     val connector = if (useOR) "OR" else "AND"
-//println(s"useOR=$useOR info=$info")
     info
       .map(_.toSrcExpression(conv, info))
       .flatten
       .sorted
-      .mkString(s"%20$connector%20") match {
+      .mkString(s" $connector ") match {
         case ""  => None
-        case str => Some(s"($str)")
+        case str => Some(str)
       }
   }
 
-  private def orderedSearch(expression: Option[String],
+  private def orderedSearch(expression: Option[Seq[(String, String)]],
                             maxDocs: Int): Seq[(String, JsValue)] = {
 
     def oSearch(typeOfStudy: Seq[String],
-                expr: String,
+                params: Seq[(String,String)],
                 maxDocs: Int,
                 auxSeq: Seq[(String, JsValue)]): Seq[(String, JsValue)] = {
       if (typeOfStudy.isEmpty) {
-        if (auxSeq.isEmpty) search(expr, maxDocs).map(elem => ("other", elem))
+        if (auxSeq.isEmpty) search(params, maxDocs).map(elem => ("other", elem))
         else auxSeq
       } else {
         val tos = typeOfStudy.head
-        val newExpr = s"$expr%20AND%20(type_of_study:(%22${tos}%22))"
-        oSearch(typeOfStudy.tail,
-                expr,
-                maxDocs,
-                auxSeq ++ (search(newExpr, maxDocs)).map(elem => (tos, elem)))
+        // 'Question and answer' is not a type of study but a type of document.
+        val newExpr = if (tos.equals("question_answer")) " AND (type:\"perg_resp\")"
+          else " AND (type_of_study:" + "\"" + tos + "\")"
+        val params2: Seq[(String,String)] = params.map {
+          param => if (param._1 equals "q") ("q" -> (param._2 + newExpr))
+                   else param
         }
+//println(s"params2=$params2")
+        val docs = search(params2, maxDocs)
+println(s"[$tos] #Docs:${docs.size} Expr=${params.find(x => x._1.equals("q")).get._2}$newExpr}")
+        oSearch(typeOfStudy.tail,
+                params,
+                maxDocs,
+                auxSeq ++ docs.map(elem => (tos, elem)))
+      }
     }
 
     require(expression != null)
@@ -182,30 +211,59 @@ class InfobuttonServer(
                           "cohort",
                           "case_control",
                           "case_reports",
-                          "overview")
+                          "overview",
+                          "question_answer")
     expression match {
-      case Some(url) => oSearch(typeOfStudy, url, maxDocs, Seq())
-      case None      => Seq()
+      case Some(params) => oSearch(typeOfStudy, params, maxDocs, Seq())
+      case None         => Seq()
     }
   }
 
-  private def search(expression: String, maxDocs: Int): Seq[JsValue] = {
-    require(expression != null)
+  private def search(params: Seq[(String, String)],
+                     maxDocs: Int): Seq[JsValue] = {
+    require(params != null)
     require(maxDocs > 0)
-println(s"Pesquisando ... [$expression]")
-    val docs = Try(Source.fromURL(expression, "utf-8").getLines().mkString("\n")) match {
-      case Success(ctt) =>
-//println(s"ctt=$ctt")
-        (Json.parse(ctt) \ "response" \ "docs").validate[JsArray] match {
-          case res: JsResult[JsArray] => res.get.value.take(maxDocs)
-          case _                      => Seq()
-        }
-      case Failure(x) =>
-        println(s"FAILURE=$x")
+
+    post(params) match {
+      case Right(ctt) => (Json.parse(ctt) \ "response" \ "docs").validate[JsArray] match {
+        case res: JsResult[JsArray] => res.get.value.take(maxDocs)
+        case _                      => Seq()
+      }
+      case Left(err) =>
+        println(s"FAILURE=$err")
         Seq()
     }
-println(s"#Documentos:${docs.size}\n")
-    docs
+  }
+
+  /**
+    * Sends via http/post protocol a sequence of parameters in the form (key,value)
+    *
+    * @param params the sequence of post parameters: key=value
+    * @return Right(response) where response is the content of the post JsResult
+    * if everything was ok or Left(err) where err is the error message is Some
+    * error occurred
+    */
+  private def post(params: Seq[(String, String)]): Either[String, String] = {
+    val paramSeq = params.map(elem => new BasicNameValuePair(elem._1, elem._2))
+    val httpclient = HttpClients.createDefault()
+    val httpPost = new HttpPost(iahxUrl)
+    httpPost.addHeader("Accept-Charset", "UTF-8")
+    httpPost.addHeader("Accept", "application/json")
+    httpPost.setEntity(new UrlEncodedFormEntity(paramSeq.asJava))
+    val response = httpclient.execute(httpPost)
+//println(s"response=$response")
+    try {
+      val entity = response.getEntity()
+      val content = EntityUtils.toString(entity)
+//println(s"content=$content entity=$entity")
+      response.close()
+      Right(content)
+    } catch {
+      case ex: Throwable =>
+//println("Throwable=${ex.toString}")
+        response.close()
+        Left(ex.toString)
+    }
   }
 
   private def convToInfoResponse(info: Seq[SearchParameter],
@@ -225,7 +283,8 @@ println(s"#Documentos:${docs.size}\n")
         case (str, (msc, idx)) =>
           val msc2 = msc.asInstanceOf[MainSearchCriteria]
           str + (if (idx == 0) "" else " OR ") +
-            (msc2.displayName.getOrElse(msc2.code.getOrElse(msc2.originalText.getOrElse(""))))
+            (msc2.displayName.getOrElse(msc2.code.getOrElse(
+              msc2.originalText.getOrElse(""))))
       }
     val categories = getCategories(info, Seq())
     val id = s"urn:uuid:${java.util.UUID.randomUUID()}"
@@ -285,6 +344,14 @@ println(s"#Documentos:${docs.size}\n")
     }
   }
 
+  /**
+    * Converts a sequence of search parameters into a url defined by the protocol
+    *
+    * @param info sequence of SearchParameter objects
+    * @param infoUrl BVS-Infobutton host url
+    * @return Some(str) where str is the output url if everything was ok or
+    *         None if some error occurred
+    */
   def paramsToUrl(info: Seq[SearchParameter],
                   infoUrl: String): Option[String] = {
     Try (new URL(infoUrl)) match {
@@ -323,9 +390,13 @@ println(s"#Documentos:${docs.size}\n")
   }
 }
 
+/**
+  * Object to call BVS_Infobutton.
+  * usage: InfoServer <url>
+  * where <url> is the url specified by the infobuuton protocol
+  */
 object InfoServer extends App {
-  val indexDir = "web/BVSInfoButton/indexes"
-  val url =
+  val url = if (args.isEmpty)
     "representedOrganization.id.root=[OID of the organization submitting the " +
       "request]&taskContext.c.c=PROBLISTREV&mainSearchCriteria.v.c=C18.452.394.750.149&mainSea" +
       "rchCriteria.v.cs=2.16.840.1.113883.6.177&mainSearchCriteria.v.dn=Type+2+" +
@@ -333,41 +404,12 @@ object InfoServer extends App {
       ".administrativeGenderCode.c=M&age.v.v=45&age.v.u=a&informationRecipient" +
       "=PAT&performer=PROV&performer.languageCode.c=en&performer.healthCarePro" +
       "vider.c.c=163W00000X&knowledgeResponseType=application/json"
-
-  val map = url
-    .split("\\&")
-    .map(_.trim.split("="))
-    .foldLeft[Map[String, String]](Map()) {
-      case (map, arr) => map + ((arr(0).trim, arr(1).trim))
-    }
-  val conv = new MeshConverter(indexDir)
-  val server = new InfobuttonServer(conv)
-
-  val info = server.getInfo(map)
-
-  //println(s"info = $info")
-}
-
-/*
-object InfoServer extends App {
-  private def usage(): Unit = {
-    Console.err.println("usage: InfoServer <code> <code>")
-    System.exit(1)
-  }
-
-  if (args.length != 2) usage()
+    else args(0)
 
   val indexDir = "web/BVSInfoButton/indexes"
-  val msc1 = new MainSearchCriteria(code=Some(args(0)))
-  val msc2 = new MainSearchCriteria(code=Some(args(1)))
   val conv = new MeshConverter(indexDir)
-
-  val teste = new InfoRecipient(role=Some("PAT"), langCode=Some("pt"))
-
   val server = new InfobuttonServer(conv)
+  val info = server.getInfo(url)
 
-  val info = server.getInfo(List(msc1, msc2, teste), "xml")
-
-  println(s"info = $info")
+  println(s"info = ${server.getInfo(url)}")
 }
- */

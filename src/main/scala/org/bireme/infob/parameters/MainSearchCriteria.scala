@@ -7,7 +7,7 @@
 
 package org.bireme.infob.parameters
 
-import org.bireme.infob.{Category, MeshConverter, Tools}
+import org.bireme.infob.{Category, MeshConverter}
 import scala.util.{Try, Success, Failure}
 
 class MainSearchCriteria(val code: Option[String] = None,
@@ -27,18 +27,21 @@ class MainSearchCriteria(val code: Option[String] = None,
         case None => ""
       }
     }
+//println(s"strCode=$strCode")
     val strDisplayName = displayName.getOrElse("").trim
     val strOriginalText = originalText.getOrElse("").trim
     val exprCode = if (strCode.isEmpty) ""
-      else s"mh:${'"'}$strCode${'"'} OR ti:${'"'}$strCode${'"'} OR ab:${'"'}$strCode${'"'}"
+      else s"(mh:${'"'}$strCode${'"'} OR ti:${'"'}$strCode${'"'} OR ab:${'"'}$strCode${'"'})"
     val exprDisplayName = if (strDisplayName.isEmpty) ""
-      else s"mh:${'"'}$strDisplayName${'"'} OR ti:${'"'}$strDisplayName${'"'} OR ab:${'"'}$strDisplayName${'"'}"
+      else s"(mh:${'"'}$strDisplayName${'"'} OR ti:${'"'}$strDisplayName${'"'} OR ab:${'"'}$strDisplayName${'"'})"
     val exprOriginalText = if (strOriginalText.isEmpty) ""
-      else s"mh:($strOriginalText) OR ti:($strOriginalText) OR ab:($strOriginalText)"
-
-    (exprCode + exprDisplayName + exprOriginalText).trim match {
+      else s"(mh:($strOriginalText) OR ti:($strOriginalText) OR ab:($strOriginalText))"
+    val out = Seq(exprCode, exprDisplayName, exprOriginalText) reduce {
+      (a,b) => if (b.isEmpty) a else if (a.isEmpty) b else s"$a OR $b"
+    }
+    out.trim match {
       case "" => None
-      case str => Some(Tools.encodeUrl(str))  //Some(Tools.replaceSpaces(str))
+      case str => Some(str)  //Some(Tools.replaceSpaces(str))
     }
   }
 

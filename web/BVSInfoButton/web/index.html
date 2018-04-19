@@ -1,9 +1,13 @@
 
 <!DOCTYPE html>
 <html>
-<body>
+<body bgcolor="#f3f3f9">
 
 <script type="text/javascript">
+
+var prefix = "http://localhost:8084/BVSInfoButton/infobutton/search";
+//var prefix = "http://localhost:8084/BVSInfoButton/BVSInfoButton";
+//var prefix = "/BVSInfoButton/BVSInfoButton";
 
 function parseElement(elemName) {
   //alert("elemName=" + elemName);
@@ -77,14 +81,14 @@ function addElements(elemNames, url) {
 
 function getParamUrl() {
   //alert("getParamUrl()");
-  var url = addElements(["mainSearchCriteria.v.c", "mainSearchCriteria.v.cs",
+  var url = ""
+  url = addElements(["mainSearchCriteria.v.c", "mainSearchCriteria.v.cs",
                          "mainSearchCriteria.v.dn", "mainSearchCriteria.v.ot"] , url);
-  //alert("getParamUrl() - url=[" + url + "]");
   url = addElements(["subTopic.v.c"], url);
   url = addElements(["subTopic.v.dn"], url);
   url = addElements(["subTopic.v.cs"], url);
-  url = addElements(["patientPerson.AdministrativeGenderCode.c"], url);
-  url = addElements(["patientPerson.AdministrativeGenderCode.dn"], url);
+  url = addElements(["patientPerson.administrativeGenderCode.c"], url);
+  url = addElements(["patientPerson.administrativeGenderCode.dn"], url);
   url = addElements(["age.v.v"], url);
   url = addElements(["age.v.u"], url);
   url = addElements(["ageGroup.v.c"], url);
@@ -96,38 +100,18 @@ function getParamUrl() {
   url = addElements(["performer"], url);
   url = addElements(["performer.languageCode.c"], url);
   url = addElements(["performer.languageCode.dn"], url);
+  url = addElements(["knowledgeResponseType"], url);
 //alert("getParamUrl() - url=[" + url + "]");
   return url;
 }
 
 function buildUrl() {
-  var prefix = "http://localhost:8084/BVSInfoButton?";
   var parameters = getParamUrl();
   if (parameters.length == 0) {
-    document.getElementById("url").innerHTML = "";
+    document.getElementById("url").innerHTML = "Url: ";
   } else {
-    document.getElementById("url").innerHTML = prefix + parameters;
+    document.getElementById("url").innerHTML = "Url: " + window.prefix + "?" + parameters;
   }
-}
-
-function postX(path, params, method) {
-  alert("postX");
-    var method1 = "get";   //method || "post"; // Set method to post by default if not specified.
-    var path1 = "http://localhost:8084/BVSInfoButton";
-
-    var form = document.createElement("form");
-    form.setAttribute("method", method1);
-    form.setAttribute("action", path1);
-
-    var hiddenField1 = document.createElement("input");
-    hiddenField1.setAttribute("type", "hidden");
-    hiddenField1.setAttribute("name", "mainSearchCriteria.v.c");
-    hiddenField1.setAttribute("value", "C18.452.394.750.149");
-    form.appendChild(hiddenField1);
-
-    document.body.appendChild(form);
-alert("form.submit");
-    form.submit();
 }
 
 function post(path, params, method) {
@@ -189,12 +173,12 @@ function getUrlParameters(url) {
   }
 </style>
 
-<h1>BVS - Infobutton</h1>
+<h1>BVS - Infobutton (alpha version)</h1>
 
-<form action="BVSInfoButton" method="post">
+<form>
 
   <div>
-  Main Search Criteria 1 (Concept Code): <input type="text" name="mainSearchCriteria.v.c" size="30" onchange="buildUrl()"></input>
+  Main Search Criteria 1 (Concept Code): <input type="text" name="mainSearchCriteria.v.c" size="30" onkeyup="buildUrl()"></input>
   &nbsp;&nbsp;Code System: <select name="mainSearchCriteria.v.cs" onchange="buildUrl()">
    <option value="">---do not use---</option>
    <option value="2.16.840.1.113883.6.177">MESH</option>
@@ -208,15 +192,15 @@ function getUrlParameters(url) {
   </select>
   </div>
   <div>
-  Main Search Criteria 1 (Display Name): <input type="text" name="mainSearchCriteria.v.dn" size="60" onchange="buildUrl()"></input>
+  Main Search Criteria 1 (Display Name): <input type="text" name="mainSearchCriteria.v.dn" size="60" onkeyup="buildUrl()"></input>
   </div>
   <div>
-  Main Search Criteria 1 (Original Text): <input type="text" name="mainSearchCriteria.v.ot" size="60" onchange="buildUrl()"></input>
+  Main Search Criteria 1 (Original Text): &nbsp;<input type="text" name="mainSearchCriteria.v.ot" size="60" onkeyup="buildUrl()"></input>
   </div>
   <hr/>
 
   <div>
-  Main Search Criteria 2 (Concept Code): <input type="text" name="mainSearchCriteria.v.c" size="30" onchange="buildUrl()"></input>
+  Main Search Criteria 2 (Concept Code): <input type="text" name="mainSearchCriteria.v.c" size="30" onkeyup="buildUrl()"></input>
   &nbsp;&nbsp;Code System: <select name="mainSearchCriteria.v.cs" onchange="buildUrl()">
    <option value="">---do not use---</option>
    <option value="2.16.840.1.113883.6.177">MESH</option>
@@ -230,15 +214,15 @@ function getUrlParameters(url) {
   </select>
   </div>
   <div>
-  Main Search Criteria 2 (Display Name): <input type="text" name="mainSearchCriteria.v.dn" size="60" onchange="buildUrl()"></input>
+  Main Search Criteria 2 (Display Name): <input type="text" name="mainSearchCriteria.v.dn" size="60" onkeyup="buildUrl()"></input>
   </div>
   <div>
-  Main Search Criteria 2 (Original Text): <input type="text" name="mainSearchCriteria.v.ot" size="60" onchange="buildUrl()"></input>
+  Main Search Criteria 2 (Original Text): &nbsp;<input type="text" name="mainSearchCriteria.v.ot" size="60" onkeyup="buildUrl()"></input>
   </div>
   <hr/>
 
   <div>
-  Main Search Criteria 3 (Concept Code): <input type="text" name="mainSearchCriteria.v.c" size="30" onchange="buildUrl()"></input>
+  Main Search Criteria 3 (Concept Code): <input type="text" name="mainSearchCriteria.v.c" size="30" onkeyup="buildUrl()"></input>
   &nbsp;&nbsp;Code System: <select name="mainSearchCriteria.v.cs" onchange="buildUrl()">
    <option value="">---do not use---</option>
    <option value="2.16.840.1.113883.6.177">MESH</option>
@@ -252,10 +236,10 @@ function getUrlParameters(url) {
   </select>
   </div>
   <div>
-  Main Search Criteria 3 (Display Name): <input type="text" name="mainSearchCriteria.v.dn" size="60" onchange="buildUrl()"></input>
+  Main Search Criteria 3 (Display Name): <input type="text" name="mainSearchCriteria.v.dn" size="60" onkeyup="buildUrl()"></input>
   </div>
   <div>
-  Main Search Criteria 3 (Original Text): <input type="text" name="mainSearchCriteria.v.ot" size="60" onchange="buildUrl()"></input>
+  Main Search Criteria 3 (Original Text): &nbsp;<input type="text" name="mainSearchCriteria.v.ot" size="60" onkeyup="buildUrl()"></input>
   </div>
   <hr/>
 
@@ -318,7 +302,7 @@ function getUrlParameters(url) {
   <hr/>
 
   <div>
-  Administrative Gender Code (Concept Code): <select name="patientPerson.AdministrativeGenderCode.c" onchange="buildUrl()">
+  Administrative Gender Code (Concept Code): <select name="patientPerson.administrativeGenderCode.c" onchange="buildUrl()">
    <option value="">---do not use---</option>
    <option value="F">F</option>
    <option value="M">M</option>
@@ -327,7 +311,7 @@ function getUrlParameters(url) {
   </div>
 
   <div>
-  Administrative Gender Code (Display Name): <select name="patientPerson.AdministrativeGenderCode.dn" onchange="buildUrl()">
+  Administrative Gender Code (Display Name): <select name="patientPerson.administrativeGenderCode.dn" onchange="buildUrl()">
    <option value="">---do not use---</option>
    <option value="Undifferentiated">undifferentiated</option>
    <option value="Male">male</option>
@@ -338,7 +322,7 @@ function getUrlParameters(url) {
   <hr/>
 
   <div>
-  Age Value: <input type="text" name="age.v.v" size="4" onchange="buildUrl()"></input>
+  Age Value: <input type="text" name="age.v.v" size="4" onkeyup="buildUrl()"></input>
   </div>
 
   <div>
@@ -1255,7 +1239,14 @@ function getUrlParameters(url) {
    <option disabled value="norwegian">norwegian</option>
   </select>
   </div>
+  <hr/>
 
+  <div>
+    Knowledge Response Type: <select name="knowledgeResponseType" onchange="buildUrl()">
+      <option value="text/xml">text/xml</option>
+      <option value="application/json">application/json</option>
+     </select>
+  </div>
   <hr/>
 
   <p id="url"></p>
@@ -1263,24 +1254,17 @@ function getUrlParameters(url) {
   <hr/>
 
   <div>
-     <input type="button" value="Send" onclick="post('http://localhost:8084/BVSInfoButton/BVSInfoButton', getUrlParameters(getParamUrl()))", "post" />
-     <!--input type="button" value="Send" onclick="postX('', '', '')"/-->
+     <input type="button" value="Send" onclick="post(window.prefix, getUrlParameters(getParamUrl()))", "post" />
   </div>
-
-</form>
+  </form>
 
 <script type="text/javascript">
-//alert("antes");
-  var prefix = "http://localhost:8084/BVSInfoButton?";
-  var url = buildUrl();
-  //alert("url=[" + url + "]");
-  if (url.length == 0) {
-    document.getElementById("url").innerHTML = "";
-  } else {
-    document.getElementById("url").innerHTML = prefix + url;
-    //alert("url=" + url + " params = " + getUrlParameters(url));
-  }
-//alert("fim");
+  window.onpageshow = function(event) {
+    if (event.persisted) {
+      window.location.reload()
+    }
+  };
+  buildUrl();
 </script>
 
 </body>

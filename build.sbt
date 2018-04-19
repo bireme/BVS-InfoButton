@@ -10,15 +10,16 @@ lazy val root = (project in file(".")).
     name := "BVS-InfoButton"
   )
 
-val akkaVersion = "10.0.10" // "10.0.9"
-val playJsonVersion = "2.6.6" // "2.6.3"
+val akkaVersion = "10.1.1" //"10.0.10"
+val playJsonVersion = "2.6.9" //"2.6.6"
 val scalaXmlVersion = "1.0.6"
-val dom4jVersion = "2.1.0" //"2.0.1"
-val scalaLoggingVersion = "3.7.2"
+val dom4jVersion = "2.1.0"
+val scalaLoggingVersion = "3.9.0" //"3.7.2"
 val logbackVersion = "1.2.3"
-val scalaTestVersion = "3.0.4"
+val scalaTestVersion = "3.0.5"
 val hairyfotrVersion = "0.1.17"
-val luceneVersion = "7.2.1" // "6.6.0"
+val luceneVersion = "7.3.0"
+val httpComponentsVersion = "4.5.5"
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http" % akkaVersion,
@@ -27,13 +28,15 @@ libraryDependencies ++= Seq(
   "org.dom4j" % "dom4j" % dom4jVersion,
   "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
   "ch.qos.logback" % "logback-classic" % logbackVersion,
+  "ch.qos.logback" % "logback-core" % logbackVersion,
   "org.scalactic" %% "scalactic" % scalaTestVersion,
   "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
   "org.apache.lucene" % "lucene-core" % luceneVersion,
   "org.apache.lucene" % "lucene-analyzers-common" % luceneVersion,
   "org.apache.lucene" % "lucene-queryparser" % luceneVersion,
   "org.apache.lucene" % "lucene-queries" % luceneVersion,
-  "org.apache.lucene" % "lucene-backward-codecs" % luceneVersion
+  "org.apache.lucene" % "lucene-backward-codecs" % luceneVersion,
+  "org.apache.httpcomponents" % "httpclient" % httpComponentsVersion
 )
 
 logBuffered in Test := false

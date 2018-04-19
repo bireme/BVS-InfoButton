@@ -14,25 +14,17 @@ class Performer(role: Option[String],
                 langCode: Option[String] = None,
                 langCodeSystem: Option[String] = None,
                 langDisplayName: Option[String] = None) extends SearchParameter {
+  val lCodeSys = langCodeSystem.getOrElse("")
+  require (lCodeSys.isEmpty || lCodeSys.equals(InfoRecipient.ISO_639_1))
+
   val lang2 = ISO639_1_Codes.codes.map { case (k, v) => (k, v.head.toLowerCase) }
   val langN = lang2.map { case (k, v) => (v, k) }
 
-  val lcode = langCodeSystem match {
-    case Some("ISO 639-1") =>
-      langCode
-        .map(_.toLowerCase)
-        .flatMap(la => if (lang2.contains(la)) Some(la) else None)
-    case Some("") =>
-      langCode
-        .map(_.toLowerCase)
-        .flatMap(la => if (lang2.contains(la)) Some(la) else None)
-    case None =>
-      langCode
-        .map(_.toLowerCase)
-        .flatMap(la => if (lang2.contains(la)) Some(la) else None)
-    case _ => langDisplayName.flatMap(la => langN.get(la.toLowerCase))
+  val lcode: Option[String] = langCode match {
+    case Some(lcode) =>
+      if (lang2.contains(lcode.toLowerCase)) Some(lcode.toLowerCase) else None
+    case None => langDisplayName.flatMap(la => langN.get(la.toLowerCase))
   }
-
   val role2 = role match {
     case Some("PAT")   => Some("PAT")   // patient
     case Some("PROV")  => Some("PROV")  // healthCareProvider
@@ -42,14 +34,14 @@ class Performer(role: Option[String],
 
   override def toSrcExpression(conv: MeshConverter,
                                env: Seq[SearchParameter]): Option[String] = {
-println(s"***lcode=$lcode")
+//println(s"***lcode=$lcode")
     env.collectFirst({ case ir: InfoRecipient => ir }) match {
       case Some(ir: InfoRecipient) =>
         ir.lcode match {
-          case Some(lang) => Some(s"(la:(%22$lang%22))")
-          case _          => lcode.map(lc => s"(la:(%22$lc%22))")
+          case Some(lang) => Some(s"(la:${'"'}$lang${'"'})")
+          case _          => lcode.map(lc => s"(la:${'"'}$lc${'"'})")
         }
-      case _ => lcode.map(lc => s"(la:(%22${Tools.encodeUrl(lc)}%22))")
+      case _ => lcode.map(lc => s"(la:${'"'}${Tools.encodeUrl(lc)}${'"'})")
     }
   }
 
@@ -70,6 +62,8 @@ println(s"***lcode=$lcode")
 }
 
 object Performer extends Parser {
+  val ISO_639_1 = "2.16.840.1.113883.1.11.11526"
+
   override def parse(parameters: Map[String, String])
     :(Seq[SearchParameter], Map[String, String]) = {
 

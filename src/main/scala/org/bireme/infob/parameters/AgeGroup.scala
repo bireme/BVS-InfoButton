@@ -53,7 +53,7 @@ class AgeGroup(code: Option[String] = None,
 
   override def toSrcExpression(conv: MeshConverter,
                                env: Seq[SearchParameter]): Option[String] =
-    agroup.map(ag => s"(limit:(%22${Tools.encodeUrl(ag)}%22))")
+    agroup.map(ag => s"(limit:${'"'}${Tools.encodeUrl(ag)}${'"'})")
 
   override def getCategories: Seq[Category] = {
     Seq(

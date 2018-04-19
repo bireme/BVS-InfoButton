@@ -26,7 +26,7 @@ import org.bireme.infob.MeshConverter;
  * @author Heitor Barbieri
  * date: 20171215
  */
-@WebServlet(name = "BVSInfoButton", urlPatterns = {"/BVSInfoButton"})
+@WebServlet(name = "BVSInfoButton", urlPatterns = {"/infobutton/search"})
 public class BVSInfoButton extends HttpServlet {
 
     private InfobuttonServer info;
@@ -62,9 +62,12 @@ public class BVSInfoButton extends HttpServlet {
                                   HttpServletResponse response)
                                           throws ServletException, IOException {
         final String auxContentType = request.getParameter("knowledgeResponseType");
-        final String contentType = (auxContentType == null) ? "application/json"
+        final String contentType = (auxContentType == null) ? "text/xml"
                                                  : auxContentType.toLowerCase();
 System.out.println("processing Request");
+        response.setContentType(contentType);
+        response.setCharacterEncoding("utf-8");
+        
         try (PrintWriter out = response.getWriter()) {
             //out.println(getMainSearchCriteria(request.getParameterMap()));
             //out.println(getDocuments(request.getParameterMap()));

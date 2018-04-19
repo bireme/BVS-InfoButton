@@ -48,7 +48,7 @@ class Age(value: Option[String],
 
   override def toSrcExpression(conv: MeshConverter,
                                env: Seq[SearchParameter]): Option[String] =
-    agroup.map(ag => s"(limit:(%22$ag%22))")
+    agroup.map(ag => s"(limit:${'"'}$ag${'"'})")
 
   override def getCategories: Seq[Category] =
     Seq(Category("age.v.v", value.get), Category("age.v.u", unit.get))

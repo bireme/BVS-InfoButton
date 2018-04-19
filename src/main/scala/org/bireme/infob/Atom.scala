@@ -31,7 +31,7 @@ case class AtomFeed(subtitle: String,
     case _                  => ("BIREME/PAHO/WHO", "http://www.paho.org/bireme")
   }
   val rights =
-    ("BVS-InfoButton © Pan American Health Organization, 2017.",
+    ("BVS-InfoButton © Pan American Health Organization, 2018.",
      "https://github.com/bireme/BVS-InfoButton/blob/master/LICENSE.txt")
 
   val prefix = "http://bvsalud.org/wp-content/themes/vhl-search-portal/images"
