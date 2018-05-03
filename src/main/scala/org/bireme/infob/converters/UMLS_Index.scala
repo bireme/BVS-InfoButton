@@ -37,7 +37,12 @@ object UMLS_Index extends App {
   val DEF_UMLS_YEAR = 2017
   val DEF_UMLS_MASTER = s"/bases/umls/${DEF_UMLS_YEAR}AA/decsnamecuisty"
 
-  val thesauri = HashSet("ICD9CM", "ICD10CM", "ICD10", "SNOMEDCT_US", "RXNORM")
+  val thesauri = HashSet("ICD9CM", "ICD10CM", "ICD10", "SNOMEDCT_US", "RXNORM",
+    "NDC", "LOINC")
+
+  val conversion = Map("ICD9CM" -> "ICD9-CM", "ICD10CM" -> "ICD10-CM",
+    "ICD10" -> "ICD10", "SNOMEDCT_US" -> "SNOMED-CT", "RXNORM" -> "RXNORM",
+    "NDC" -> "NDC", "LOINC" -> "LOINC")
 
   val TAG = 501
   val UMLS_CONCEPT_CODE_SUBFLD = '1'
@@ -105,8 +110,9 @@ object UMLS_Index extends App {
       val preferedTerm = etSeq.find(_.termType.equals("PF"))
       val doc = new Document()
 
+      val thesaurus = conversion.get(head.thesaurus).get
       doc.add(new StringField("umlsCode", umlsCode, Field.Store.YES))
-      doc.add(new StringField("thesaurus", head.thesaurus, Field.Store.YES))
+      doc.add(new StringField("thesaurus", thesaurus, Field.Store.YES))
       doc.add(new StringField("termCode", head.termCode, Field.Store.YES))
       meshTermCode.map { mtc =>
         doc.add(new StringField("meshCode", mtc, Field.Store.YES))

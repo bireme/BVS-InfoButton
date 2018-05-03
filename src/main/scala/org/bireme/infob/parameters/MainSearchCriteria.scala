@@ -28,21 +28,23 @@ class MainSearchCriteria(val code: Option[String] = None,
       }
     }
 //println(s"strCode=$strCode")
-    val strDisplayName = displayName.getOrElse("").trim
+    //val strDispName = displayName.getOrElse("").trim
+    val strDisplayName = conv.convert(cSystem, displayName.getOrElse("")) match {
+      case Right(cod) => cod.trim
+      case Left(descr) => descr match {
+        case Some(des) => des.trim
+        case None => ""
+      }
+    }
+
     val strOriginalText = originalText.getOrElse("").trim
-    val exprCode = if (strCode.isEmpty) ""
-      else s"(mh:${'"'}$strCode${'"'} OR ti:${'"'}$strCode${'"'} OR ab:${'"'}$strCode${'"'})"
-    val exprDisplayName = if (strDisplayName.isEmpty) ""
-      else s"(mh:${'"'}$strDisplayName${'"'} OR ti:${'"'}$strDisplayName${'"'} OR ab:${'"'}$strDisplayName${'"'})"
-    val exprOriginalText = if (strOriginalText.isEmpty) ""
-      else s"(mh:($strOriginalText) OR ti:($strOriginalText) OR ab:($strOriginalText))"
-    val out = Seq(exprCode, exprDisplayName, exprOriginalText) reduce {
-      (a,b) => if (b.isEmpty) a else if (a.isEmpty) b else s"$a OR $b"
-    }
-    out.trim match {
-      case "" => None
-      case str => Some(str)  //Some(Tools.replaceSpaces(str))
-    }
+
+    if (strCode.isEmpty) {
+      if (strDisplayName.isEmpty) {
+        if (strOriginalText.isEmpty) None else
+          Some(s"(mh:($strOriginalText) OR ti:($strOriginalText) OR ab:($strOriginalText))")
+      } else Some(s"(mh:${'"'}$strDisplayName${'"'} OR ti:${'"'}$strDisplayName${'"'} OR ab:${'"'}$strDisplayName${'"'})")
+    } else Some(s"(mh:${'"'}$strCode${'"'} OR ti:${'"'}$strCode${'"'} OR ab:${'"'}$strCode${'"'})")
   }
 
   override def getCategories: Seq[Category] = {

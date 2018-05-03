@@ -12,6 +12,7 @@ import org.bireme.infob.parameters._
 import ch.qos.logback.classic.{Level, Logger => xLogger}
 import com.typesafe.scalalogging.Logger
 import java.net.{URL, URLDecoder, URLEncoder}
+import java.nio.charset.Charset
 import org.slf4j.LoggerFactory
 import play.api.libs.json._
 
@@ -69,12 +70,11 @@ class InfobuttonServer(
     val useORExpression = info.count(_.isInstanceOf[MainSearchCriteria]) > 1 // There are more than one MainSearchCriteria
 //println(s"Antes do orderedSearch(exprAND, maxDocs) exprAND=[$exprAND]")
     val docsAND = orderedSearch(exprAND, maxDocs)
-    val remaining =  if (useORExpression) maxDocs - docsAND.size else 0
 //println(s"Antes do orderedSearch(exprOR, maxDocs) remaining=$remaining")
-    val exprOR = if (remaining > 0) convToSrcExpression(info, conv, maxDocs, true)
+    val exprOR = if (useORExpression) convToSrcExpression(info, conv, maxDocs, true)
       else None
-    val docsOR = if (remaining > 0) {
-        orderedSearch(exprOR, remaining)
+    val docsOR = if (useORExpression) {
+        orderedSearch(exprOR, maxDocs, Some(docsAND))
       } else Seq()
     val docs = docsAND ++ docsOR
 
@@ -104,7 +104,7 @@ class InfobuttonServer(
                                   useOR: Boolean): Option[Seq[(String, String)]] = {
     // Processing MainSearchCriteria
     val (s1,s2) = partition[MainSearchCriteria](info)
-println(s"info=$info s1=$s1 s2=$s2")
+//println(s"info=$info s1=$s1 s2=$s2")
     if (s1.isEmpty)
       throw new IllegalArgumentException("missing MainSearchCriteria")
 //println(s"srcParam2SrcExpr(s1, conv, useOR)=${srcParam2SrcExpr(s1, conv, useOR)}")
@@ -116,7 +116,7 @@ println(s"info=$info s1=$s1 s2=$s2")
           case Some(src) => s" AND $src"
           case None => ""
         }
-        //println(s"*=>info=${info} s1=$s1 s3=$s3 s4=$s4")
+        println(s"*=>info=${info} s1=$s1 s3=$s3 s4=$s4")
 
         //Processing other parameters
         val srcParam = s4.foldLeft[String](s"$msc_str AND " +
@@ -173,34 +173,9 @@ println(s"info=$info s1=$s1 s2=$s2")
   }
 
   private def orderedSearch(expression: Option[Seq[(String, String)]],
-                            maxDocs: Int): Seq[(String, JsValue)] = {
-
-    def oSearch(typeOfStudy: Seq[String],
-                params: Seq[(String,String)],
-                maxDocs: Int,
-                auxSeq: Seq[(String, JsValue)]): Seq[(String, JsValue)] = {
-      if (typeOfStudy.isEmpty) {
-        if (auxSeq.isEmpty) search(params, maxDocs).map(elem => ("other", elem))
-        else auxSeq
-      } else {
-        val tos = typeOfStudy.head
-        // 'Question and answer' is not a type of study but a type of document.
-        val newExpr = if (tos.equals("question_answer")) " AND (type:\"perg_resp\")"
-          else " AND (type_of_study:" + "\"" + tos + "\")"
-        val params2: Seq[(String,String)] = params.map {
-          param => if (param._1 equals "q") ("q" -> (param._2 + newExpr))
-                   else param
-        }
-//println(s"params2=$params2")
-        val docs = search(params2, maxDocs)
-println(s"[$tos] #Docs:${docs.size} Expr=${params.find(x => x._1.equals("q")).get._2}$newExpr}")
-        oSearch(typeOfStudy.tail,
-                params,
-                maxDocs,
-                auxSeq ++ docs.map(elem => (tos, elem)))
-      }
-    }
-
+                            maxDocs: Int,
+                            auxDocsAnd: Option[Seq[(String, JsValue)]] = None):
+                                                      Seq[(String, JsValue)] = {
     require(expression != null)
     require(maxDocs > 0)
 
@@ -214,8 +189,41 @@ println(s"[$tos] #Docs:${docs.size} Expr=${params.find(x => x._1.equals("q")).ge
                           "overview",
                           "question_answer")
     expression match {
-      case Some(params) => oSearch(typeOfStudy, params, maxDocs, Seq())
+      case Some(params) => oSearch(typeOfStudy, params, maxDocs, Seq(), auxDocsAnd)
       case None         => Seq()
+    }
+  }
+
+  private def oSearch(typeOfStudy: Seq[String],
+                      params: Seq[(String,String)],
+                      maxDocs: Int,
+                      auxSeq: Seq[(String, JsValue)],
+                      auxDocsAnd: Option[Seq[(String, JsValue)]]):
+                                                      Seq[(String, JsValue)] = {
+    if (typeOfStudy.isEmpty) {
+      if (auxSeq.isEmpty) search(params, maxDocs).map(elem => ("other", elem))
+      else auxSeq
+    } else {
+      val tos = typeOfStudy.head
+      // 'Question and answer' is not a type of study but a type of document.
+      val newExpr = if (tos.equals("question_answer")) " AND (type:\"perg_resp\")"
+        else " AND (type_of_study:" + "\"" + tos + "\")"
+      val params2: Seq[(String,String)] = params.map {
+        param => if (param._1 equals "q") ("q" -> (param._2 + newExpr))
+                 else param
+      }
+      val numDocsAnd = auxDocsAnd.map(_.count(_._1 equals tos)).getOrElse(0)
+      val maxDocs2 = maxDocs - numDocsAnd
+
+//println(s"params2=$params2")
+      val docs = if (maxDocs2 > 0) search(params2, maxDocs2) else Seq()
+//println(s"[$tos] #Docs:${docs.size + numDocsAnd} and=${numDocsAnd} or=${docs.size} maxDocs2=${maxDocs2}")
+println(s"[$tos] #Docs:${docs.size + numDocsAnd}")
+      oSearch(typeOfStudy.tail,
+              params,
+              maxDocs,
+              auxSeq ++ docs.map(elem => (tos, elem)),
+              auxDocsAnd)
     }
   }
 
@@ -249,9 +257,10 @@ println(s"[$tos] #Docs:${docs.size} Expr=${params.find(x => x._1.equals("q")).ge
     val httpPost = new HttpPost(iahxUrl)
     httpPost.addHeader("Accept-Charset", "UTF-8")
     httpPost.addHeader("Accept", "application/json")
-    httpPost.setEntity(new UrlEncodedFormEntity(paramSeq.asJava))
+    httpPost.setEntity(new UrlEncodedFormEntity(paramSeq.asJava, Charset.forName("utf-8")))
+println(s"httpPost=$httpPost")
     val response = httpclient.execute(httpPost)
-//println(s"response=$response")
+println(s"response=$response")
     try {
       val entity = response.getEntity()
       val content = EntityUtils.toString(entity)
@@ -411,4 +420,5 @@ object InfoServer extends App {
   val server = new InfobuttonServer(conv)
 
   println(s"info = ${server.getInfo(url, 10)}")
+  conv.close()
 }

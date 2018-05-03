@@ -44,20 +44,24 @@ object ICD10_UpdateIndex extends App {
                           inputFile: String): Unit = {
     val analyzer = new KeywordAnalyzer()
     val directory = FSDirectory.open(new File(luceneIndex).toPath())
-
-    val config = new IndexWriterConfig(analyzer)
-    config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND)
-
-    val indexWriter = new IndexWriter(directory, config)
     val source = Source.fromFile(inputFile, "utf-8")
     val lines = source.getLines()
 
-    insertDefinitions(lines, indexWriter, None)
+    val config = new IndexWriterConfig(analyzer)
+    config.setOpenMode(IndexWriterConfig.OpenMode.APPEND)
+    val indexWriter = new IndexWriter(directory, config)
 
-    indexWriter.forceMerge(1)
-    source.close()
+    insertDefinitions(lines, indexWriter, None)
     indexWriter.close()
+
+    val config2 = new IndexWriterConfig(analyzer)
+    config2.setOpenMode(IndexWriterConfig.OpenMode.APPEND)
+    val indexWriter2 = new IndexWriter(directory, config2)
+    indexWriter2.forceMerge(1)
+    indexWriter2.close()
+    
     directory.close()
+    source.close()
   }
 
   private def insertDefinitions(lines: Iterator[String],

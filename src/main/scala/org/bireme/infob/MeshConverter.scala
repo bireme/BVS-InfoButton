@@ -25,12 +25,12 @@ import scala.util.{Either, Left, Right}
   * @author Heitor Barbieri
   */
 class MeshConverter(indexes: String) {
-  //"ICD9CM", "ICD10CM", "IDC10", "SNOMEDCT_US", "RXNORM"
+  //"ICD9CM", "ICD10CM", "IDC10", "SNOMED-CT", "RXNORM"
   val thesauri = Map(
-    "ICD9-CM" -> "ICD9CM",
-    "ICD10-CM" -> "ICD10CM",
+    "ICD9-CM" -> "ICD9-CM",
+    "ICD10-CM" -> "ICD10-CM",
     "ICD10" -> "ICD10",
-    "SNOMED-CT" -> "SNOMEDCT_US",
+    "SNOMED-CT" -> "SNOMED-CT",
     "RXNORM" -> "RXNORM"
   )
 
@@ -68,29 +68,33 @@ class MeshConverter(indexes: String) {
     */
   def convert(codeSystem: String,
               code: String): Either[Option[String], String] = {
+    require (code != null)
+
     val tcode = code.trim.toUpperCase
-
-    val mesh = codeSystem.trim.toUpperCase match {
-      case "2.16.840.1.113883.6.103" => getMeshCode("ICD9-CM", tcode)
-      case "2.16.840.1.113883.6.90"  => getMeshCode("ICD10-CM", tcode)
-      case "2.16.840.1.113883.6.3"   => getMeshCode("ICD10", tcode)
-      case "2.16.840.1.113883.6.96"  => getMeshCode("SNOMED-CT", tcode)
-      case "2.16.840.1.113883.6.88"  => getMeshCode("RXNORM", tcode)
-      case "2.16.840.1.113883.6.177" => Right(tcode) // MeSH
-      case "2.16.840.1.113883.6.69"  => getMeshCode("NDC", tcode)
-      case "2.16.840.1.113883.6.1"   => getMeshCode("LOINC", tcode)
-      case _                         => Left(None)
-    }
-
-    // Try converting MeSH code or term into a DeCs code or term description
-//println(s"codeSystem=$codeSystem code=$code mesh=$mesh")
-    mesh match {
-      case Right(mcode) =>
-        mesh2DeCS(mcode) match {
-          case Some(dcode) => Right(dcode)
-          case None => Left(None)
-        }
-      case Left(x) => Left(x)
+    if (tcode.isEmpty) Left(None)
+    else {
+      val mesh = codeSystem.trim.toUpperCase match {
+        case "2.16.840.1.113883.6.103" => getMeshCode("ICD9-CM", tcode)
+        case "2.16.840.1.113883.6.90"  => getMeshCode("ICD10-CM", tcode)
+        case "2.16.840.1.113883.6.3"   => getMeshCode("ICD10", tcode)
+        case "2.16.840.1.113883.6.96"  => getMeshCode("SNOMED-CT", tcode)
+        case "2.16.840.1.113883.6.88"  => getMeshCode("RXNORM", tcode)
+        case "2.16.840.1.113883.6.177" => Right(tcode) // MeSH
+        case "2.16.840.1.113883.6.69"  => getMeshCode("NDC", tcode)
+        case "2.16.840.1.113883.6.1"   => getMeshCode("LOINC", tcode)
+        case _                         => Left(None)
+      }
+  println(s"mesh=$mesh codeSystem=$codeSystem")
+      // Try converting MeSH code or term into a DeCs code or term description
+  //println(s"codeSystem=$codeSystem code=$code mesh=$mesh")
+      mesh match {
+        case Right(mcode) =>
+          mesh2DeCS(mcode) match {
+            case Some(dcode) => Right(dcode)
+            case None => Left(None)
+          }
+        case Left(x) => Left(x)
+      }
     }
   }
 
@@ -100,11 +104,11 @@ class MeshConverter(indexes: String) {
     thesauri.get(codeSystem) match {
       case Some(cSystem) => thes2thesSearchers.get("UMLS") match {
         case Some(searcher) =>
-    //println(s"codeSystem=$cSystem code=$code searcher=$searcher")
+    println(s"codeSystem=$cSystem code=$code searcher=$searcher")
           val parser = new QueryParser("thesaurus", analyzer)
           val query = parser.parse(s"thesaurus:$cSystem AND termCode:$code")
           val topDocs = searcher.search(query, 1)
-    //println(s"query=$query totalHits=${topDocs.totalHits}")
+    println(s"query=$query totalHits=${topDocs.totalHits}")
           if (topDocs.totalHits == 0) {
             val ucode = Tools.uniformString(code)
             val query2 = parser.parse(s"thesaurus:$cSystem AND termLabelNorm:$ucode")
@@ -154,7 +158,7 @@ class MeshConverter(indexes: String) {
                BooleanClause.Occur.SHOULD)
           .build()
         val topDocs = searcher.search(booleanQuery, 1)
-println(s"booleanQuery=${booleanQuery.toString()} totalHits=${topDocs.totalHits}")
+//println(s"booleanQuery=${booleanQuery.toString()} totalHits=${topDocs.totalHits}")
         if (topDocs.totalHits == 0) None
         else {
           //println(s"Achou algum documento. totalHits=${topDocs.totalHits}")
