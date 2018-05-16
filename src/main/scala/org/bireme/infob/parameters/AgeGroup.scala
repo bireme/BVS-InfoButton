@@ -51,9 +51,9 @@ class AgeGroup(code: Option[String] = None,
   } else None
 //println(s"agroup=$agroup")
 
-  override def toSrcExpression(conv: MeshConverter,
-                               env: Seq[SearchParameter]): Option[String] =
-    agroup.map(ag => s"(limit:${'"'}${Tools.encodeUrl(ag)}${'"'})")
+  override def toSrcExpression(env: Seq[SearchParameter]): Option[String] =
+    agroup.map(ag => s"(limit:${'"'}$ag${'"'})")
+    //agroup.map(ag => s"(limit:${'"'}${Tools.encodeUrl(ag)}${'"'})")
 
   override def getCategories: Seq[Category] = {
     Seq(
@@ -70,7 +70,9 @@ class AgeGroup(code: Option[String] = None,
 }
 
 object AgeGroup extends Parser {
-  override def parse(parameters: Map[String, String]) :(Seq[SearchParameter], Map[String, String]) = {
+  override def parse(conv: MeshConverter,
+                    parameters: Map[String, String]):
+                                 (Seq[SearchParameter], Map[String, String]) = {
 
     val (ag, others) = parameters.partition(_._1.startsWith("ageGroup.v."))
 

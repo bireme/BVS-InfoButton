@@ -3,15 +3,64 @@
 <html>
 <body bgcolor="#f3f3f9">
 
+<style>
+  div {
+    padding-bottom: 1.3em;
+  }
+  h1 {
+    margin-bottom: 1em;
+  }
+  h3 {
+    padding-bottom: 0.8em;
+  }
+  select {
+    margin-left: 0.2em;
+  }
+  .hoverable {
+    font-size: 11.0px;
+    color: blue;
+    text-align: left;
+  }
+  p.copyright {
+    font-size: 10.0px;
+    color: blue;
+    text-align: right;
+  }
+
+  .dropdown {
+    position: relative;
+    display: inline-block;
+  }
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 850px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    padding: 12px 16px;
+    z-index: 1;
+    font-size: 90%;
+  }
+  .dropdown:hover .dropdown-content {
+    display: block;
+  }
+
+</style>
+
 <script type="text/javascript">
 
-var prefix = "http://localhost:8084/BVSInfoButton/infobutton/search";
-//var prefix = "http://localhost:8084/BVSInfoButton/BVSInfoButton";
-//var prefix = "/BVSInfoButton/BVSInfoButton";
+var protocol = window.location.protocol
+var strPort = "";
+var port = window.location.port;
+if (port === "80") strPort = ""; else strPort = ":" + port;
+
+var host = window.location.hostname + strPort 
+          //"bvsinfobutton.homolog.bvsalud.org"
+          //"serverofir5.bireme.br"
+
+var prefix = protocol + "//" + host + "/BVSInfoButton/infobutton/search";
 
 function parseElement(elemName) {
-  //alert("elemName=" + elemName);
-
   var elem = document.getElementsByName(elemName);
   var ret = [];
   var size = elem.length;
@@ -21,11 +70,14 @@ function parseElement(elemName) {
     var elem2 = elem[0];
     //alert("elem2=" + elem2);
     var isInputText = elem2 instanceof HTMLInputElement && elem2.type == 'text';
+    var isCheckBox = elem2 instanceof HTMLInputElement && elem2.type == 'checkbox';
     //alert ("isInputText=" + isInputText);
 
     for (i = 0; i < size; i++) {
-      var content = (isInputText) ? elem[i].value
-                                  : elem[i].options[elem[i].selectedIndex].value;
+      var content = (isInputText)
+                ? elem[i].value
+                : (isCheckBox) ? (elem[i].checked) ? "true" : ""
+                               : elem[i].options[elem[i].selectedIndex].value;
       ret.push(content.trim());
     }
   }
@@ -64,7 +116,7 @@ function addElements(elemNames, url) {
         var content = parsed[i][j];
 //alert("content=" + content);
         if (content.length > 0) {
-          var idx = useIndex ? k : "";
+          var idx = useIndex && (k > 0) ? k : "";
 //alert("antes ret=[" + ret + "]");
           ret = ret + sep + elemNames[i] + idx + "=" + content;
 //alert("depois ret=[" + ret + "]");
@@ -81,7 +133,7 @@ function addElements(elemNames, url) {
 
 function getParamUrl() {
   //alert("getParamUrl()");
-  var url = ""
+  var url = "";
   url = addElements(["mainSearchCriteria.v.c", "mainSearchCriteria.v.cs",
                          "mainSearchCriteria.v.dn", "mainSearchCriteria.v.ot"] , url);
   url = addElements(["subTopic.v.c"], url);
@@ -101,23 +153,26 @@ function getParamUrl() {
   url = addElements(["performer.languageCode.c"], url);
   url = addElements(["performer.languageCode.dn"], url);
   url = addElements(["knowledgeResponseType"], url);
+  url = addElements(["explain"], url);
 //alert("getParamUrl() - url=[" + url + "]");
   return url;
 }
 
 function buildUrl() {
+  //alert("buildUrl");
   var parameters = getParamUrl();
+  //alert("parameters.length=" + parameters.length);
   if (parameters.length == 0) {
-    document.getElementById("url").innerHTML = "Url: ";
+    document.getElementById("url").innerHTML = "url: ";
   } else {
-    document.getElementById("url").innerHTML = "Url: " + window.prefix + "?" + parameters;
+    document.getElementById("url").innerHTML = "url: " + window.prefix + "?" + parameters;
   }
 }
 
 function post(path, params, method) {
     method = method || "post"; // Set method to post by default if not specified.
 //alert("path=" + path + " params=" + params + " method=" + method);
-    // The rest of this code assumes you are not using a library.
+    // The rescopyrightt of this code assumes you are not using a library.
     // It can be made less wordy if you use one.
     var form = document.createElement("form");
     form.setAttribute("method", method);
@@ -158,27 +213,12 @@ function getUrlParameters(url) {
 
 </script>
 
-<style>
-  div {
-    padding-bottom: 1.3em;
-  }
-  h1 {
-    margin-bottom: 1em;
-  }
-  h3 {
-    padding-bottom: 0.8em;
-  }
-  select {
-    margin-left: 0.2em;
-  }
-</style>
+<h1>BVS - Infobutton (version 0.9)</h1>
 
-<h1>BVS - Infobutton (alpha version)</h1>
-
-<form>
+<form id="myForm">
 
   <div>
-  Main Search Criteria 1 (Concept Code): <input type="text" name="mainSearchCriteria.v.c" size="30" onkeyup="buildUrl()"></input>
+  Main Search Criteria 1 (Concept Code): <input type="text" name="mainSearchCriteria.v.c" size="30" onkeyup="buildUrl()"/>
   &nbsp;&nbsp;Code System: <select name="mainSearchCriteria.v.cs" onchange="buildUrl()">
    <option value="">---do not use---</option>
    <option value="2.16.840.1.113883.6.177">MESH</option>
@@ -192,15 +232,25 @@ function getUrlParameters(url) {
   </select>
   </div>
   <div>
-  Main Search Criteria 1 (Display Name): <input type="text" name="mainSearchCriteria.v.dn" size="60" onkeyup="buildUrl()"></input>
+  Main Search Criteria 1 (Display Name): <input type="text" name="mainSearchCriteria.v.dn" size="60" onkeyup="buildUrl()"/>
   </div>
   <div>
-  Main Search Criteria 1 (Original Text): &nbsp;<input type="text" name="mainSearchCriteria.v.ot" size="60" onkeyup="buildUrl()"></input>
+  Main Search Criteria 1 (Original Text): &nbsp;<input type="text" name="mainSearchCriteria.v.ot" size="60" onkeyup="buildUrl()"/>
+  </div>
+
+  <div class="dropdown">
+    <span class="hoverable">See rules</span>
+    <div class="dropdown-content">
+      <p>1) If code is present, displayName MAY also be present, so that knowledge resources that do not support a given code system MAY still process the request using displayName as a search keyword.</p>
+      <p>2) If code is present, codeSystem SHALL be present.</p>
+      <p>3) If the code, the displayName, and originalText are all present, knowledge resources MAY decide whether to process the code, the displayName, and/or the originalText to retrieve relevant content.</p>
+      <p>4) If code is not present, the text displayed to (or entered by) the user SHALL be represented in the originalText attribute.</p>
+    </div>
   </div>
   <hr/>
 
   <div>
-  Main Search Criteria 2 (Concept Code): <input type="text" name="mainSearchCriteria.v.c" size="30" onkeyup="buildUrl()"></input>
+  Main Search Criteria 2 (Concept Code): <input type="text" name="mainSearchCriteria.v.c" size="30" onkeyup="buildUrl()"/>
   &nbsp;&nbsp;Code System: <select name="mainSearchCriteria.v.cs" onchange="buildUrl()">
    <option value="">---do not use---</option>
    <option value="2.16.840.1.113883.6.177">MESH</option>
@@ -214,15 +264,15 @@ function getUrlParameters(url) {
   </select>
   </div>
   <div>
-  Main Search Criteria 2 (Display Name): <input type="text" name="mainSearchCriteria.v.dn" size="60" onkeyup="buildUrl()"></input>
+  Main Search Criteria 2 (Display Name): <input type="text" name="mainSearchCriteria.v.dn" size="60" onkeyup="buildUrl()"/>
   </div>
   <div>
-  Main Search Criteria 2 (Original Text): &nbsp;<input type="text" name="mainSearchCriteria.v.ot" size="60" onkeyup="buildUrl()"></input>
-  </div>
+  Main Search Criteria 2 (Original Text): &nbsp;<input type="text" name="mainSearchCriteria.v.ot" size="60" onkeyup="buildUrl()"/>
+</div>
   <hr/>
 
   <div>
-  Main Search Criteria 3 (Concept Code): <input type="text" name="mainSearchCriteria.v.c" size="30" onkeyup="buildUrl()"></input>
+  Main Search Criteria 3 (Concept Code): <input type="text" name="mainSearchCriteria.v.c" size="30" onkeyup="buildUrl()"/>
   &nbsp;&nbsp;Code System: <select name="mainSearchCriteria.v.cs" onchange="buildUrl()">
    <option value="">---do not use---</option>
    <option value="2.16.840.1.113883.6.177">MESH</option>
@@ -236,10 +286,10 @@ function getUrlParameters(url) {
   </select>
   </div>
   <div>
-  Main Search Criteria 3 (Display Name): <input type="text" name="mainSearchCriteria.v.dn" size="60" onkeyup="buildUrl()"></input>
+  Main Search Criteria 3 (Display Name): <input type="text" name="mainSearchCriteria.v.dn" size="60" onkeyup="buildUrl()"/>
   </div>
   <div>
-  Main Search Criteria 3 (Original Text): &nbsp;<input type="text" name="mainSearchCriteria.v.ot" size="60" onkeyup="buildUrl()"></input>
+  Main Search Criteria 3 (Original Text): &nbsp;<input type="text" name="mainSearchCriteria.v.ot" size="60" onkeyup="buildUrl()"/>
   </div>
   <hr/>
 
@@ -274,6 +324,7 @@ function getUrlParameters(url) {
   </select>
   </div>
 
+  <div>
   SubTopic (Display Name): <select name="subTopic.v.dn" onchange="buildUrl()">
    <option value="">---do not use---</option>
    <option value="administration & dosage">administration & dosage (MeSH)</option>
@@ -304,9 +355,9 @@ function getUrlParameters(url) {
   <div>
   Administrative Gender Code (Concept Code): <select name="patientPerson.administrativeGenderCode.c" onchange="buildUrl()">
    <option value="">---do not use---</option>
-   <option value="F">F</option>
-   <option value="M">M</option>
-   <option value="UN">UN</option>
+   <option value="F">F (female)</option>
+   <option value="M">M (male)</option>
+   <option value="UN">UN (undifferentiated)</option>
   </select>
   </div>
 
@@ -322,18 +373,18 @@ function getUrlParameters(url) {
   <hr/>
 
   <div>
-  Age Value: <input type="text" name="age.v.v" size="4" onkeyup="buildUrl()"></input>
+  Age Value: <input type="text" name="age.v.v" size="4" onkeyup="buildUrl()"/>
   </div>
 
   <div>
   Age Unit: <select name="age.v.u" onchange="buildUrl()">
     <option value="">---do not use---</option>
-    <option value="min">min</option>
-    <option value="h">h</option>
-    <option value="d">d</option>
-    <option value="wk">wk</option>
-    <option value="mo">mo</option>
-    <option value="a">a</option>
+    <option value="min">min (minute)</option>
+    <option value="h">h (hour)</option>
+    <option value="d">d (day)</option>
+    <option value="wk">wk (week)</option>
+    <option value="mo">mo (month)</option>
+    <option value="a">a (year)</option>
     </select>
   </div>
 
@@ -342,16 +393,16 @@ function getUrlParameters(url) {
   <div>
   Age Group (Concept Code): <select name="ageGroup.v.c" onchange="buildUrl()">
    <option value="">---do not use---</option>
-   <option value="D007231">D007231</option>
-   <option value="D007223">D007223</option>
-   <option value="D002675">D002675</option>
-   <option value="D002648">D002648</option>
-   <option value="D000293">D000293</option>
-   <option value="D055815">D055815</option>
-   <option value="D000328">D000328</option>
-   <option value="D008875">D008875</option>
-   <option value="D000368">D000368</option>
-   <option value="D000369">D000369</option>
+   <option value="D007231">D007231 (infant, newborn; birth to 1 month)</option>
+   <option value="D007223">D007223 (infant; 1 to 23 months)</option>
+   <option value="D002675">D002675 (child, preschool; 2 to 5 years)</option>
+   <option value="D002648">D002648 (child; 6 to 12 years)</option>
+   <option value="D000293">D000293 (adolescent; 13-18 years)</option>
+   <option value="D055815">D055815 (young adult; 19-24 years)</option>
+   <option value="D000328">D000328 (adult; 19-44 years)</option>
+   <option value="D008875">D008875 (middle aged; 45-64 years)</option>
+   <option value="D000368">D000368 (aged; 56-79 years)</option>
+   <option value="D000369">D000369 (aged, 80 and older; a person 80 years of age and older)</option>
   </select>
   </div>
 
@@ -1192,7 +1243,7 @@ function getUrlParameters(url) {
   <hr/>
 
   <div>
-  Performer Role: <select name="performer onchange="buildUrl()"">
+  Performer Role: <select name="performer" onchange="buildUrl()">
    <option value="">---do not use---</option>
    <option disabled value="PAT">patient</option>
    <option disabled value="PROV">health care provider</option>
@@ -1201,7 +1252,7 @@ function getUrlParameters(url) {
   </div>
 
   <div>
-  Performer Language (Concept Code): <select name="performer.languageCode.c" onchange="buildUrl()"">
+  Performer Language (Concept Code): <select name="performer.languageCode.c" onchange="buildUrl()">
    <option value="">---do not use---</option>
    <option value="en">en</option>
    <option value="es">es</option>
@@ -1249,21 +1300,31 @@ function getUrlParameters(url) {
   </div>
   <hr/>
 
+      <input type="checkbox" name="explain" value="explain" onchange="buildUrl()">Explain results (not in the infobutton protocol)<br>
+
+  <hr/>
+
   <p id="url"></p>
 
   <hr/>
 
+
+  <br/>
   <div>
-     <input type="button" value="Send" onclick="post(window.prefix, getUrlParameters(getParamUrl()))", "post" />
+    <button onclick="document.getElementById('myForm').reset();">Clear</button>
+    <input type="button" value="Send" onclick="post(window.prefix, getUrlParameters(getParamUrl()), 'post')" />
   </div>
   </form>
+
+  <p class="copyright">BVS-InfoButton &copy; Pan American Health Organization, 2017.</p>
 
 <script type="text/javascript">
   window.onpageshow = function(event) {
     if (event.persisted) {
-      window.location.reload()
+      window.location.reload();
     }
   };
+  //alert("início");
   buildUrl();
 </script>
 

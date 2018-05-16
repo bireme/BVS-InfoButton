@@ -84,7 +84,7 @@ class MeshConverter(indexes: String) {
         case "2.16.840.1.113883.6.1"   => getMeshCode("LOINC", tcode)
         case _                         => Left(None)
       }
-  println(s"mesh=$mesh codeSystem=$codeSystem")
+  //println(s"mesh=$mesh codeSystem=$codeSystem")
       // Try converting MeSH code or term into a DeCs code or term description
   //println(s"codeSystem=$codeSystem code=$code mesh=$mesh")
       mesh match {
@@ -104,11 +104,11 @@ class MeshConverter(indexes: String) {
     thesauri.get(codeSystem) match {
       case Some(cSystem) => thes2thesSearchers.get("UMLS") match {
         case Some(searcher) =>
-    println(s"codeSystem=$cSystem code=$code searcher=$searcher")
+    //println(s"codeSystem=$cSystem code=$code searcher=$searcher")
           val parser = new QueryParser("thesaurus", analyzer)
           val query = parser.parse(s"thesaurus:$cSystem AND termCode:$code")
           val topDocs = searcher.search(query, 1)
-    println(s"query=$query totalHits=${topDocs.totalHits}")
+    //println(s"query=$query totalHits=${topDocs.totalHits}")
           if (topDocs.totalHits == 0) {
             val ucode = Tools.uniformString(code)
             val query2 = parser.parse(s"thesaurus:$cSystem AND termLabelNorm:$ucode")

@@ -7,7 +7,7 @@
 
 package org.bireme.infob.parameters
 
-import org.bireme.infob.{Category, MeshConverter, Tools}
+import org.bireme.infob.{Category, MeshConverter}
 import scala.util.{Try, Success, Failure}
 
 class Performer(role: Option[String],
@@ -32,17 +32,10 @@ class Performer(role: Option[String],
     case _             => None
   }
 
-  override def toSrcExpression(conv: MeshConverter,
-                               env: Seq[SearchParameter]): Option[String] = {
+  override def toSrcExpression(env: Seq[SearchParameter]): Option[String] = {
 //println(s"***lcode=$lcode")
-    env.collectFirst({ case ir: InfoRecipient => ir }) match {
-      case Some(ir: InfoRecipient) =>
-        ir.lcode match {
-          case Some(lang) => Some(s"(la:${'"'}$lang${'"'})")
-          case _          => lcode.map(lc => s"(la:${'"'}$lc${'"'})")
-        }
-      case _ => lcode.map(lc => s"(la:${'"'}${Tools.encodeUrl(lc)}${'"'})")
-    }
+    //lcode.map(lc => s"(la:${'"'}${Tools.encodeUrl(lc)}${'"'})")
+    lcode.map(lc => s"(la:${'"'}lc${'"'})")
   }
 
   override def getCategories: Seq[Category] = {
@@ -64,7 +57,8 @@ class Performer(role: Option[String],
 object Performer extends Parser {
   val ISO_639_1 = "2.16.840.1.113883.1.11.11526"
 
-  override def parse(parameters: Map[String, String])
+  override def parse(conv: MeshConverter,
+                     parameters: Map[String, String])
     :(Seq[SearchParameter], Map[String, String]) = {
 
     val (per, others) = parameters.partition(_._1.startsWith("performer"))

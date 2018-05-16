@@ -29,8 +29,7 @@ class AdministrativeGenderCode(code: Option[String] = None,
       }
   }
 
-  override def toSrcExpression(conv: MeshConverter,
-                               env: Seq[SearchParameter]): Option[String] =
+  override def toSrcExpression(env: Seq[SearchParameter]): Option[String] =
     agcode.map(agc => s"(limit:${'"'}$agc${'"'})")
 
   override def getCategories: Seq[Category] = {
@@ -47,7 +46,8 @@ class AdministrativeGenderCode(code: Option[String] = None,
 }
 
 object AdministrativeGenderCode extends Parser {
-  override def parse(parameters: Map[String, String])
+  override def parse(conv: MeshConverter,
+                     parameters: Map[String, String])
     :(Seq[SearchParameter], Map[String, String]) = {
 
     val (agc, others) = parameters.partition(_._1.startsWith(

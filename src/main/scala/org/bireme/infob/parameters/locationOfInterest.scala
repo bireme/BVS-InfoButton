@@ -36,8 +36,7 @@ class LocationOfInterest(
     case _ => None
   }
 
-  override def toSrcExpression(conv: MeshConverter,
-                               env: Seq[SearchParameter]): Option[String] = {
+  override def toSrcExpression(env: Seq[SearchParameter]): Option[String] = {
 //println("===Entrei no toSrcExpression")
     iahxCode.map(ic => s"(pais_assunto:${'"'}${Tools.encodeUrl(ic)}${'"'})")
   }
@@ -55,7 +54,8 @@ class LocationOfInterest(
 }
 
 object LocationOfInterest extends Parser {
-  override def parse(parameters: Map[String, String])
+  override def parse(conv: MeshConverter,
+                     parameters: Map[String, String])
     : (Seq[SearchParameter], Map[String, String]) = {
     val (loi, others) =
       parameters.partition(_._1.startsWith("locationOfInterest.addr."))

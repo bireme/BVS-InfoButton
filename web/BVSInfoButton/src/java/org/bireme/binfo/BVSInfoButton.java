@@ -18,7 +18,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.bireme.infob.InfobuttonServer;
+import org.bireme.infob.InfoServer;
 import org.bireme.infob.MeshConverter;
 
 /**
@@ -29,7 +29,7 @@ import org.bireme.infob.MeshConverter;
 @WebServlet(name = "BVSInfoButton", urlPatterns = {"/infobutton/search"})
 public class BVSInfoButton extends HttpServlet {
 
-    private InfobuttonServer info;
+    private InfoServer info;
     private String tpath;
     private MeshConverter mconverter;
 
@@ -45,7 +45,7 @@ public class BVSInfoButton extends HttpServlet {
         if (tpath == null) throw new ServletException(
                                          "empty 'LUCENE_THESAURI_PATH' config");
         mconverter = new MeshConverter(tpath);
-        info = new InfobuttonServer(mconverter, solrUrl);
+        info = new InfoServer(mconverter, solrUrl);
 
     }
 
@@ -64,7 +64,7 @@ public class BVSInfoButton extends HttpServlet {
         final String auxContentType = request.getParameter("knowledgeResponseType");
         final String contentType = (auxContentType == null) ? "text/xml"
                                                  : auxContentType.toLowerCase();
-System.out.println("processing Request");
+//sSystem.out.println("processing Request");
         response.setContentType(contentType);
         response.setCharacterEncoding("utf-8");
         

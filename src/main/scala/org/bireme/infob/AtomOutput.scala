@@ -11,8 +11,11 @@ import org.dom4j.{DocumentHelper, Document, Element}
 import play.api.libs.json._
 
 object AtomOutput {
-  def toXml(atom: Atom): String = {
+  //Either[Option[JsObject], Element
+  def toXml(atom: Atom,
+            explain: Option[Element]): String = {
     require(atom != null)
+    require(explain != null)
 
     val document = DocumentHelper.createDocument()
     document.setXMLEncoding("UTF-8")
@@ -20,24 +23,33 @@ object AtomOutput {
     val feedElement = feed2Xml(atom.feed, document)
 
     atom.entry.foreach(entry => entry2Xml(entry, feedElement))
-
+    if (!explain.isEmpty) feedElement.add(explain.get)
+    //OutputFormat format = OutputFormat.createPrettyPrint();
+    //if (!explain.isEmpty) feedElement.addComment(explain.get.asXML)
     document.asXML()
   }
 
-  def toJson(atom: Atom): String = {
+  def toJson(atom: Atom,
+             explain: Option[JsObject]): String = {
     require(atom != null)
+    require(explain != null)
 
     val feed = feed2Json(atom.feed)
     val atomEntry = atom.entry
 
-    if (atomEntry.isEmpty)
-      Json.prettyPrint(JsObject(List("feed" -> JsObject(feed))))
+    val root = if (atomEntry.isEmpty)
+      JsObject(List("feed" -> JsObject(feed)))
     else {
       val entries = Seq("entry" -> JsArray(atomEntry.map(entry2Json(_))))
-
-      Json.prettyPrint(JsObject(List("feed" -> JsObject(feed ++ entries))))
-      //Json.stringify(JsObject(List("feed" -> JsObject(feed ++ entries))))
+      JsObject(List("feed" -> JsObject(feed ++ entries)))
     }
+
+    val root2 = explain match {
+      case Some(expl) => root ++ expl
+      case None => root
+    }
+
+    Json.prettyPrint(root2)
   }
 
   private def feed2Xml(feed: AtomFeed, doc: Document): Element = {
@@ -60,10 +72,12 @@ object AtomOutput {
 
     root.addElement("title").addAttribute("type", "text").addText(feed.title)
 
-    root
-      .addElement("subtitle")
-      .addAttribute("type", "text")
-      .addText(feed.subtitle)
+    if (!feed.subtitle.isEmpty) {
+      root
+        .addElement("subtitle")
+        .addAttribute("type", "text")
+        .addText(feed.subtitle)
+    }
 
     val author = root.addElement("author")
     author.addElement("name").addText(feed.author._1)
@@ -155,10 +169,11 @@ object AtomOutput {
       "base" -> JsString(feed.link),
       "lang" -> JsString(feed.lang),
       "title" -> JsObject(
-        List("_value" -> JsString(feed.title), "type" -> JsString("text"))),
-      "subtitle" -> JsObject(
-        List("_value" -> JsString(feed.subtitle), "type" -> JsString("text"))),
-      "author" -> JsObject(
+        List("_value" -> JsString(feed.title), "type" -> JsString("text")))) ++
+   (if (feed.subtitle.isEmpty) Seq()
+   else Seq("subtitle" -> JsObject(
+        List("_value" -> JsString(feed.subtitle), "type" -> JsString("text"))))) ++
+   Seq("author" -> JsObject(
         List("_name" -> JsObject(List("_value" -> JsString(feed.author._1))),
              "uri" -> JsObject(List("_value" -> JsString(feed.author._2))))),
       "updated" -> JsObject(List("_value" -> JsString(feed.updated))),

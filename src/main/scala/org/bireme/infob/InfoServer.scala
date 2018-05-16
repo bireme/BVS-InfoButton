@@ -10,17 +10,23 @@ package org.bireme.infob
 import org.bireme.infob.parameters._
 
 import ch.qos.logback.classic.{Level, Logger => xLogger}
+
 import com.typesafe.scalalogging.Logger
+
 import java.net.{URL, URLDecoder, URLEncoder}
 import java.nio.charset.Charset
-import org.slf4j.LoggerFactory
-import play.api.libs.json._
 
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.impl.client.HttpClients
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.util.EntityUtils
+
+import org.dom4j.Element
+
+import org.slf4j.LoggerFactory
+
+import play.api.libs.json._
 
 import scala.collection.JavaConverters._
 import scala.reflect._
@@ -36,7 +42,7 @@ import scala.util.{Try, Success, Failure}
   *
   * @author Heitor Barbieri
   */
-class InfobuttonServer(
+class InfoServer(
     conv: MeshConverter,
     iahxUrl: String = "http://basalto02.bireme.br:8986/solr5/portal/select") {
 
@@ -46,6 +52,17 @@ class InfobuttonServer(
     .setLevel(Level.DEBUG) //Level.INFO
 
   val logger = Logger("BVS-InfoButton")
+
+  // Types of study
+  // 'overview' is present to grant that at least some document will be returned
+  val studies = Seq("guideline",
+                    "systematic_reviews",
+                    "clinical_trials",
+                    "cohort",
+                    "case_control",
+                    "case_reports",
+                    "overview",
+                    "question_answer")
 
   def getInfo(param: java.util.Map[String, Array[String]], maxDocs: Int): String = {
     val pmap = param.asScala.toMap.map { case (key, value) => (key, value(0)) }
@@ -63,77 +80,84 @@ class InfobuttonServer(
     require(param != null)
     require(maxDocs > 0)
 //println("Antes do ParameterParser")
-    val (info, oType, callbackFunc) = ParameterParser.parse(param)
+    val (info, oType, callbackFunc) = ParameterParser.parse(conv, param)
 //println(s">> getInfo - param=$param  info=$info")
-    val outType = oType.getOrElse("text/xml")
-    val exprAND = convToSrcExpression(info, conv, maxDocs, false)
-    val useORExpression = info.count(_.isInstanceOf[MainSearchCriteria]) > 1 // There are more than one MainSearchCriteria
-//println(s"Antes do orderedSearch(exprAND, maxDocs) exprAND=[$exprAND]")
-    val docsAND = orderedSearch(exprAND, maxDocs)
-//println(s"Antes do orderedSearch(exprOR, maxDocs) remaining=$remaining")
-    val exprOR = if (useORExpression) convToSrcExpression(info, conv, maxDocs, true)
+    val exprAND = convToSrcExpression(info, maxDocs, false)
+//println(s"expreAND=$exprAND")
+    val explainer = if (param.contains("explain")) {
+      val isXml = oType.equals("text/xml")
+      Some(Explainer.explain(this, info, exprAND, isXml))
+    } else None
+    val useORExpression = false //info.count(_.isInstanceOf[MainSearchCriteria]) > 1 // There are more than one MainSearchCriteria
+//println(s"Antes do orderedSearch(studies, exprAND, maxDocs) exprAND=[$exprAND]")
+    val docsAND = orderedSearch(studies, exprAND, maxDocs)
+//println(s"Antes do orderedSearch(studies, exprOR, maxDocs) remaining=$remaining")
+    val exprOR = if (useORExpression) convToSrcExpression(info, maxDocs, true)
       else None
     val docsOR = if (useORExpression) {
-        orderedSearch(exprOR, maxDocs, Some(docsAND))
+        orderedSearch(studies, exprOR, maxDocs, Some(docsAND))
       } else Seq()
     val docs = docsAND ++ docsOR
 
     logger.debug((param.foldLeft[String]("\nParameters: ") {
       case (str, param) => s"$str \n\t[${param._1}: ${param._2}]"
     }))
-    logger.debug((exprAND match {
+    /*logger.debug((exprAND match {
       case Some(expr) => s"\nSearch expression (AND): \n\t$expr"
       case None       => "\nSearch expression (AND): Not Found"
-    }))
+    }))*/
     if (useORExpression) logger.debug((exprOR match {
       case Some(expr) => s"\nSearch expression (OR): \n\t$expr"
       case None       => "\nSearch expression (OR): Not Found."
     }))
-    logger.debug("\nDocuments found:\n\t (AND) - " + docsAND.size)
+    logger.debug("\nDocuments found: " + docsAND.size)
     if (useORExpression) logger.debug("\n\t (OR) - " + docsOR.size)
 
-    convToInfoResponse(info, docs, outType, callbackFunc)
+    convToInfoResponse(info, docs, oType, callbackFunc, explainer)
   }
 
 //http://basalto02.bireme.br:8986/solr5/portal/select?
 //q=tw:((instance:%22regional%22)%20AND%20(%20mh:(c02.081.270)))&wt=json&
 //indent=true&start=0&rows=10&sort=da+desc
   private def convToSrcExpression(info: Seq[SearchParameter],
-                                  conv: MeshConverter,
                                   maxDocs: Int,
                                   useOR: Boolean): Option[Seq[(String, String)]] = {
     // Processing MainSearchCriteria
     val (s1,s2) = partition[MainSearchCriteria](info)
 //println(s"info=$info s1=$s1 s2=$s2")
-    if (s1.isEmpty)
-      throw new IllegalArgumentException("missing MainSearchCriteria")
-//println(s"srcParam2SrcExpr(s1, conv, useOR)=${srcParam2SrcExpr(s1, conv, useOR)}")
-    srcParam2SrcExpr(s1, conv, useOR) map {
-      msc_str =>
-        // Processing LocationOfInterest
-        val (s3,s4) = partition[LocationOfInterest](s2)
-        val loi = srcParam2SrcExpr(s3, conv, true) match {
-          case Some(src) => s" AND $src"
-          case None => ""
-        }
-        println(s"*=>info=${info} s1=$s1 s3=$s3 s4=$s4")
-
-        //Processing other parameters
-        val srcParam = s4.foldLeft[String](s"$msc_str AND " +
-          "(instance:\"regional\") AND (fulltext:\"1\")" + loi) {
-            case (str, sparam) =>
-              str +
-                (sparam.toSrcExpression(conv, info) match {
-                  case Some(str2) => s" AND $str2"
-                  case None       => ""
-                })
+    if (s1.isEmpty) None // missing MainSearchCriteria
+    else {
+//println(s"srcParam2SrcExpr(s1, useOR)=${srcParam2SrcExpr(s1, useOR)}")
+      srcParam2SrcExpr(s1, useOR) map {
+        msc_str =>
+          // Processing LocationOfInterest
+          val (s3,s4) = partition[LocationOfInterest](s2)
+          val loi = srcParam2SrcExpr(s3, true) match {
+            case Some(src) => s" AND $src"
+            case None => ""
           }
-        Seq("source" -> "bvs_infobutton",
-            "start" -> "0",
-            "rows" -> maxDocs.toString,
-            "sort" -> "da desc",
-            "wt" -> "json",
-            "q" -> srcParam)
+          //println(s"*=>info=${info} s1=$s1 s3=$s3 s4=$s4")
+
+          //Processing other parameters
+          val srcParam = s4.foldLeft[String](s"$msc_str AND " +
+            "(instance:\"regional\") AND (fulltext:\"1\")" + loi) {
+              case (str, sparam) =>
+                str +
+                  (sparam.toSrcExpression(info) match {
+                    case Some(str2) =>
+                      if (str.contains(str2)) ""
+                      else if (str.contains("(la:") && str2.contains("(la:")) ""
+                      else s" AND $str2"
+                    case None       => ""
+                  })
+            }
+          Seq("source" -> "bvs_infobutton",
+              "start" -> "0",
+              "rows" -> maxDocs.toString,
+              "sort" -> "da desc",
+              "wt" -> "json",
+              "q" -> srcParam)
+      }
     }
   }
 
@@ -159,11 +183,10 @@ class InfobuttonServer(
   }
 
   private def srcParam2SrcExpr[T <: SearchParameter](info: Seq[T],
-                               conv: MeshConverter,
                                useOR: Boolean) : Option[String] = {
     val connector = if (useOR) "OR" else "AND"
     info
-      .map(_.toSrcExpression(conv, info))
+      .map(_.toSrcExpression(info))
       .flatten
       .sorted
       .mkString(s" $connector ") match {
@@ -172,22 +195,15 @@ class InfobuttonServer(
       }
   }
 
-  private def orderedSearch(expression: Option[Seq[(String, String)]],
-                            maxDocs: Int,
-                            auxDocsAnd: Option[Seq[(String, JsValue)]] = None):
+  def orderedSearch(typeOfStudy: Seq[String],
+                    expression: Option[Seq[(String, String)]],
+                    maxDocs: Int,
+                    auxDocsAnd: Option[Seq[(String, JsValue)]] = None):
                                                       Seq[(String, JsValue)] = {
+    require(typeOfStudy != null)
     require(expression != null)
     require(maxDocs > 0)
 
-    // overview is present to grant that at least some document will be returned
-    val typeOfStudy = Seq("guideline",
-                          "systematic_reviews",
-                          "clinical_trials",
-                          "cohort",
-                          "case_control",
-                          "case_reports",
-                          "overview",
-                          "question_answer")
     expression match {
       case Some(params) => oSearch(typeOfStudy, params, maxDocs, Seq(), auxDocsAnd)
       case None         => Seq()
@@ -215,10 +231,10 @@ class InfobuttonServer(
       val numDocsAnd = auxDocsAnd.map(_.count(_._1 equals tos)).getOrElse(0)
       val maxDocs2 = maxDocs - numDocsAnd
 
-//println(s"params2=$params2")
+//println(s"params2=$params2 maxDocs2=$maxDocs2")
       val docs = if (maxDocs2 > 0) search(params2, maxDocs2) else Seq()
 //println(s"[$tos] #Docs:${docs.size + numDocsAnd} and=${numDocsAnd} or=${docs.size} maxDocs2=${maxDocs2}")
-println(s"[$tos] #Docs:${docs.size + numDocsAnd}")
+//println(s"[$tos] #Docs:${docs.size + numDocsAnd}")
       oSearch(typeOfStudy.tail,
               params,
               maxDocs,
@@ -233,7 +249,7 @@ println(s"[$tos] #Docs:${docs.size + numDocsAnd}")
     require(maxDocs > 0)
 
     post(params) match {
-      case Right(ctt) => (Json.parse(ctt) \ "response" \ "docs").validate[JsArray] match {
+      case Right(ctt) => println(s"ctt=$ctt");(Json.parse(ctt) \ "response" \ "docs").validate[JsArray] match {
         case res: JsResult[JsArray] => res.get.value.take(maxDocs)
         case _                      => Seq()
       }
@@ -258,34 +274,43 @@ println(s"[$tos] #Docs:${docs.size + numDocsAnd}")
     httpPost.addHeader("Accept-Charset", "UTF-8")
     httpPost.addHeader("Accept", "application/json")
     httpPost.setEntity(new UrlEncodedFormEntity(paramSeq.asJava, Charset.forName("utf-8")))
-println(s"httpPost=$httpPost")
+//println(s"httpPost=$httpPost")
     val response = httpclient.execute(httpPost)
-println(s"response=$response")
-    try {
-      val entity = response.getEntity()
-      val content = EntityUtils.toString(entity)
-//println(s"content=$content entity=$entity")
-      response.close()
-      Right(content)
-    } catch {
-      case ex: Throwable =>
-//println("Throwable=${ex.toString}")
+    val statusLine = response.getStatusLine
+
+    if (statusLine.getStatusCode == 200) {
+//println(s"response=$response")
+      try {
+        val entity = response.getEntity()
+        val content = EntityUtils.toString(entity)
+  //println(s"content=$content entity=$entity")
         response.close()
-        Left(ex.toString)
+        Right(content)
+      } catch {
+        case ex: Throwable =>
+  //println("Throwable=${ex.toString}")
+          response.close()
+          Left(ex.toString)
+      }
+    } else {
+      Left(statusLine.getReasonPhrase)
     }
   }
 
   private def convToInfoResponse(info: Seq[SearchParameter],
                                  docs: Seq[(String, JsValue)],
                                  outType: String,
-                                 callbackFunc: Option[String]): String = {
+                                 callbackFunc: Option[String],
+                                 explainer: Option[Either[JsObject, Element]]):
+                                                                      String = {
     require(info != null)
     require(docs != null)
     require(outType != null)
     require(callbackFunc != null)
 
     val lang = getRespLanguage(info)
-    val subtitle = info
+    val subtitle = ""
+    /*val subtitle = info
       .filter(_.isInstanceOf[MainSearchCriteria])
       .zipWithIndex
       .foldLeft[String]("") {
@@ -295,6 +320,7 @@ println(s"response=$response")
             (msc2.displayName.getOrElse(msc2.code.getOrElse(
               msc2.originalText.getOrElse(""))))
       }
+    */
     val categories = getCategories(info, Seq())
     val id = s"urn:uuid:${java.util.UUID.randomUUID()}"
     val feed = AtomFeed(subtitle, categories, lang = lang, id = id)
@@ -304,12 +330,31 @@ println(s"response=$response")
     }
     val atom = Atom(feed, entries)
     outType.toLowerCase match {
-      case "application/json" => AtomOutput.toJson(atom)
+      case "application/json" =>
+        explainer match {
+          case Some(expl) =>
+  //println(s"@@@expl=$expl")
+            AtomOutput.toJson(atom, Some(expl.left.get))
+          case None => AtomOutput.toJson(atom, None)
+        }
       case "application/javascript" =>
         val fname = callbackFunc.getOrElse("callback")
-        s"$fname(${AtomOutput.toJson(atom)});"
-      case "text/xml" => AtomOutput.toXml(atom)
-      case _          => AtomOutput.toXml(atom)
+        explainer match {
+          case Some(expl) =>
+            s"$fname(${AtomOutput.toJson(atom, Some(expl.left.get))});"
+          case None => s"$fname(${AtomOutput.toJson(atom, None)});"
+
+        }
+      case "text/xml" =>
+        explainer match {
+          case Some(expl) => AtomOutput.toXml(atom, Some(expl.right.get))
+          case None => AtomOutput.toXml(atom, None)
+        }
+      case _  =>
+        explainer match {
+          case Some(expl) => AtomOutput.toXml(atom, Some(expl.right.get))
+          case None => AtomOutput.toXml(atom, None)
+        }
     }
   }
 
@@ -345,7 +390,9 @@ println(s"response=$response")
         case _ =>
           val aux2 = same.zipWithIndex.foldLeft[Seq[Category]] (aux) {
             case (seq, (sparam, idx)) => sparam.getCategories.foldLeft[Seq[Category]] (seq) {
-              case (seq2, cat) => seq2 :+ Category(cat.scheme + idx, cat.term)
+              case (seq2, cat) =>
+                if (idx == 0) seq2 :+ Category(cat.scheme, cat.term)
+                else seq2 :+ Category(cat.scheme + idx, cat.term)
             }
           }
           getCategories(dif, aux2)
@@ -417,7 +464,7 @@ object InfoServer extends App {
 
   val indexDir = "web/BVSInfoButton/indexes"
   val conv = new MeshConverter(indexDir)
-  val server = new InfobuttonServer(conv)
+  val server = new InfoServer(conv)
 
   println(s"info = ${server.getInfo(url, 10)}")
   conv.close()

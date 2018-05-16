@@ -7,10 +7,11 @@
 
 package org.bireme.infob.parameters
 
-import org.bireme.infob.{Category, MeshConverter, Tools}
+import org.bireme.infob.{Category, MeshConverter}
 import scala.util.{Try, Success, Failure}
 
 class SubTopic(
+    conv: MeshConverter,
     codeSystem: Option[String] = Some("2.16.840.1.113883.6.177"),
     code: Option[String] = None,
     displayName: Option[String] = None,
@@ -18,7 +19,7 @@ class SubTopic(
 //println(s"SubTopic codeSystem=$codeSystem code=$code displayName=$displayName originalText=$originalText")
   assert(
     codeSystem.get.equals("2.16.840.1.113883.6.177") || // MeSH
-      codeSystem.get.equals("2.16.840.1.113883.6.96")) // SNOMED CT
+    codeSystem.get.equals("2.16.840.1.113883.6.96")) // SNOMED CT
   assert((!code.isEmpty) || (!displayName.isEmpty) || (!originalText.isEmpty))
 //println("SubTopic depois")
   private val snomedct2DeCS = Map(
@@ -27,23 +28,16 @@ class SubTopic(
     "drug interaction with alcohol" -> "(drug AND interaction AND alcohol)"
   )
 
-  override def toSrcExpression(conv: MeshConverter,
-                               env: Seq[SearchParameter]): Option[String] = {
+  override def toSrcExpression(env: Seq[SearchParameter]): Option[String] = {
 //println("===Entrei no toSrcExpression")
-    val codeSrcExpr = code.flatMap(x => getSrcExpr(x, conv))
-    val dplNameSrcExpr = displayName.flatMap(x => getSrcExpr(x, conv))
-    val oTextSrcExpr = originalText.flatMap(x => getSrcExpr(x, conv))
-  //println(s"codeSrcExpr=${codeSrcExpr.getOrElse("")} dplNameSrcExpr=${dplNameSrcExpr.getOrElse("")} oTextSrcExpr=${oTextSrcExpr.getOrElse("")}")
-    val aux1 = codeSrcExpr.getOrElse("")
-    val aux2 = if (dplNameSrcExpr.isEmpty) aux1
-               else if (aux1.isEmpty) dplNameSrcExpr.get else s"OR ${dplNameSrcExpr.get}"
-    val aux3 = if (oTextSrcExpr.isEmpty) aux2
-               else if (aux2.isEmpty) oTextSrcExpr.get else s"OR ${oTextSrcExpr.get}"
-    if (aux3.isEmpty) None else Some(Tools.encodeUrl(aux3))
+    val codeSrcExpr = code.flatMap(x => getSrcExpr(x))
+    lazy val dplNameSrcExpr = displayName.flatMap(x => getSrcExpr(x))
+    lazy val oTextSrcExpr = originalText.flatMap(x => getSrcExpr(x))
+
+    codeSrcExpr orElse dplNameSrcExpr orElse oTextSrcExpr
   }
 
-  private def getSrcExpr(in: String,
-                         conv: MeshConverter): Option[String] = {
+  private def getSrcExpr(in: String): Option[String] = {
     val intr = in.trim
     val in2 = intr //if (intr.endsWith("*")) intr else intr + "*"
     val ostr: Option[String] = conv.convert(codeSystem.get, in2) match {
@@ -56,7 +50,7 @@ class SubTopic(
     }.map {
       case (qual, expr) =>
         val index = if (qual) "sh" else "mh"
-        s"($index:${'"'}$expr${'"'} OR ti:($expr) OR ab:($expr))"
+        s"($index:${'"'}$expr${'"'} OR ti:${'"'}$expr${'"'} OR ab:${'"'}$expr${'"'})"
     }
   }
 
@@ -77,7 +71,8 @@ class SubTopic(
 }
 
 object SubTopic extends Parser {
-  override def parse(parameters: Map[String, String])
+  override def parse(conv: MeshConverter,
+                     parameters: Map[String, String])
     :(Seq[SearchParameter], Map[String, String]) = {
 //println(s"SubTopic parameters=$parameters")
     val (sut, others) = parameters.partition(_._1.startsWith("subTopic"))
@@ -86,6 +81,7 @@ object SubTopic extends Parser {
     else {
       Try {
         new SubTopic(
+          conv,
           sut.get("subTopic.v.cs"),
           sut.get("subTopic.v.c"),
           sut.get("subTopic.v.dn"),

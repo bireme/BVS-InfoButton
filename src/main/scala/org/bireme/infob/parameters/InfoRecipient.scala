@@ -7,7 +7,7 @@
 
 package org.bireme.infob.parameters
 
-import org.bireme.infob.{Category, MeshConverter, Tools}
+import org.bireme.infob.{Category, MeshConverter}
 import scala.util.{Try, Success, Failure}
 
 class InfoRecipient(role: Option[String],
@@ -35,10 +35,10 @@ class InfoRecipient(role: Option[String],
     case _             => None
   }
 
-  override def toSrcExpression(conv: MeshConverter,
-                               env: Seq[SearchParameter]): Option[String] = {
-println(s"InfoRecipient lcode=$lcode")
-    lcode.map(lc => s"(la:${'"'}${Tools.encodeUrl(lc)}${'"'})")
+  override def toSrcExpression(env: Seq[SearchParameter]): Option[String] = {
+//println(s"InfoRecipient lcode=$lcode")
+    //lcode.map(lc => s"(la:${'"'}${Tools.encodeUrl(lc)}${'"'})")
+    lcode.map(lc => s"(la:${'"'}$lc${'"'})")
   }
 
   override def getCategories: Seq[Category] = {
@@ -62,14 +62,15 @@ println(s"InfoRecipient lcode=$lcode")
 object InfoRecipient extends Parser {
   val ISO_639_1 = "2.16.840.1.113883.1.11.11526"
 
-  override def parse(parameters: Map[String, String])
+  override def parse(conv: MeshConverter,
+                     parameters: Map[String, String])
     :(Seq[SearchParameter], Map[String, String]) = {
 
     val (ir, others) = parameters.partition(_._1.startsWith("informationRecipient"))
 
     if (ir.isEmpty) (Seq(), others)
     else {
-println("ir=" + ir)
+//println("ir=" + ir)
       Try (
         new InfoRecipient(
           role = ir.get("informationRecipient"),

@@ -21,7 +21,7 @@ class SubTopicTest extends FlatSpec {
   //val server = "http://serverofi5.bireme.br:8180"
   val server = "http://localhost:8084"
   val service = s"$server/BVSInfoButton/infobutton/search"
-if (1 > 0) {
+if (1 < 0) {
 
   /* === Check if the service complains if Main Search Criteria (Concept Code)
   is used without specifying the Code System  === */

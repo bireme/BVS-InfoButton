@@ -34,15 +34,27 @@ object ParameterParser {
     *
     * @param param the map of url parameters like: &param=value
     * @return a triple of: 1) Sequence of search parameter classes
-    *                      2) Possibly the return type format (xml,json,json-p)
+    *                      2) The return type format (xml,json,json-p)
     *                      3) Possibly the name of the javascript callback function
     */
-  def parse(param: Map[String, String])
-    : (Seq[SearchParameter], Option[String], Option[String]) = {
+  def parse(conv: MeshConverter,
+            param: Map[String, String])
+    : (Seq[SearchParameter], String, Option[String]) = {
     require(param != null)
+//println(s"conv=$conv parSeq=$parSeq, param=$param")
+    val (spSeq, others) = parse(conv, parSeq, param, Seq())
+//println(s"spSeq=$spSeq others=$others")
+    val responseType =
+      others.get("knowledgeResponseType") match {
+        case Some(krt) => krt.toLowerCase match {
+          case "text/xml" => "text/xml"
+          case "application/json" => "application/json"
+          case "application/javascript" => "application/javascript"
+          case _ => "text/xml"
+        }
+        case None => "text/xml"
+      }
 
-    val (spSeq, others) = parse(parSeq, param, Seq())
-    val responseType = others.get("knowledgeResponseType").map(_.toLowerCase)
     val callbackFunc =
       if (responseType.equals("application/javascript")) others.get("jsonp")
       else None
@@ -50,9 +62,10 @@ object ParameterParser {
     (spSeq, responseType, callbackFunc)
   }
 
-  private def parse(names: Seq[String],
-                    param: Map[String, String],
-                    auxSrcParam: Seq[SearchParameter])
+  def parse(conv: MeshConverter,
+            names: Seq[String],
+            param: Map[String, String],
+            auxSrcParam: Seq[SearchParameter])
     : (Seq[SearchParameter], Map[String, String]) = {
 
     if (names.isEmpty) (auxSrcParam, param)
@@ -62,11 +75,11 @@ object ParameterParser {
       //println(s"name=$clazz")
       val obj = clazz.getField("MODULE$").get(classOf[Parser]).asInstanceOf[Parser]
       val (seq, others) = {
-        val (sp, oths) = obj.parse(param)
+        val (sp, oths) = obj.parse(conv, param)
         if (sp.isEmpty) (auxSrcParam, oths) else (auxSrcParam ++ sp, oths)
       }
       //println(s"name=$clazz ${obj} => seq=$seq others=$others")
-      parse(names.tail, others, seq)
+      parse(conv, names.tail, others, seq)
     }
   }
 }
@@ -91,10 +104,12 @@ object ParameterParserTest extends App {
   map.foreach(kv => println(s"${kv._1} -> ${kv._2}"))
   println()
 
-  val (params, responseType, callbackFunc) = ParameterParser.parse(map)
+  val indexDir = "web/BVSInfoButton/indexes"
+  val conv = new MeshConverter(indexDir)
+  val (params, responseType, callbackFunc) = ParameterParser.parse(conv, map)
 
   params.foreach(p => println(p.toString + "\n"))
   println(
-    s"""knowledgeResponseType=${responseType.getOrElse("application/json")}""")
+    s"""knowledgeResponseType=${responseType}""")
   callbackFunc.map(s => println(s"callback function=$s"))
 }

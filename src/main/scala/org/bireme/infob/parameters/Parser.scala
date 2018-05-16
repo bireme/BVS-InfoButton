@@ -7,7 +7,10 @@
 
 package org.bireme.infob.parameters
 
+import org.bireme.infob.MeshConverter
+
 trait Parser {
-  def parse(parameters: Map[String, String]):
+  def parse(conv: MeshConverter,
+            parameters: Map[String, String]):
     (Seq[SearchParameter], Map[String, String])
 }

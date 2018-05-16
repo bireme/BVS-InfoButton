@@ -18,8 +18,7 @@ class KnowledgeResponseType(krtype: Option[String],
     case _ => "text/xml"
   }
 
-  override def toSrcExpression(conv: MeshConverter,
-                               env: Seq[SearchParameter]): Option[String] = None
+  override def toSrcExpression(env: Seq[SearchParameter]): Option[String] = None
 
   override def getCategories: Seq[Category] =
     callback match {
@@ -34,7 +33,8 @@ class KnowledgeResponseType(krtype: Option[String],
 }
 
 object KnowledgeResponseType extends Parser {
-  override def parse(parameters: Map[String, String])
+  override def parse(conv: MeshConverter,
+                     parameters: Map[String, String])
     :(Seq[SearchParameter], Map[String, String]) = {
 
     val (krt, others1) = parameters.partition(_._1.equals("knowledgeResponseType"))

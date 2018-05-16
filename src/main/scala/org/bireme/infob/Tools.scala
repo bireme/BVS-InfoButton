@@ -25,11 +25,11 @@ object Tools {
     val s1 = Normalizer.normalize(in.trim().toLowerCase(), Form.NFD)
     val s2 = s1.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "")
 
-    s2.replaceAll("[^\\w]", "")
+    s2.replaceAll("[^\\w\\-]", "")
   }
 
   def replaceSpaces(in: String): String =
     if (in == null) null else in.replace(" ", "%20")
 
-  def encodeUrl(in: String): String =  URLEncoder.encode(in, "UTF-8")    
+  def encodeUrl(in: String): String =  URLEncoder.encode(in, "UTF-8")
 }

@@ -6,7 +6,7 @@
     </context-param>
     <context-param>
         <param-name>LUCENE_THESAURI_PATH</param-name>
-        <param-value>/home/heitor/sbt-projects/BVS-InfoButton/web/BVSInfoButton/indexes</param-value>
+        <param-value>/home/javaapps/sbt-projects/BVS-InfoButton/web/BVSInfoButton/indexes</param-value>
     </context-param>
     <servlet>
         <servlet-name>BVSInfoButton</servlet-name>
