@@ -54,11 +54,11 @@ var strPort = "";
 var port = window.location.port;
 if (port === "80") strPort = ""; else strPort = ":" + port;
 
-var host = window.location.hostname + strPort 
-          //"bvsinfobutton.homolog.bvsalud.org"
-          //"serverofir5.bireme.br"
+var host = window.location.hostname; 
+          //"bvsinfobutton.homolog.bvsalud.org";
+          //"serverofi5.bireme.br";
 
-var prefix = protocol + "//" + host + "/BVSInfoButton/infobutton/search";
+var prefix = protocol + "//" + host + strPort + "/BVSInfoButton/infobutton/search";
 
 function parseElement(elemName) {
   var elem = document.getElementsByName(elemName);
