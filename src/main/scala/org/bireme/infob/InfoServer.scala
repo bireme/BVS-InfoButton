@@ -185,14 +185,18 @@ class InfoServer(
   private def srcParam2SrcExpr[T <: SearchParameter](info: Seq[T],
                                useOR: Boolean) : Option[String] = {
     val connector = if (useOR) "OR" else "AND"
-    info
-      .map(_.toSrcExpression(info))
-      .flatten
-      .sorted
-      .mkString(s" $connector ") match {
-        case ""  => None
-        case str => Some(str)
-      }
+    val expressions = info.map(_.toSrcExpression(info))
+println(s"expressions=$expressions")
+    if (!useOR && expressions.contains(None)) None
+    else {
+      expressions
+        .flatten
+        .sorted
+        .mkString(s" $connector ") match {
+          case ""  => None
+          case str => Some(str)
+        }
+    }
   }
 
   def orderedSearch(typeOfStudy: Seq[String],
@@ -249,7 +253,7 @@ class InfoServer(
     require(maxDocs > 0)
 
     post(params) match {
-      case Right(ctt) => println(s"ctt=$ctt");(Json.parse(ctt) \ "response" \ "docs").validate[JsArray] match {
+      case Right(ctt) => /*println(s"ctt=$ctt");*/(Json.parse(ctt) \ "response" \ "docs").validate[JsArray] match {
         case res: JsResult[JsArray] => res.get.value.take(maxDocs)
         case _                      => Seq()
       }
@@ -268,6 +272,7 @@ class InfoServer(
     * error occurred
     */
   private def post(params: Seq[(String, String)]): Either[String, String] = {
+//println(s"post: params=$params")
     val paramSeq = params.map(elem => new BasicNameValuePair(elem._1, elem._2))
     val httpclient = HttpClients.createDefault()
     val httpPost = new HttpPost(iahxUrl)
@@ -277,7 +282,7 @@ class InfoServer(
 //println(s"httpPost=$httpPost")
     val response = httpclient.execute(httpPost)
     val statusLine = response.getStatusLine
-
+//println("status Code=" + statusLine.getStatusCode)
     if (statusLine.getStatusCode == 200) {
 //println(s"response=$response")
       try {

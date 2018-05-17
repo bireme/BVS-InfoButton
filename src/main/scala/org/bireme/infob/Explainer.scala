@@ -28,7 +28,8 @@ object Explainer {
                   expression: Option[Seq[(String, String)]]) : JsObject = {
     val res = expression match {
       case Some(expr) => parse(info, expr)
-      case None => Seq(("No search expression found", Seq[(String, Int)]()))
+      case None => Seq(("Search expression or term not found",
+                        Seq[(String, Int)]()))
     }
     val terms = JsArray(
       convert(srcParam) map {
@@ -55,7 +56,8 @@ object Explainer {
                  expression: Option[Seq[(String, String)]]) : Element = {
     val res = expression match {
       case Some(expr) => parse(info, expr)
-      case None => Seq(("No search expression found", Seq[(String, Int)]()))
+      case None => Seq(("Search expression or term not found",
+                   Seq[(String, Int)]()))
     }
     val element = new DOMElement("explain")
     val terms = element.addElement("terms")
@@ -82,15 +84,19 @@ object Explainer {
   private def convert(srcParam: Seq[SearchParameter]):
                               Seq[(String, String, String, Option[String])] = {
     require(srcParam != null)
-
+//println(s"convert srcParam=$srcParam")
     srcParam.filter(_.isInstanceOf[MainSearchCriteria]).map {
       param =>
         val msc = param.asInstanceOf[MainSearchCriteria]
         if (msc.strCode.isEmpty) {
           if (msc.strDisplayName.isEmpty) {
-            (msc.originalText.getOrElse(""), msc.strOriginalText,
-            msc.strOriginalTextStatus, msc.codeSystem)
-          } else (msc.displayName.get, msc.strDisplayName, msc.strDisplayNameStatus, msc.codeSystem)
+            if (msc.originalText.isEmpty) {
+              (msc.code.getOrElse(""), msc.strCode,
+               msc.strCodeStatus, msc.codeSystem)
+            } else (msc.originalText.get, msc.strOriginalText,
+                    msc.strOriginalTextStatus, msc.codeSystem)
+          } else (msc.displayName.get, msc.strDisplayName,
+                  msc.strDisplayNameStatus, msc.codeSystem)
         } else (msc.code.get, msc.strCode, msc.strCodeStatus, msc.codeSystem)
     }
   }

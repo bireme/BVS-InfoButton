@@ -1,3 +1,11 @@
+<!--
+=========================================================================
+
+    BVS-InfoButton © Pan American Health Organization, 2017.
+    See License at: https://github.com/bireme/BVS-InfoButton/blob/master/LICENSE.txt
+
+==========================================================================
+-->
 
 <!DOCTYPE html>
 <html>
@@ -49,29 +57,31 @@
 
 <script type="text/javascript">
 
-var protocol = window.location.protocol
-var strPort = "";
-var port = window.location.port;
-if (port === "80") strPort = ""; else strPort = ":" + port;
-
-var host = window.location.hostname; 
-          //"bvsinfobutton.homolog.bvsalud.org";
+var host = //window.location.hostname;
           //"serverofi5.bireme.br";
+          "bvsinfobutton.homolog.bvsalud.org";
 
-var prefix = protocol + "//" + host + strPort + "/BVSInfoButton/infobutton/search";
+var protocol = window.location.protocol
+var prefix = "";
+if (host === "bvsinfobutton.homolog.bvsalud.org") {
+  prefix = protocol + "//" + host + "/infobutton/search";
+} else {
+  var port = window.location.port;
+  var strPort = "";
+  if (port === "80") strPort = ""; else strPort = ":" + port;
+  prefix = protocol + "//" + host + strPort + "/BVSInfoButton/infobutton/search";
+}
+
 
 function parseElement(elemName) {
   var elem = document.getElementsByName(elemName);
   var ret = [];
   var size = elem.length;
-  //alert("elemName=" + elemName + " size=" + size);
 
   if ((elem != null) && (size > 0)) {
     var elem2 = elem[0];
-    //alert("elem2=" + elem2);
     var isInputText = elem2 instanceof HTMLInputElement && elem2.type == 'text';
     var isCheckBox = elem2 instanceof HTMLInputElement && elem2.type == 'checkbox';
-    //alert ("isInputText=" + isInputText);
 
     for (i = 0; i < size; i++) {
       var content = (isInputText)
@@ -85,7 +95,6 @@ function parseElement(elemName) {
 }
 
 function addElements(elemNames, url) {
-  //alert("addElements(" + elemNames + ") len=" + elemNames.length);
   var url2 = (typeof url == 'undefined') ? "" : url;
   var sep = (0 === url2.length) ? "" : "&";
   var parsed = [];
@@ -94,32 +103,26 @@ function addElements(elemNames, url) {
   for (ii = 0; ii < elemNames.length; ii++) {
     var name = elemNames[ii];
     var pElem = parseElement(name);
-//alert("pElem=" + pElem + " name=" + name);
     parsed.push(pElem);
     for (j = 0; j < pElem.length; j++) {
       if (pElem[j].length > 0) indexes.add(j);
     }
-  //alert("aqui ii=" + ii + " elemNames.length=" + elemNames.length)
   }
   var iSize = indexes.size;
   var useIndex = iSize > 1;
   ret = url2;
-//alert("iSize=" + iSize);  // Quantos indices serao utilizados na url
+  // Quantos indices serao utilizados na url
   if (iSize > 0) {
     var pl = parsed[0].length;
-//alert("pl=" + pl);        // Quantas instancias tem do mesmo campo
+    // Quantas instancias tem do mesmo campo
     var k = 0;
     for (j = 0; j < pl; j++) {
       var found = false;
       for (i = 0; i < parsed.length; i++) {
-//alert("parsed["+ i + "]=" + parsed[i] + " j=" + j);
         var content = parsed[i][j];
-//alert("content=" + content);
         if (content.length > 0) {
           var idx = useIndex && (k > 0) ? k : "";
-//alert("antes ret=[" + ret + "]");
           ret = ret + sep + elemNames[i] + idx + "=" + content;
-//alert("depois ret=[" + ret + "]");
           sep = "&";
           found = true;
         }
@@ -127,12 +130,10 @@ function addElements(elemNames, url) {
       if (found) k = k + 1;
     }
   }
-  //alert ("ret=" + ret);
   return ret;
 }
 
 function getParamUrl() {
-  //alert("getParamUrl()");
   var url = "";
   url = addElements(["mainSearchCriteria.v.c", "mainSearchCriteria.v.cs",
                          "mainSearchCriteria.v.dn", "mainSearchCriteria.v.ot"] , url);
@@ -154,14 +155,12 @@ function getParamUrl() {
   url = addElements(["performer.languageCode.dn"], url);
   url = addElements(["knowledgeResponseType"], url);
   url = addElements(["explain"], url);
-//alert("getParamUrl() - url=[" + url + "]");
+
   return url;
 }
 
 function buildUrl() {
-  //alert("buildUrl");
   var parameters = getParamUrl();
-  //alert("parameters.length=" + parameters.length);
   if (parameters.length == 0) {
     document.getElementById("url").innerHTML = "url: ";
   } else {
@@ -171,7 +170,6 @@ function buildUrl() {
 
 function post(path, params, method) {
     method = method || "post"; // Set method to post by default if not specified.
-//alert("path=" + path + " params=" + params + " method=" + method);
     // The rescopyrightt of this code assumes you are not using a library.
     // It can be made less wordy if you use one.
     var form = document.createElement("form");
@@ -184,13 +182,11 @@ function post(path, params, method) {
             hiddenField.setAttribute("type", "hidden");
             hiddenField.setAttribute("name", key);
             hiddenField.setAttribute("value", params[key]);
-//alert("name=" + key + " value=" + params[key]);
             form.appendChild(hiddenField);
         }
     }
 
     document.body.appendChild(form);
-//alert("form.submit");
     form.submit();
 }
 
@@ -199,14 +195,10 @@ function getUrlParameters(url) {
   var params = {};
   var split1 = url.split("&");
 
-//alert("aqui split1=[" + split1 + "]");
   for (i=0; i < split1.length; i++) {
-  //for (var par in split1) {
     var par = split1[i];
-//alert("aqui par=[" + par + "]");
     var split2 = par.split("=");
     params[split2[0].trim()] = split2[1].trim();
-//alert("key=" + split2[0].trim() + " value=" + split2[1].trim());
   }
   return params;
 }
@@ -1324,7 +1316,6 @@ function getUrlParameters(url) {
       window.location.reload();
     }
   };
-  //alert("início");
   buildUrl();
 </script>
 

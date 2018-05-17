@@ -84,7 +84,6 @@ class MeshConverter(indexes: String) {
         case "2.16.840.1.113883.6.1"   => getMeshCode("LOINC", tcode)
         case _                         => Left(None)
       }
-  //println(s"mesh=$mesh codeSystem=$codeSystem")
       // Try converting MeSH code or term into a DeCs code or term description
   //println(s"codeSystem=$codeSystem code=$code mesh=$mesh")
       mesh match {
@@ -115,7 +114,8 @@ class MeshConverter(indexes: String) {
             val topDocs2 = searcher.search(query2, 1)
             if (topDocs2.totalHits == 0) Left(None)
             else {
-              val doc = searcher.doc(topDocs.scoreDocs.head.doc)
+    //println("topDocs2.totalHits == 0")
+              val doc = searcher.doc(topDocs2.scoreDocs.head.doc)
               val meshCode = doc.get("meshCode")
       //println(s"++meshCode=$meshCode")
               if (meshCode == null) {

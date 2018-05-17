@@ -19,8 +19,10 @@ class MainSearchCriteria(conv: MeshConverter,
     extends SearchParameter {
 
   //println(s"code=$code codeSystem=$codeSystem")
-  require(code.isEmpty || !codeSystem.isEmpty)
-  require(!code.isEmpty || !originalText.isEmpty)
+  require(code.isEmpty || !codeSystem.isEmpty,
+    s"code[$code].isEmpty || !codeSystem[$codeSystem].isEmpty")
+  require(!code.isEmpty || !originalText.isEmpty,
+    s"!code[$code].isEmpty || !originalText[$originalText].isEmpty")
 
   val (strCode, strCodeStatus) = code match {
     case Some(cod) => conv.convert(codeSystem.get, cod) match {
@@ -32,7 +34,7 @@ class MainSearchCriteria(conv: MeshConverter,
     }
     case None => ("", "not found")
   }
-println(s"code=$code strCode=$strCode strCodeStatus=$strCodeStatus")
+//println(s"code=$code strCode=$strCode strCodeStatus=$strCodeStatus")
 
   //val strDispName = displayName.getOrElse("").trim
   lazy val (strDisplayName, strDisplayNameStatus) = displayName match {
@@ -46,14 +48,14 @@ println(s"code=$code strCode=$strCode strCodeStatus=$strCodeStatus")
       }
     case None => ("", "not found")
   }
-println(s"displayName=$displayName strDisplayName=$strDisplayName strDisplayNameStatus=$strDisplayNameStatus")
+//println(s"displayName=$displayName strDisplayName=$strDisplayName strDisplayNameStatus=$strDisplayNameStatus")
 
   lazy val (strOriginalText, strOriginalTextStatus) =
     (originalText.getOrElse("").trim, "original")
-println(s"strOriginalText=$strOriginalText strOriginalTextStatus=$strOriginalTextStatus")
+//println(s"strOriginalText=$strOriginalText strOriginalTextStatus=$strOriginalTextStatus")
 
   override def toSrcExpression(env: Seq[SearchParameter]): Option[String] = {
-println(s"env=$env")
+//println(s"env=$env")
     val ret = code match {
       case Some(_) =>
         strCodeStatus match {
@@ -84,7 +86,7 @@ println(s"env=$env")
                           andOrExpression("ab", strOriginalText) + ")"
                          )
     }
-    println(s"expr=[$ret]")
+    //println(s"expr=[$ret]")
     ret
 
 /*
@@ -104,7 +106,7 @@ println(s"env=$env")
                               in: String): String = {
     require (index != null)
     require (in != null)
-println(s"index=$index in=$in")
+//println(s"index=$index in=$in")
     val words = in.trim.split("\\s+").foldLeft[Set[String]](TreeSet()) {
       case (set, word) =>
         val normWord = Tools.uniformString(word)
@@ -112,7 +114,7 @@ println(s"index=$index in=$in")
           set + normWord
         else set
     }
-println(s"words=$words")
+//println(s"words=$words")
     val words2 = words.map(word => s"$index:$word")
     val words3 = if (words2.size > 5) words2.mkString(" OR ")
     else words2.mkString(" AND ")
@@ -167,11 +169,11 @@ object MainSearchCriteria extends Parser {
                      auxSeq: Seq[MainSearchCriteria]): Seq[SearchParameter] = {
 //println(s"*** getMSC msc=$msc cardinality=$cardinality auxSeq=$auxSeq")
     val cardi = if ((cardinality == 0) &&
-      (msc.exists(p => p._1 matches("mainSearchCriteria.v.(c|cs|dn|ot)")))) ""
+      (msc.exists(p => p._1 matches("mainSearchCriteria.v.(c|dn|ot)")))) ""
       else cardinality.toString
     val (mscCard, other) = msc.partition(
       p => p._1 matches s"mainSearchCriteria.v.(c|cs|dn|ot)$cardi")
-//println(s"mscCard=$mscCard other=$other")
+//println(s" msc=$msc mscCard=$mscCard other=$other")
     if (mscCard.isEmpty) auxSeq
     else {
       val newAuxSeq = Try (

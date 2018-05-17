@@ -18,9 +18,11 @@ import org.scalatest.Matchers._
 * date: 20180418
 */
 class MainSearchCriteriaTest extends FlatSpec {
-  //val server = "http://serverofi5.bireme.br:8180"
+  //val server = "http://bvsinfobutton.homolog.bvsalud.org"
+  //val service = s"$server/infobutton/search"
   val server = "http://localhost:8084"
   val service = s"$server/BVSInfoButton/infobutton/search"
+
 if (1 < 0) {
   /* === Check if the service complains if no Main Search Criteria paramenter is
     used === */
@@ -187,14 +189,13 @@ if (1 < 0) {
 
   /* === Check the service result if Main Search Criteria (Display Name)
   is used with a valid Code System  === */
-  "BVS_Infobutton" should "return more than 50 documents if 'dengue'" +
+  "BVS_Infobutton" should "not return documents if 'dengue'" +
   " Display Name is used as Main Search Criteria with Code System 'MESH'." in {
     val url = service +
       "?mainSearchCriteria.v.dn=dengue&mainSearchCriteria.v.cs=2.16.840.1.113883.6.177"
     getPageContent(url) match {
       case Some(content) =>
-        getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 50
-        hasStringPattern(content, "[Dd]engue") should be (true)
+        getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be (0)
         case None => fail
       }
   }
@@ -361,7 +362,7 @@ if (1 < 0) {
 
   /* === Check the service result if Main Search Criteria1 (Concept Code1)
   is used only with (Code System2)  === */
-  "BVS_Infobutton" should "return more than 50 documents if Main Search Criteria1 " +
+  "BVS_Infobutton" should "not return documents if Main Search Criteria1 " +
   "'D002648 - criança' Code Concept in 'MESH' but not specifying the Code System " +
   "is used with Main Search Criteria2 Code System 'MESH'" in {
     val url = service + "?" +
@@ -369,8 +370,7 @@ if (1 < 0) {
       "mainSearchCriteria.v.cs1=2.16.840.1.113883.6.177"
     getPageContent(url) match {
       case Some(content) =>
-        getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 50
-        hasStringPattern(content, "[Cc]rian[çc]a|[Cc]hild") should be (true)
+        getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be (0)
       case None => fail
     }
   }
@@ -464,15 +464,13 @@ if (1 < 0) {
 
   /* === Check the service result if Main Search Criteria1 (Display Name1)
   is used with Main Search Criteria2 (Display Name2)  === */
-  "BVS_Infobutton" should "return more than 40 documents if Main Search Criteria1 " +
+  "BVS_Infobutton" should "not return documents if Main Search Criteria1 " +
   "'dengue' Display Name is used with Main Search Criteria2 'criança' Display Name" in {
     val url = service + "?" +
       "mainSearchCriteria.v.dn0=dengue&mainSearchCriteria.v.dn1=criança"
     getPageContent(url) match {
       case Some(content) =>
-        getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 40
-        hasStringPattern(content, "[Dd]engue") should be (true)
-        hasStringPattern(content, "[Cc]rian[çc]a") should be (true)
+        getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be (0)
       case None => fail
     }
   }
@@ -508,7 +506,7 @@ if (1 < 0) {
 
   /* === Check the service result if Main Search Criteria1 (Original Text1)
   is used with Main Search Criteria2 (Display Name2)  === */
-  "BVS_Infobutton" should "return more than 40 documents if Main Search Criteria1 " +
+  "BVS_Infobutton" should "not return documents if Main Search Criteria1 " +
   "'dengue' Original Text is used with Main Search Criteria2 'criança' Display" +
   " Name" in {
     val url = service + "?" + "mainSearchCriteria.v.ot0=dengue&mainSearchCriteria.v.dn1=criança"
@@ -516,9 +514,7 @@ if (1 < 0) {
     getPageContent(url) match {
       case Some(content) =>
 //println(s"url=[$url] content=[$content]")
-        getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 40
-        hasStringPattern(content, "[Dd]engue") should be (true)
-        hasStringPattern(content, "[Cc]rian[çc]a") should be (true)
+        getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be (0)
       case None => fail
     }
   }
