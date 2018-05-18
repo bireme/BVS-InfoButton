@@ -35,7 +35,7 @@ class Performer(role: Option[String],
   override def toSrcExpression(env: Seq[SearchParameter]): Option[String] = {
 //println(s"***lcode=$lcode")
     //lcode.map(lc => s"(la:${'"'}${Tools.encodeUrl(lc)}${'"'})")
-    lcode.map(lc => s"(la:${'"'}lc${'"'})")
+    lcode.map(lc => s"(la:${'"'}$lc${'"'})")
   }
 
   override def getCategories: Seq[Category] = {

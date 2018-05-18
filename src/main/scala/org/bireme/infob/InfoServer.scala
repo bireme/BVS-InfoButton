@@ -145,6 +145,7 @@ class InfoServer(
                 str +
                   (sparam.toSrcExpression(info) match {
                     case Some(str2) =>
+//println(s"sparam=$sparam str2=$str2")
                       if (str.contains(str2)) ""
                       else if (str.contains("(la:") && str2.contains("(la:")) ""
                       else s" AND $str2"
@@ -186,7 +187,7 @@ class InfoServer(
                                useOR: Boolean) : Option[String] = {
     val connector = if (useOR) "OR" else "AND"
     val expressions = info.map(_.toSrcExpression(info))
-println(s"expressions=$expressions")
+//println(s"expressions=$expressions")
     if (!useOR && expressions.contains(None)) None
     else {
       expressions

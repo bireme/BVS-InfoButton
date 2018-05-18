@@ -7,7 +7,7 @@
 
 package org.bireme.infob.parameters
 
-import org.bireme.infob.{Category, MeshConverter}
+import org.bireme.infob.{Category, MeshConverter, Tools}
 import scala.util.{Try, Success, Failure}
 
 class Age(value: Option[String],
@@ -30,7 +30,7 @@ class Age(value: Option[String],
     case Some(x) if ((x >= 780) && (x < 960)) => Some("aged")
     case Some(x) if (x >= 960)                => Some("aged, 80 and older")
     case None                                 => None
-  }).map(_.replace(" ", "%20"))
+  })
 
   private def convertToMonth(value: String, unit: String): Option[Int] = {
     val ival = value.toInt
@@ -47,7 +47,7 @@ class Age(value: Option[String],
   }
 
   override def toSrcExpression(env: Seq[SearchParameter]): Option[String] =
-    agroup.map(ag => s"(limit:${'"'}$ag${'"'})")
+    agroup.map(ag => s"(limit:${'"'}${ag}${'"'})")
 
   override def getCategories: Seq[Category] =
     Seq(Category("age.v.v", value.get), Category("age.v.u", unit.get))
