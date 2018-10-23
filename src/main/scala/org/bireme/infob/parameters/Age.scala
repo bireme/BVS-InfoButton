@@ -7,7 +7,7 @@
 
 package org.bireme.infob.parameters
 
-import org.bireme.infob.{Category, MeshConverter, Tools}
+import org.bireme.infob.{Category, MeshConverter}
 import scala.util.{Try, Success, Failure}
 
 class Age(value: Option[String],

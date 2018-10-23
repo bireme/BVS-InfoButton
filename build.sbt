@@ -1,7 +1,7 @@
 lazy val commonSettings = Seq(
   organization := "org.bireme",
   version := "1.0.0",
-  scalaVersion := "2.12.6"
+  scalaVersion := "2.12.7"
 )
 
 lazy val root = (project in file(".")).
@@ -10,15 +10,15 @@ lazy val root = (project in file(".")).
     name := "BVS-InfoButton"
   )
 
-val akkaVersion = "10.1.1" //"10.0.10"
-val playJsonVersion = "2.6.9" //"2.6.6"
-val scalaXmlVersion = "1.0.6"
-val dom4jVersion = "2.1.0"
+val akkaVersion = "10.1.5" // "10.1.1"
+val playJsonVersion = "2.6.10" // "2.6.9"
+val scalaXmlVersion = "1.1.1" // "1.0.6"
+val dom4jVersion = "2.1.1" // "2.1.0"
 val scalaLoggingVersion = "3.9.0" //"3.7.2"
 val logbackVersion = "1.2.3"
 val scalaTestVersion = "3.0.5"
 val hairyfotrVersion = "0.1.17"
-val luceneVersion = "7.3.0"
+val luceneVersion = "7.5.0" // "7.3.0"
 val httpComponentsVersion = "4.5.5"
 
 libraryDependencies ++= Seq(
@@ -40,7 +40,7 @@ libraryDependencies ++= Seq(
 )
 
 logBuffered in Test := false
-trapExit :=  false  // To allow System.exit() without an exception (TestIndex.scala)
+trapExit := false  // To allow System.exit() without an exception (TestIndex.scala)
 
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Ywarn-unused")
 addCompilerPlugin("org.psywerx.hairyfotr" %% "linter" % hairyfotrVersion)

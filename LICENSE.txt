@@ -56,7 +56,7 @@ Software License unless otherwise indicated in writing by PAHO. PAHO reserves th
 to provide Updates to this Software on amended terms as it sees fit. User shall be
 responsible for installing the latest version of the software.
 
-9. Open Source Software: Certain components of the Proethos Software may be subject to
+9. Open Source Software: Certain components of the BVS-InfoButton Software may be subject to
 a license that permits end users to modify these portions and redistribute its modifications
 (“Open Source software”). Use, modification and redistribution of the Open Source
 software is governed solely by the terms and conditions of the applicable Open Source
