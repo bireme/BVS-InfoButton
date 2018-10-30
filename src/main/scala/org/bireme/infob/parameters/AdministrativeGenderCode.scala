@@ -14,9 +14,9 @@ import scala.util.{Try, Success, Failure}
 class AdministrativeGenderCode(code: Option[String] = None,
                                displayName: Option[String] = None)
     extends SearchParameter {
-  require(!code.isEmpty || !displayName.isEmpty)
+  require(code.isDefined || displayName.isDefined)
 
-  val agcode = code.map(_.toLowerCase) match {
+  val agcode: Option[String] = code.map(_.toLowerCase) match {
     case Some("f")  => Some("female")
     case Some("m")  => Some("male")
     case Some("un") => None // Sugestão do RTM
@@ -53,8 +53,9 @@ object AdministrativeGenderCode extends Parser {
     val (agc, others) = parameters.partition(_._1.startsWith(
       "patientPerson.administrativeGenderCode."))
 
-    if (agc.isEmpty) (Seq(), others)
-    else {
+    if (agc.isEmpty) {
+      (Seq(), others)
+    } else {
       Try (
           new AdministrativeGenderCode(
             agc.get("patientPerson.administrativeGenderCode.c"),

@@ -43,7 +43,7 @@ object ICD10_UpdateIndex extends App {
   private def updateIndex(luceneIndex: String,
                           inputFile: String): Unit = {
     val analyzer = new KeywordAnalyzer()
-    val directory = FSDirectory.open(new File(luceneIndex).toPath())
+    val directory = FSDirectory.open(new File(luceneIndex).toPath)
     val source = Source.fromFile(inputFile, "utf-8")
     val lines = source.getLines()
 
@@ -84,9 +84,11 @@ object ICD10_UpdateIndex extends App {
         doc.add(new StringField("termLabelNorm",
           Tools.uniformString(termLabel), Field.Store.YES))
         writer.addDocument(doc)
-        searcher2.getIndexReader().close()
+        searcher2.getIndexReader.close()
         insertDefinitions(lines, writer, None)
-      } else insertDefinitions(lines, writer, searcher)
-    } else if (!searcher.isEmpty) searcher.get.getIndexReader().close()
+      } else {
+        insertDefinitions(lines, writer, searcher)
+      }
+    } else if (searcher.isDefined) searcher.get.getIndexReader.close()
   }
 }

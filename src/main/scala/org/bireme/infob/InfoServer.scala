@@ -7,38 +7,32 @@
 
 package org.bireme.infob
 
-import org.bireme.infob.parameters._
-
-import ch.qos.logback.classic.{Level, Logger => xLogger}
-
-import com.typesafe.scalalogging.Logger
-
 import java.net.{URL, URLDecoder, URLEncoder}
 import java.nio.charset.Charset
 
+import ch.qos.logback.classic.{Level, Logger => xLogger}
+import com.typesafe.scalalogging.Logger
+import org.apache.http.HttpEntity
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.impl.client.HttpClients
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.util.EntityUtils
-
+import org.bireme.infob.parameters._
 import org.dom4j.Element
-
 import org.slf4j.LoggerFactory
-
 import play.api.libs.json._
 
 import scala.collection.JavaConverters._
 import scala.reflect._
-import scala.reflect.runtime.universe._
-import scala.util.{Try, Success, Failure}
+import scala.util.{Failure, Success, Try}
 
 /**
   * This class converts an url request into a document with retrieved documents
   * from BVS that are associated with the url query parameters.
   *
   * @param conv the thesaurus to MESH term code converter
-  * @param iahxURL the BVS search portal url
+  * @param iahxUrl the BVS search portal url
   *
   * @author Heitor Barbieri
   */
@@ -79,39 +73,43 @@ class InfoServer(
   def getInfo(param: Map[String, String], maxDocs: Int = 10): String = {
     require(param != null)
     require(maxDocs > 0)
-//println("Antes do ParameterParser")
+
     val (info, oType, callbackFunc) = ParameterParser.parse(conv, param)
-//println(s">> getInfo - param=$param  info=$info")
-    val exprAND = convToSrcExpression(info, maxDocs, false)
-//println(s"expreAND=$exprAND")
-    val explainer = if (param.contains("explain")) {
+    val exprAND: Option[Seq[(String, String)]] = convToSrcExpression(info, maxDocs, useOR = false)
+    val explainer: Option[Either[JsObject, Element]] = if (param.contains("explain")) {
       val isXml = oType.equals("text/xml")
       Some(Explainer.explain(this, info, exprAND, isXml))
-    } else None
-    val useORExpression = false //info.count(_.isInstanceOf[MainSearchCriteria]) > 1 // There are more than one MainSearchCriteria
-//println(s"Antes do orderedSearch(studies, exprAND, maxDocs) exprAND=[$exprAND]")
-    val docsAND = orderedSearch(studies, exprAND, maxDocs)
-//println(s"Antes do orderedSearch(studies, exprOR, maxDocs) remaining=$remaining")
-    val exprOR = if (useORExpression) convToSrcExpression(info, maxDocs, true)
-      else None
-    val docsOR = if (useORExpression) {
+    } else {
+      None
+    }
+    val useORExpression = false
+    val docsAND: Seq[(String, JsValue)] = orderedSearch(studies, exprAND, maxDocs)
+    val exprOR: Option[Seq[(String, String)]] = if (useORExpression) {
+      convToSrcExpression(info, maxDocs, useOR=true)
+    } else {
+      None
+    }
+    val docsOR: Seq[(String, JsValue)] =
+      if (useORExpression) {
         orderedSearch(studies, exprOR, maxDocs, Some(docsAND))
-      } else Seq()
-    val docs = docsAND ++ docsOR
+      } else {
+        Seq()
+      }
+    val docs: Seq[(String, JsValue)] = docsAND ++ docsOR
 
-    logger.debug((param.foldLeft[String]("\nParameters: ") {
-      case (str, param) => s"$str \n\t[${param._1}: ${param._2}]"
-    }))
-    /*logger.debug((exprAND match {
-      case Some(expr) => s"\nSearch expression (AND): \n\t$expr"
-      case None       => "\nSearch expression (AND): Not Found"
-    }))*/
-    if (useORExpression) logger.debug((exprOR match {
-      case Some(expr) => s"\nSearch expression (OR): \n\t$expr"
-      case None       => "\nSearch expression (OR): Not Found."
-    }))
+    logger.debug(param.foldLeft[String]("\nParameters: ") {
+      case (str, param2) => s"$str \n\t[${param2._1}: ${param2._2}]"
+    })
+    if (useORExpression) {
+      logger.debug(exprOR match {
+        case Some(expr) => s"\nSearch expression (OR): \n\t$expr"
+        case None       => "\nSearch expression (OR): Not Found."
+      })
+    }
     logger.debug("\nDocuments found: " + docsAND.size)
-    if (useORExpression) logger.debug("\n\t (OR) - " + docsOR.size)
+    if (useORExpression) {
+      logger.debug("\n\t (OR) - " + docsOR.size)
+    }
 
     convToInfoResponse(info, docs, oType, callbackFunc, explainer)
   }
@@ -125,14 +123,15 @@ class InfoServer(
     // Processing MainSearchCriteria
     val (s1,s2) = partition[MainSearchCriteria](info)
 //println(s"info=$info s1=$s1 s2=$s2")
-    if (s1.isEmpty) None // missing MainSearchCriteria
-    else {
+    if (s1.isEmpty) { // missing MainSearchCriteria
+      None
+    } else {
 //println(s"srcParam2SrcExpr(s1, useOR)=${srcParam2SrcExpr(s1, useOR)}")
       srcParam2SrcExpr(s1, useOR) map {
         msc_str =>
           // Processing LocationOfInterest
           val (s3,s4) = partition[LocationOfInterest](s2)
-          val loi = srcParam2SrcExpr(s3, true) match {
+          val loi = srcParam2SrcExpr(s3, useOR = true) match {
             case Some(src) => s" AND $src"
             case None => ""
           }
@@ -146,9 +145,15 @@ class InfoServer(
                   (sparam.toSrcExpression(info) match {
                     case Some(str2) =>
 //println(s"sparam=$sparam str2=$str2")
-                      if (str.contains(str2)) ""
-                      else if (str.contains("(la:") && str2.contains("(la:")) ""
-                      else s" AND $str2"
+                      if (str.contains(str2)) {
+                        ""
+                      } else {
+                        if (str.contains("(la:") && str2.contains("(la:")) {
+                          ""
+                        } else {
+                          s" AND $str2"
+                        }
+                      }
                     case None       => ""
                   })
             }
@@ -188,8 +193,9 @@ class InfoServer(
     val connector = if (useOR) "OR" else "AND"
     val expressions = info.map(_.toSrcExpression(info))
 //println(s"expressions=$expressions")
-    if (!useOR && expressions.contains(None)) None
-    else {
+    if (!useOR && expressions.contains(None)) {
+      None
+    } else {
       expressions
         .flatten
         .sorted
@@ -222,16 +228,26 @@ class InfoServer(
                       auxDocsAnd: Option[Seq[(String, JsValue)]]):
                                                       Seq[(String, JsValue)] = {
     if (typeOfStudy.isEmpty) {
-      if (auxSeq.isEmpty) search(params, maxDocs).map(elem => ("other", elem))
-      else auxSeq
+      if (auxSeq.isEmpty) {
+        search(params, maxDocs).map(elem => ("other", elem))
+      } else {
+        auxSeq
+      }
     } else {
       val tos = typeOfStudy.head
       // 'Question and answer' is not a type of study but a type of document.
-      val newExpr = if (tos.equals("question_answer")) " AND (type:\"perg_resp\")"
-        else " AND (type_of_study:" + "\"" + tos + "\")"
+      val newExpr = if (tos.equals("question_answer")) {
+        " AND (type:\"perg_resp\")"
+      } else {
+        " AND (type_of_study:" + "\"" + tos + "\")"
+      }
       val params2: Seq[(String,String)] = params.map {
-        param => if (param._1 equals "q") ("q" -> (param._2 + newExpr))
-                 else param
+        param =>
+          if (param._1 equals "q") {
+            "q" -> (param._2 + newExpr)
+          } else {
+            param
+          }
       }
       val numDocsAnd = auxDocsAnd.map(_.count(_._1 equals tos)).getOrElse(0)
       val maxDocs2 = maxDocs - numDocsAnd
@@ -254,7 +270,7 @@ class InfoServer(
     require(maxDocs > 0)
 
     post(params) match {
-      case Right(ctt) => /*println(s"ctt=$ctt");*/(Json.parse(ctt) \ "response" \ "docs").validate[JsArray] match {
+      case Right(ctt) => (Json.parse(ctt) \ "response" \ "docs").validate[JsArray] match {
         case res: JsResult[JsArray] => res.get.value.take(maxDocs)
         case _                      => Seq()
       }
@@ -274,7 +290,7 @@ class InfoServer(
     */
   private def post(params: Seq[(String, String)]): Either[String, String] = {
 //println(s"post: params=$params")
-    val paramSeq = params.map(elem => new BasicNameValuePair(elem._1, elem._2))
+    val paramSeq: Seq[BasicNameValuePair] = params.map(elem => new BasicNameValuePair(elem._1, elem._2))
     val httpclient = HttpClients.createDefault()
     val httpPost = new HttpPost(iahxUrl)
     httpPost.addHeader("Accept-Charset", "UTF-8")
@@ -287,8 +303,8 @@ class InfoServer(
     if (statusLine.getStatusCode == 200) {
 //println(s"response=$response")
       try {
-        val entity = response.getEntity()
-        val content = EntityUtils.toString(entity)
+        val entity: HttpEntity = response.getEntity
+        val content: String = EntityUtils.toString(entity)
   //println(s"content=$content entity=$entity")
         response.close()
         Right(content)
@@ -307,30 +323,18 @@ class InfoServer(
                                  docs: Seq[(String, JsValue)],
                                  outType: String,
                                  callbackFunc: Option[String],
-                                 explainer: Option[Either[JsObject, Element]]):
-                                                                      String = {
+                                 explainer: Option[Either[JsObject, Element]]): String = {
     require(info != null)
     require(docs != null)
     require(outType != null)
     require(callbackFunc != null)
 
-    val lang = getRespLanguage(info)
+    val lang: String = getRespLanguage(info)
     val subtitle = ""
-    /*val subtitle = info
-      .filter(_.isInstanceOf[MainSearchCriteria])
-      .zipWithIndex
-      .foldLeft[String]("") {
-        case (str, (msc, idx)) =>
-          val msc2 = msc.asInstanceOf[MainSearchCriteria]
-          str + (if (idx == 0) "" else " OR ") +
-            (msc2.displayName.getOrElse(msc2.code.getOrElse(
-              msc2.originalText.getOrElse(""))))
-      }
-    */
-    val categories = getCategories(info, Seq())
+    val categories: Seq[Category] = getCategories(info, Seq())
     val id = s"urn:uuid:${java.util.UUID.randomUUID()}"
-    val feed = AtomFeed(subtitle, categories, lang = lang, id = id)
-    val entries = docs.foldLeft[Seq[AtomEntry]](Seq()) {
+    val feed: AtomFeed = AtomFeed(subtitle, categories, lang = lang, id = id)
+    val entries: Seq[AtomEntry] = docs.foldLeft[Seq[AtomEntry]](Seq()) {
       case (seq, (docType, doc)) =>
         seq :+ AtomEntry(docType, doc, lang, categories)
     }
@@ -338,16 +342,13 @@ class InfoServer(
     outType.toLowerCase match {
       case "application/json" =>
         explainer match {
-          case Some(expl) =>
-  //println(s"@@@expl=$expl")
-            AtomOutput.toJson(atom, Some(expl.left.get))
+          case Some(expl) => AtomOutput.toJson(atom, Some(expl.left.get))
           case None => AtomOutput.toJson(atom, None)
         }
       case "application/javascript" =>
         val fname = callbackFunc.getOrElse("callback")
         explainer match {
-          case Some(expl) =>
-            s"$fname(${AtomOutput.toJson(atom, Some(expl.left.get))});"
+          case Some(expl) => s"$fname(${AtomOutput.toJson(atom, Some(expl.left.get))});"
           case None => s"$fname(${AtomOutput.toJson(atom, None)});"
 
         }
@@ -385,10 +386,13 @@ class InfoServer(
 
   def getCategories(info: Seq[SearchParameter],
                     aux: Seq[Category]): Seq[Category] = {
-    if (info.isEmpty) aux
-    else {
-      val className = info.head.getClass.getName
-      val (same, dif) = info.partition(_.getClass.getName.equals(className))
+    if (info.isEmpty) {
+      aux
+    } else {
+      val className: String = info.head.getClass.getName
+      val (same, dif) = info.partition {
+        sp: SearchParameter => sp.getClass.getName.equals(className)
+      }
 
       same.size match {
         case 0 => aux
@@ -397,8 +401,11 @@ class InfoServer(
           val aux2 = same.zipWithIndex.foldLeft[Seq[Category]] (aux) {
             case (seq, (sparam, idx)) => sparam.getCategories.foldLeft[Seq[Category]] (seq) {
               case (seq2, cat) =>
-                if (idx == 0) seq2 :+ Category(cat.scheme, cat.term)
-                else seq2 :+ Category(cat.scheme + idx, cat.term)
+                if (idx == 0) {
+                  seq2 :+ Category(cat.scheme, cat.term)
+                } else {
+                  seq2 :+ Category(cat.scheme + idx, cat.term)
+                }
             }
           }
           getCategories(dif, aux2)
@@ -417,10 +424,15 @@ class InfoServer(
   def paramsToUrl(info: Seq[SearchParameter],
                   infoUrl: String): Option[String] = {
     Try (new URL(infoUrl)) match {
-      case Success(u) => {
+      case Success(u) =>
         val uStr = u.toString
-        val url2 = (if (uStr.endsWith("/")) uStr.substring(0, uStr.size-1)
-                   else uStr) + "?"
+        val url2 = (
+          if (uStr.endsWith("/")) {
+            uStr.substring(0, uStr.length-1)
+          } else {
+            uStr
+          }
+        ) + "?"
         val params = info.zipWithIndex.foldLeft[String]("") {
           case (out, (par, idx)) => par.getCategories.foldLeft[String](out) {
             case (out2, cat) => out2 + (if (idx == 0) "" else "&") +
@@ -428,7 +440,6 @@ class InfoServer(
           }
         }
         Some(url2 + URLEncoder.encode(params, "UTF-8"))
-      }
       case Failure(_) => None
     }
   }
@@ -444,7 +455,7 @@ class InfoServer(
               case (map, arr) => map + ((arr(0).trim, arr(1).trim))
             }
         } match {
-          case Success(u) => Some(u)
+          case Success(s) => Some(s)
           case Failure(_) => None
         }
       case Failure(_) => None
@@ -458,7 +469,7 @@ class InfoServer(
   * where <url> is the url specified by the infobuuton protocol
   */
 object InfoServer extends App {
-  val url = if (args.isEmpty)
+  val url = if (args.isEmpty) {
     "representedOrganization.id.root=[OID of the organization submitting the " +
       "request]&taskContext.c.c=PROBLISTREV&mainSearchCriteria.v.c=C18.452.394.750.149&mainSea" +
       "rchCriteria.v.cs=2.16.840.1.113883.6.177&mainSearchCriteria.v.dn=Type+2+" +
@@ -466,12 +477,14 @@ object InfoServer extends App {
       ".administrativeGenderCode.c=M&age.v.v=45&age.v.u=a&informationRecipient" +
       "=PAT&performer=PROV&performer.languageCode.c=en&performer.healthCarePro" +
       "vider.c.c=163W00000X&knowledgeResponseType=application/json"
-    else args(0)
+  } else {
+    args(0)
+  }
 
   val indexDir = "web/BVSInfoButton/indexes"
-  val conv = new MeshConverter(indexDir)
-  val server = new InfoServer(conv)
+  val conv: MeshConverter = new MeshConverter(indexDir)
+  val server: InfoServer = new InfoServer(conv)
 
-  println(s"info = ${server.getInfo(url, 10)}")
+  println(s"info = ${server.getInfo(url, maxDocs = 10)}")
   conv.close()
 }

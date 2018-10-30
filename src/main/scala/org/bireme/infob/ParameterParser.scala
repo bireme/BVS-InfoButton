@@ -13,7 +13,7 @@ import org.bireme.infob.parameters._
   * An object that convertes the map representing url parameters into
   * SearchParameters objects.
   *
-  * @author: Heitor Barbieri
+  * author: Heitor Barbieri
   */
 object ParameterParser {
   // Sequence of search parameter classes the url parameters will be converted to
@@ -41,9 +41,8 @@ object ParameterParser {
             param: Map[String, String])
     : (Seq[SearchParameter], String, Option[String]) = {
     require(param != null)
-//println(s"conv=$conv parSeq=$parSeq, param=$param")
+
     val (spSeq, others) = parse(conv, parSeq, param, Seq())
-//println(s"spSeq=$spSeq others=$others")
     val responseType =
       others.get("knowledgeResponseType") match {
         case Some(krt) => krt.toLowerCase match {
@@ -56,8 +55,11 @@ object ParameterParser {
       }
 
     val callbackFunc =
-      if (responseType.equals("application/javascript")) others.get("jsonp")
-      else None
+      if (responseType.equals("application/javascript")) {
+        others.get("jsonp")
+      } else {
+        None
+      }
 
     (spSeq, responseType, callbackFunc)
   }
@@ -68,11 +70,11 @@ object ParameterParser {
             auxSrcParam: Seq[SearchParameter])
     : (Seq[SearchParameter], Map[String, String]) = {
 
-    if (names.isEmpty) (auxSrcParam, param)
-    else {
+    if (names.isEmpty) {
+      (auxSrcParam, param)
+    } else {
       val name = names.head
       val clazz = Class.forName("org.bireme.infob.parameters." + name + "$")
-      //println(s"name=$clazz")
       val obj = clazz.getField("MODULE$").get(classOf[Parser]).asInstanceOf[Parser]
       val (seq, others) = {
         val (sp, oths) = obj.parse(conv, param)
@@ -99,17 +101,16 @@ object ParameterParserTest extends App {
 
   val map =
     url.split("\\&").map(_.split("=")).foldLeft[Map[String, String]](Map()) {
-      case (map, arr) => map + ((arr(0).trim, arr(1).trim))
+      case (map2, arr) => map2 + ((arr(0).trim, arr(1).trim))
     }
   map.foreach(kv => println(s"${kv._1} -> ${kv._2}"))
   println()
 
   val indexDir = "web/BVSInfoButton/indexes"
-  val conv = new MeshConverter(indexDir)
+  val conv: MeshConverter = new MeshConverter(indexDir)
   val (params, responseType, callbackFunc) = ParameterParser.parse(conv, map)
 
   params.foreach(p => println(p.toString + "\n"))
-  println(
-    s"""knowledgeResponseType=${responseType}""")
-  callbackFunc.map(s => println(s"callback function=$s"))
+  println(s"""knowledgeResponseType=$responseType""")
+  callbackFunc.foreach(s => println(s"callback function=$s"))
 }

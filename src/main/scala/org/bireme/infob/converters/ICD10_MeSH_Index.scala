@@ -39,7 +39,7 @@ object ICD10_MeSH_Index extends App {
 
   def createIndex(luceneIndex: String, url: String, cid10: String): Unit = {
     val analyzer = new KeywordAnalyzer()
-    val directory = FSDirectory.open(new File(luceneIndex).toPath())
+    val directory = FSDirectory.open(new File(luceneIndex).toPath)
 
     val config = new IndexWriterConfig(analyzer)
     config.setOpenMode(IndexWriterConfig.OpenMode.CREATE)
@@ -48,7 +48,7 @@ object ICD10_MeSH_Index extends App {
     val source = Source.fromURL(url, "utf-8")
     val lines = source.getLines()
 
-    index(insertDefinitions(cid10, filterByMeSH_ICD10(lines)), indexWriter)
+    index(insertDefinitions(cid10, filterByMeSHICD10(lines)), indexWriter)
 
     indexWriter.forceMerge(1)
     source.close()
@@ -56,10 +56,10 @@ object ICD10_MeSH_Index extends App {
     directory.close()
   }
 
-  private def filterByMeSH_ICD10(
+  private def filterByMeSHICD10(
       lines: collection.Iterator[String]): Map[String, Set[String]] = {
     lines.foldLeft[Map[String, Set[String]]](Map()) {
-      case (map, line) => {
+      case (map, line) =>
         val split = line.substring(10).trim().split("\\|")
 
         split.find(_.startsWith("ICD-10:")) match {
@@ -80,7 +80,6 @@ object ICD10_MeSH_Index extends App {
             }
           case None => map
         }
-      }
     }
   }
 
@@ -101,7 +100,9 @@ object ICD10_MeSH_Index extends App {
             case Some(mcodes) => map + (code -> (description, mcodes))
             case None         => map
           }
-        } else map
+        } else {
+          map
+        }
         map2
     }
     source.close()

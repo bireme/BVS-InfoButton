@@ -29,7 +29,11 @@ object Tools {
   }
 
   def replaceSpaces(in: String): String =
-    if (in == null) null else in.replace(" ", "%20")
+    if (in == null) {
+      null
+    } else {
+      in.replace(" ", "%20")
+    }
 
   def encodeUrl(in: String): String =  URLEncoder.encode(in, "UTF-8")
 }

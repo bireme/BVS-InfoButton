@@ -51,7 +51,7 @@ object UMLS_Index extends App {
   val TERM_LABEL_SUBFLD = 'q'
   val TERM_TYPE_SUBFLD = 't'
 
-  val parameters = args.size match {
+  val parameters = args.length match {
     case 0 => Map[String, String]()
     case _ => args.foldLeft[Map[String, String]](Map()) {
       case (map, par) =>
@@ -68,7 +68,7 @@ object UMLS_Index extends App {
 
     val mst = MasterFactory.getInstance(umlsMaster).open()
     val analyzer = new KeywordAnalyzer()
-    val directory = FSDirectory.open(new File(umlsIndex).toPath())
+    val directory = FSDirectory.open(new File(umlsIndex).toPath)
 
     val config = new IndexWriterConfig(analyzer)
     config.setOpenMode(IndexWriterConfig.OpenMode.CREATE)
@@ -84,16 +84,16 @@ object UMLS_Index extends App {
   }
 
   private def writeRecord(rec: Record, indexWriter: IndexWriter): Unit = {
-    parseRecord(rec).map {
+    parseRecord(rec).foreach {
       _.groupBy[String](_.umlsConceptCode).foreach {
         case (code, etSeq) =>
           val seqs = etSeq.groupBy[String](et =>
             if (et.thesaurus.startsWith("MSH")) "MESH" else "NO_MESH")
           val meshCode = seqs.get("MESH").map(_.head.termCode)
 
-          seqs.get("NO_MESH").map { noMshSeq =>
+          seqs.get("NO_MESH").foreach { noMshSeq =>
             thesauri.foreach { thes =>
-              val tSeq = noMshSeq.filter(_.thesaurus.equals(thes))
+              val tSeq = noMshSeq.filter { et => et.thesaurus.equals(thes) }
               writeDocuments(tSeq, code, meshCode, indexWriter)
             }
           }
@@ -105,16 +105,16 @@ object UMLS_Index extends App {
                              umlsCode: String,
                              meshTermCode: Option[String],
                              indexWriter: IndexWriter): Unit = {
-    if (!etSeq.isEmpty) {
-      val head = etSeq.head
-      val preferedTerm = etSeq.find(_.termType.equals("PF"))
-      val doc = new Document()
+    if (etSeq.nonEmpty) {
+      val head: EntryTerm = etSeq.head
+      val preferedTerm: Option[EntryTerm] = etSeq.find { et => et.termType.equals("PF")}
+      val doc: Document = new Document()
 
-      val thesaurus = conversion.get(head.thesaurus).get
+      val thesaurus: String = conversion(head.thesaurus)
       doc.add(new StringField("umlsCode", umlsCode, Field.Store.YES))
       doc.add(new StringField("thesaurus", thesaurus, Field.Store.YES))
       doc.add(new StringField("termCode", head.termCode, Field.Store.YES))
-      meshTermCode.map { mtc =>
+      meshTermCode.foreach { mtc =>
         doc.add(new StringField("meshCode", mtc, Field.Store.YES))
       }
       preferedTerm match {
@@ -135,7 +135,7 @@ object UMLS_Index extends App {
   }
 
   private def parseRecord(rec: Record): Option[Seq[EntryTerm]] = {
-    if (rec.isActive()) {
+    if (rec.isActive) {
       val et = rec.iterator.asScala
         .filter(_.getId == TAG)
         .foldLeft[Seq[EntryTerm]](Seq()) {
@@ -149,6 +149,8 @@ object UMLS_Index extends App {
             )
         }
       Some(et)
-    } else None
+    } else {
+      None
+    }
   }
 }

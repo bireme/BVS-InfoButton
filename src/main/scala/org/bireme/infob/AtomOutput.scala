@@ -23,7 +23,7 @@ object AtomOutput {
     val feedElement = feed2Xml(atom.feed, document)
 
     atom.entry.foreach(entry => entry2Xml(entry, feedElement))
-    if (!explain.isEmpty) feedElement.add(explain.get)
+    if (explain.isDefined) feedElement.add(explain.get)
     //OutputFormat format = OutputFormat.createPrettyPrint();
     //if (!explain.isEmpty) feedElement.addComment(explain.get.asXML)
     document.asXML()
@@ -37,10 +37,10 @@ object AtomOutput {
     val feed = feed2Json(atom.feed)
     val atomEntry = atom.entry
 
-    val root = if (atomEntry.isEmpty)
+    val root = if (atomEntry.isEmpty) {
       JsObject(List("feed" -> JsObject(feed)))
-    else {
-      val entries = Seq("entry" -> JsArray(atomEntry.map(entry2Json(_))))
+    } else {
+      val entries = Seq("entry" -> JsArray(atomEntry.map(entry2Json)))
       JsObject(List("feed" -> JsObject(feed ++ entries)))
     }
 
@@ -86,7 +86,7 @@ object AtomOutput {
     root.addElement("updated").addText(feed.updated)
 
     feed.categories
-      .filter(cat => (!cat.scheme.isEmpty && !cat.term.isEmpty))
+      .filter(cat => cat.scheme.isEmpty && !cat.term.isEmpty )
       .foreach(
         cat =>
           root
@@ -130,7 +130,7 @@ object AtomOutput {
           .addText(summary))
 
     entry.categories
-      .filter(cat => (!cat.scheme.isEmpty && !cat.term.isEmpty))
+      .filter(cat => !cat.scheme.isEmpty && !cat.term.isEmpty )
       .foreach(
         cat =>
           entryElem
@@ -145,7 +145,7 @@ object AtomOutput {
           .addAttribute("scheme", "documentType")
           .addAttribute("term", docType))
 
-    entry.author.map(_.foreach(author =>
+    entry.author.foreach(_.foreach(author =>
       entryElem.addElement("author").addText(author)))
     entry.source.map(source => entryElem.addElement("source").addText(source))
   }
@@ -155,7 +155,7 @@ object AtomOutput {
 
     val headerCategory = JsArray(
       feed.categories
-        .filter(cat => (!cat.scheme.isEmpty && !cat.term.isEmpty))
+        .filter(cat => !cat.scheme.isEmpty && !cat.term.isEmpty )
         .map(cat =>
           JsObject(List("scheme" -> JsString(cat.scheme),
                         "term" -> JsString(cat.term))))
@@ -170,9 +170,12 @@ object AtomOutput {
       "lang" -> JsString(feed.lang),
       "title" -> JsObject(
         List("_value" -> JsString(feed.title), "type" -> JsString("text")))) ++
-   (if (feed.subtitle.isEmpty) Seq()
-   else Seq("subtitle" -> JsObject(
-        List("_value" -> JsString(feed.subtitle), "type" -> JsString("text"))))) ++
+        (if (feed.subtitle.isEmpty) {
+          Seq()
+         } else {
+          Seq("subtitle" -> JsObject(
+            List("_value" -> JsString(feed.subtitle), "type" -> JsString("text"))))
+         }) ++
    Seq("author" -> JsObject(
         List("_name" -> JsObject(List("_value" -> JsString(feed.author._1))),
              "uri" -> JsObject(List("_value" -> JsString(feed.author._2))))),
@@ -195,7 +198,7 @@ object AtomOutput {
     val category = Some(
       JsArray(
         entry.categories
-          .filter(cat => (!cat.scheme.isEmpty && !cat.term.isEmpty))
+          .filter(cat => !cat.scheme.isEmpty && !cat.term.isEmpty )
           .map(cat =>
             JsObject(List("scheme" -> JsString(cat.scheme),
                           "term" -> JsString(cat.term)))) ++ docType
@@ -211,12 +214,16 @@ object AtomOutput {
         JsObject(List("_value" -> JsString(upd)))),
       "link" -> entry.link.map(
         lk =>
-          JsObject(
-            List("hreflang" -> JsString(entry.lang),
-                 "title" -> JsString(entry.title.getOrElse("")),
-                 "rel" -> JsString("via"),
-                 "type" -> JsString("html"),
-                 "href" -> (JsString(lk))))),
+          JsObject
+            {
+              List(
+                "hreflang" -> JsString(entry.lang),
+                "title" -> JsString(entry.title.getOrElse("")),
+                "rel" -> JsString("via"),
+                "type" -> JsString("html"),
+                "href" -> JsString(lk)
+              )
+            }),
       "lang" -> Some(JsString(entry.lang)),
       "author" -> entry.author.map(set => JsArray(set.map(au => JsString(au)))),
       "source" -> entry.source.map(src =>

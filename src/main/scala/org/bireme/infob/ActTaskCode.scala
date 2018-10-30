@@ -1,11 +1,18 @@
+/*=========================================================================
+
+    BVS-InfoButton © Pan American Health Organization, 2017.
+    See License at: https://github.com/bireme/BVS-InfoButton/blob/master/LICENSE.txt
+
+  ==========================================================================*/
+
 package org.bireme.infob
 
 /**
   *
   * Description: A task or action that a user may perform in a clinical information system.
-  * Id:	2.16.840.1.113883.1.11.19846
-  * Name:	ActTaskCode
-  * Version Label:	DEFN=UV=VO=1099-20110726
+  * Id: 2.16.840.1.113883.1.11.19846
+  * Name: ActTaskCode
+  * Version Label: DEFN=UV=VO=1099-20110726
   */
 object ActTaskCode {
   val name = "ActTaskCode"

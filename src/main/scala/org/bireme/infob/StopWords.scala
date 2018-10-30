@@ -8,7 +8,7 @@
 package org.bireme.infob
 
 object StopWords {
-  val stopwords = Set(
+  val stopwords: Set[String] = Set(
     "a",
     "about",
     "above",

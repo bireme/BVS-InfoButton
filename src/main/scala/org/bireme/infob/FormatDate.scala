@@ -25,7 +25,7 @@ object FormatDate {
   /**
     * Try to convert the date into the yyyy-MM-dd'T'HH:mm:ss'Z output format
     *
-    * @param input date string with the following format: yyyyMMdd
+    * @param date string with the following format: yyyyMMdd
     * @return possibly the formated output date string
     */
   def format1(date: String): Option[String] = {
@@ -42,10 +42,10 @@ object FormatDate {
   /**
     * Convert the date into the yyyy-MM-dd'T'HH:mm:ss'Z output format
     *
-    * @param input date object
+    * @param date object
     * @return the formated output date string
     */
-  def format2(date: Date) = dateFmtOut.format(date)
+  def format2(date: Date): String = dateFmtOut.format(date)
 
   /**
     * Convert the date into the yyyy-MM-dd output format

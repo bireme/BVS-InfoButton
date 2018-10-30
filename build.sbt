@@ -19,7 +19,7 @@ val logbackVersion = "1.2.3"
 val scalaTestVersion = "3.0.5"
 val hairyfotrVersion = "0.1.17"
 val luceneVersion = "7.5.0" // "7.3.0"
-val httpComponentsVersion = "4.5.5"
+val httpComponentsVersion = "4.5.6"
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http" % akkaVersion,

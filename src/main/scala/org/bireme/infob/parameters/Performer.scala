@@ -14,18 +14,17 @@ class Performer(role: Option[String],
                 langCode: Option[String] = None,
                 langCodeSystem: Option[String] = None,
                 langDisplayName: Option[String] = None) extends SearchParameter {
-  val lCodeSys = langCodeSystem.getOrElse("")
+  val lCodeSys: String = langCodeSystem.getOrElse("")
   require (lCodeSys.isEmpty || lCodeSys.equals(InfoRecipient.ISO_639_1))
 
-  val lang2 = ISO639_1_Codes.codes.map { case (k, v) => (k, v.head.toLowerCase) }
-  val langN = lang2.map { case (k, v) => (v, k) }
+  val lang2: Map[String, String] = ISO639_1_Codes.codes.map { case (k, v) => (k, v.head.toLowerCase) }
+  val langN: Map[String, String] = lang2.map { case (k, v) => (v, k) }
 
   val lcode: Option[String] = langCode match {
-    case Some(lcode) =>
-      if (lang2.contains(lcode.toLowerCase)) Some(lcode.toLowerCase) else None
+    case Some(lcode2) => Some(lcode2.toLowerCase).filter(lang2.contains)
     case None => langDisplayName.flatMap(la => langN.get(la.toLowerCase))
   }
-  val role2 = role match {
+  val role2: Option[String] = role match {
     case Some("PAT")   => Some("PAT")   // patient
     case Some("PROV")  => Some("PROV")  // healthCareProvider
     case Some("PAYOR") => Some("PAYOR") // payor
@@ -47,7 +46,7 @@ class Performer(role: Option[String],
     ).filter(!_.term.isEmpty)
   }
 
-  override def toString =
+  override def toString: String =
     s"""Performer(role: Option[String] = $role,
                   langCode: Option[String] = $langCode,
                   langCodeSystem: Option[String] = $langCodeSystem,
@@ -63,8 +62,9 @@ object Performer extends Parser {
 
     val (per, others) = parameters.partition(_._1.startsWith("performer"))
 
-    if (per.isEmpty) (Seq(), others)
-    else {
+    if (per.isEmpty) {
+      (Seq(), others)
+    } else {
       Try (
         new Performer(
           role = per.get("performer"),

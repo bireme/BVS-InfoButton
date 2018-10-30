@@ -19,8 +19,11 @@ object Explainer {
               srcParam: Seq[SearchParameter],
               expression: Option[Seq[(String, String)]],
               isXml: Boolean = true): Either[JsObject, Element] = {
-    if (isXml) Right(explainXml(info, srcParam, expression))
-    else Left(explainJson(info, srcParam, expression))
+    if (isXml) {
+      Right(explainXml(info, srcParam, expression))
+    } else {
+      Left(explainJson(info, srcParam, expression))
+    }
   }
 
   def explainJson(info: InfoServer,
@@ -93,31 +96,34 @@ object Explainer {
             if (msc.originalText.isEmpty) {
               (msc.code.getOrElse(""), msc.strCode,
                msc.strCodeStatus, msc.codeSystem)
-            } else (msc.originalText.get, msc.strOriginalText,
-                    msc.strOriginalTextStatus, msc.codeSystem)
-          } else (msc.displayName.get, msc.strDisplayName,
-                  msc.strDisplayNameStatus, msc.codeSystem)
-        } else (msc.code.get, msc.strCode, msc.strCodeStatus, msc.codeSystem)
+            } else {
+              (msc.originalText.get, msc.strOriginalText,
+                msc.strOriginalTextStatus, msc.codeSystem)
+            }
+          } else {
+            (msc.displayName.get, msc.strDisplayName,
+              msc.strDisplayNameStatus, msc.codeSystem)
+          }
+        } else {
+          (msc.code.get, msc.strCode, msc.strCodeStatus, msc.codeSystem)
+        }
     }
   }
 
   private def parse(info: InfoServer,
                     expr: Seq[(String, String)]):
                                            Seq[(String, Seq[(String, Int)])] = {
-    val (bexpr, others) = expr.partition(_._1 equals("q"))
-//println(s"bexpr=$bexpr others=$others")
-    if (bexpr.isEmpty) Seq(("No search expression found",
-                             info.studies.map(x => (x, 0))))
-    else {
+    val (bexpr, others) = expr.partition(_._1 equals "q" )
+
+    if (bexpr.isEmpty) {
+      Seq(("No search expression found",
+        info.studies.map(x => (x, 0))))
+    } else {
       val bex = bexpr.head._2
-//println(s"bex=$bex")
       val split = bex.split("(?<=\\)) AND (?=\\()").toSeq
-//println(s"split=$split")
       val (instFull, others1) = split.partition(x =>
          x.startsWith("(instance:") || x.startsWith("(fulltext:"))
-//println(s"instFull=$instFull, others1=$others1")
       val (mainSrcCrit, others2) = others1.partition(_.contains("(mh:"))
-//println(s"mainSrcCrit=$mainSrcCrit, others2=$others2")
 
       parse2(info, mainSrcCrit, instFull, others2, others)
     }
@@ -137,12 +143,14 @@ object Explainer {
 //println(s"queryQ=$queryQ nod=$nod")
         seq :+ (queryQ._2, nod)
     }
-    if (isEmpty(seq1)) seq1 // if no one found documents
-    else {
+    if (isEmpty(seq1)) {
+      seq1
+    } else {
       // Test with all MainSearchCriteria at same time
-//println(s"mainSrcCrit.size=${mainSrcCrit.size})")
-      val seq3 = if (mainSrcCrit.size == 1) seq1
-        else {
+      val seq3 =
+        if (mainSrcCrit.size == 1) {
+          seq1
+        } else {
           val seq2 = {
             val queryQ = createQ(mainSrcCrit, instFull, Seq())
             val nod = numOfDocs(info, expr :+ queryQ)
@@ -158,8 +166,9 @@ object Explainer {
           seq :+ (queryQ._2, nod)
       }
       val seq5 = seq3 ++ seq4
-      if (others.size <= 1) seq5
-      else {
+      if (others.size <= 1) {
+        seq5
+      } else {
         // Test with all other parameters at same time
         val queryQ = createQ(mainSrcCrit, instFull, others)
         val nod = numOfDocs(info, expr :+ queryQ)
@@ -181,7 +190,7 @@ object Explainer {
 
   private def numOfDocs(info: InfoServer,
                         expr: Seq[(String, String)]): Seq[(String, Int)] = {
-    val seq = info.orderedSearch(info.studies, Some(expr), 10)
+    val seq: Seq[(String, JsValue)] = info.orderedSearch(info.studies, Some(expr), maxDocs = 10)
 
     info.studies map(tos => (tos, seq.count(_._1 equals tos)))
   }

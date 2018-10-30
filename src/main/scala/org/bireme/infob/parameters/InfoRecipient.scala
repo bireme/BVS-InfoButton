@@ -17,18 +17,17 @@ class InfoRecipient(role: Option[String],
                     langCode: Option[String] = None,
                     langCodeSystem: Option[String] = Some(InfoRecipient.ISO_639_1),
                     langDisplayName: Option[String] = None) extends SearchParameter {
-  val lCodeSys = langCodeSystem.getOrElse("")
+  val lCodeSys: String = langCodeSystem.getOrElse("")
   require (lCodeSys.isEmpty || lCodeSys.equals(InfoRecipient.ISO_639_1))
 
-  val lang2 = ISO639_1_Codes.codes.map { case (k, v) => (k, v.head.toLowerCase) }
-  val langN = lang2.map { case (k, v) => (v, k) }
+  val lang2: Map[String, String] = ISO639_1_Codes.codes.map { case (k, v) => (k, v.head.toLowerCase) }
+  val langN: Map[String, String] = lang2.map { case (k, v) => (v, k) }
 
   val lcode: Option[String] = langCode match {
-    case Some(lcode) =>
-      if (lang2.contains(lcode.toLowerCase)) Some(lcode.toLowerCase) else None
-    case None => langDisplayName.flatMap(la => langN.get(la.toLowerCase))
+    case Some(lcode2) => Some(lcode2.toLowerCase).filter(lang2.contains)
+    case None        => langDisplayName.flatMap(la => langN.get(la.toLowerCase))
   }
-  val role2 = role match {
+  val role2: Option[String] = role match {
     case Some("PAT")   => Some("PAT")   // patient
     case Some("PROV")  => Some("PROV")  // healthCareProvider
     case Some("PAYOR") => Some("PAYOR") // payor
@@ -52,7 +51,7 @@ class InfoRecipient(role: Option[String],
     ).filter(!_.term.isEmpty)
   }
 
-  override def toString =
+  override def toString: String =
     s"""InfoRecipient(role: Option[String] = $role,
                       langCodeSystem: Option[String] = $langCodeSystem,
                       langCode: Option[String] = $langCode,
@@ -68,8 +67,9 @@ object InfoRecipient extends Parser {
 
     val (ir, others) = parameters.partition(_._1.startsWith("informationRecipient"))
 
-    if (ir.isEmpty) (Seq(), others)
-    else {
+    if (ir.isEmpty) {
+      (Seq(), others)
+    } else {
 //println("ir=" + ir)
       Try (
         new InfoRecipient(
@@ -79,7 +79,7 @@ object InfoRecipient extends Parser {
           langDisplayName = ir.get("informationRecipient.languageCode.dn")
         )
       ) match {
-        case Success(s) => println(s"ir2=$s");(Seq(s), others)
+        case Success(s) => (Seq(s), others)
         case Failure(_) => (Seq(), others)
       }
     }

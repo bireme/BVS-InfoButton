@@ -171,7 +171,7 @@ object ISO3166 {
     "Nicaragua" -> "nicaragua",
     "Nigeria" -> "africa",
     "Niger" -> "africa",
-    "Niue	" -> "oceania",
+    "Niue" -> "oceania",
     "Norfolk Island" -> "oceania",
     "Northern Mariana Islands" -> "oceania",
     "Norway" -> "europa",

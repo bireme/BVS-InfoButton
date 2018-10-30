@@ -7,17 +7,17 @@
 
 package org.bireme.infob.parameters
 
-import org.bireme.infob.{Category, MeshConverter, Tools}
+import org.bireme.infob.{Category, MeshConverter}
 import scala.util.{Try, Success, Failure}
 
 class AgeGroup(code: Option[String] = None,
                codeSystem: Option[String] = None,
                displayName: Option[String] = None) extends SearchParameter {
-  require(!code.isEmpty || !displayName.isEmpty)
+  require(code.isDefined || displayName.isDefined)
 
-  val csystem = codeSystem.getOrElse("2.16.840.1.113883.6.177").trim
+  val csystem: String = codeSystem.getOrElse("2.16.840.1.113883.6.177").trim
 
-  val agroup = if (csystem.equals("2.16.840.1.113883.6.177")) {
+  val agroup: Option[String] = if (csystem.equals("2.16.840.1.113883.6.177")) {
     code.map(_.trim.toUpperCase) match {
       case Some(cd) =>
         cd match {
@@ -48,8 +48,9 @@ class AgeGroup(code: Option[String] = None,
           case _ => None
         }
     }
-  } else None
-//println(s"agroup=$agroup")
+  } else {
+    None
+  }
 
   override def toSrcExpression(env: Seq[SearchParameter]): Option[String] =
     agroup.map(ag => s"(limit:${'"'}$ag${'"'})")
@@ -63,7 +64,7 @@ class AgeGroup(code: Option[String] = None,
     ).filter(!_.term.isEmpty)
   }
 
-  override def toString =
+  override def toString: String =
     s"""AgeGroup(code: Option[String] = $code,
                    codeSystem: Option[String] = $codeSystem,
                    displayName: Option[String] = $displayName)"""
@@ -76,8 +77,9 @@ object AgeGroup extends Parser {
 
     val (ag, others) = parameters.partition(_._1.startsWith("ageGroup.v."))
 
-    if (ag.isEmpty) (Seq(), others)
-    else {
+    if (ag.isEmpty) {
+      (Seq(), others)
+    } else {
       Try (
         new AgeGroup(
           parameters.get("ageGroup.v.c"),
