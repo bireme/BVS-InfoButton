@@ -9,6 +9,7 @@ package org.bireme.binfo;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Map;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -21,6 +22,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.bireme.infob.InfoServer;
 import org.bireme.infob.MeshConverter;
 
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+
 /**
  *
  * @author Heitor Barbieri
@@ -28,7 +32,8 @@ import org.bireme.infob.MeshConverter;
  */
 @WebServlet(name = "BVSInfoButton", urlPatterns = {"/infobutton/search"})
 public class BVSInfoButton extends HttpServlet {
-
+    private static final Logger logger = LogManager.getLogger(BVSInfoButton.class);
+ 
     private InfoServer info;
     private String tpath;
     private MeshConverter mconverter;
@@ -60,7 +65,7 @@ public class BVSInfoButton extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request,
                                   HttpServletResponse response)
-                                          throws ServletException, IOException {
+                                          throws ServletException, IOException {                
         final String auxContentType = request.getParameter("knowledgeResponseType");
         final String contentType = (auxContentType == null) ? "text/xml"
                                                  : auxContentType.toLowerCase();
@@ -71,8 +76,31 @@ public class BVSInfoButton extends HttpServlet {
         try (PrintWriter out = response.getWriter()) {
             //out.println(getMainSearchCriteria(request.getParameterMap()));
             //out.println(getDocuments(request.getParameterMap()));
-            out.println(info.getInfo(request.getParameterMap(), 10));
-        }
+            scala.Tuple2<Object,String> result = info.getInfo(request.getParameterMap(), 10);
+            out.println(result._2);
+            logger.info(getRequestInfo(request, ((Integer)result._1)));
+        }                
+    }
+    
+    private String getRequestInfo(HttpServletRequest request,
+                                    int total) {
+        final Map<String, String[]> parameters = request.getParameterMap();
+        final String raddr = request.getRemoteAddr();
+        final String referer = request.getHeader("referer");        
+        final StringBuilder builder = new StringBuilder();
+        
+        builder.append("\tdocs_found=" + total);
+        
+        for (Map.Entry<String, String[]> elem : parameters.entrySet()) {
+            final String key = elem.getKey();
+            final String[] values = elem.getValue();
+            
+            for (String value: values) {
+                builder.append("\t" + key + "=" + value);
+            }
+        }        
+        
+        return "remote_address=" + raddr + "\treferer=" + referer + builder.toString();
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">

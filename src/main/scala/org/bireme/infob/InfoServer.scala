@@ -43,34 +43,34 @@ class InfoServer(
   LoggerFactory
     .getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME)
     .asInstanceOf[xLogger]
-    .setLevel(Level.DEBUG) //Level.INFO
+    .setLevel(Level.INFO)
 
   val logger = Logger("BVS-InfoButton")
 
   // Types of study
   // 'overview' is present to grant that at least some document will be returned
-  val studies = Seq("guideline",
-                    "systematic_reviews",
-                    "clinical_trials",
-                    "cohort",
-                    "case_control",
-                    "case_reports",
-                    "overview",
-                    "question_answer")
+  val studies: Seq[String] = Seq("guideline",
+                                 "systematic_reviews",
+                                 "clinical_trials",
+                                 "cohort",
+                                 "case_control",
+                                 "case_reports",
+                                 "overview",
+                                 "question_answer")
 
-  def getInfo(param: java.util.Map[String, Array[String]], maxDocs: Int): String = {
+  def getInfo(param: java.util.Map[String, Array[String]], maxDocs: Int): (Int, String) = {
     val pmap = param.asScala.toMap.map { case (key, value) => (key, value(0)) }
     getInfo(pmap, maxDocs)
   }
 
-  def getInfo(url: String, maxDocs: Int): String = {
+  def getInfo(url: String, maxDocs: Int): (Int, String) = {
     urlToParms(url) match {
       case Some(param) => getInfo(param, maxDocs)
-      case None => ""
+      case None => (0, "")
     }
   }
 
-  def getInfo(param: Map[String, String], maxDocs: Int = 10): String = {
+  def getInfo(param: Map[String, String], maxDocs: Int = 10): (Int, String) = {
     require(param != null)
     require(maxDocs > 0)
 
@@ -96,6 +96,7 @@ class InfoServer(
         Seq()
       }
     val docs: Seq[(String, JsValue)] = docsAND ++ docsOR
+    val total: Int = docs.size
 
     logger.debug(param.foldLeft[String]("\nParameters: ") {
       case (str, param2) => s"$str \n\t[${param2._1}: ${param2._2}]"
@@ -106,12 +107,12 @@ class InfoServer(
         case None       => "\nSearch expression (OR): Not Found."
       })
     }
-    logger.debug("\nDocuments found: " + docsAND.size)
-    if (useORExpression) {
-      logger.debug("\n\t (OR) - " + docsOR.size)
-    }
+    logger.debug("\nDocuments found: ")
+    logger.debug("\n\t(AND): " + docsAND.size)
+    logger.debug(" (OR) : " + docsOR.size)
+    logger.debug(" total: " + total)
 
-    convToInfoResponse(info, docs, oType, callbackFunc, explainer)
+    (total, convToInfoResponse(info, docs, oType, callbackFunc, explainer))
   }
 
 //http://basalto02.bireme.br:8986/solr5/portal/select?

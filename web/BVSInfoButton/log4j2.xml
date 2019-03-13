@@ -1,0 +1,22 @@
+
+
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Configuration status="WARN">
+      <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+          <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>      
+      <appender name="FILE" class="org.apache.log4j.DailyRollingFileAppender">
+        <param name="file" value="/home/javaapps/sbt-projects/BVS-Infobutton/logs/access.log" />
+        <param name="DatePattern" value="'.'yyyy-MM-dd" />
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="[%t] %d{HH:mm:ss,SSS} %-5p %l - %m%n" />
+        </layout>
+      </appender>
+      </Appenders>
+      <Loggers>
+        <Root level="info">
+          <AppenderRef ref="Console"/>
+        </Root>
+      </Loggers>
+    </Configuration>
