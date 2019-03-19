@@ -58,8 +58,10 @@ class MainSearchCriteria(conv: MeshConverter,
     val ret = code match {
       case Some(_) =>
         strCodeStatus match {
-          case "exact"  => Some("(mh:\"" + codeSet + "\" OR ti:\"" + codeSet +
-                                 "\" OR ab:\"" + codeSet + "\")")
+          case "exact"  =>
+            val code2: String = codeSet.head.toLowerCase
+            Some("(mh:\"" + code2 + "\" OR ti:\"" + code2 +
+                                 "\" OR ab:\"" + code2 + "\")")
           case "synonym"  => Some("(" +
                                   andOrExpression("mh", codeSet) + " OR " +
                                   andOrExpression("ti", codeSet) + " OR " +

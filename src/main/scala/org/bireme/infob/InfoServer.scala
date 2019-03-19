@@ -478,7 +478,7 @@ object InfoServer extends App {
       ".administrativeGenderCode.c=M&age.v.v=45&age.v.u=a&informationRecipient" +
       "=PAT&performer=PROV&performer.languageCode.c=en&performer.healthCarePro" +
       "vider.c.c=163W00000X&knowledgeResponseType=application/json"*/
-     "http://localhost:8084/BVSInfoButton/infobutton/search?mainSearchCriteria.v.c=77386006&mainSearchCriteria.v.cs=2.16.840.1.113883.6.96&mainSearchCriteria.v.c1=44808001&mainSearchCriteria.v.cs1=2.16.840.1.113883.6.96&knowledgeResponseType=text/xml&explain=true"
+     "http://bvsinfobutton.homolog.bvsalud.org/infobutton/search?mainSearchCriteria.v.c=D000071244&mainSearchCriteria.v.cs=2.16.840.1.113883.6.177&knowledgeResponseType=text/xml&explain=true"
   } else {
     args(0)
   }
