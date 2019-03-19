@@ -24,31 +24,31 @@ class MainSearchCriteria(conv: MeshConverter,
   require(code.isDefined || originalText.isDefined,
     s"code[$code].isDefined || originalText[$originalText].isDefined")
 
-  val (strCode, strCodeStatus) = code match {
+  val (codeSet: Set[String], strCodeStatus: String) = code match {
     case Some(cod) => conv.convert(codeSystem.get, cod) match {
-      case Right(cod2) => (cod2.trim, "exact")
+      case Right(cod2) => (Set[String](cod2), "exact")
       case Left(descr) => descr match {
-        case Some(des) => (des.trim, "synonym")
-        case None => ("", "not found")
+        case Some(des: Set[String]) => (des, "synonym")
+        case None => (Set[String](), "not found")
       }
     }
-    case None => ("", "not found")
+    case None => (Set[String](), "not found")
   }
-//println(s"code=$code strCode=$strCode strCodeStatus=$strCodeStatus")
+//println(s"code=$code codeSet=$codeSet strCodeStatus=$strCodeStatus")
 
   //val strDispName = displayName.getOrElse("").trim
-  lazy val (strDisplayName, strDisplayNameStatus) = displayName match {
+  lazy val (displayNameSet: Set[String], strDisplayNameStatus: String) = displayName match {
     case Some(dName) =>
       conv.convert(codeSystem.get, dName) match {
-        case Right(cod) => (cod.trim, "exact")
+        case Right(cod) => (Set[String](cod.trim), "exact")
         case Left(descr) => descr match {
-          case Some(des) => (des.trim, "synonym")
-          case None => ("", "not found")
+          case Some(des) => (des, "synonym")
+          case None => (Set[String](), "not found")
         }
       }
-    case None => ("", "not found")
+    case None => (Set[String](), "not found")
   }
-//println(s"displayName=$displayName strDisplayName=$strDisplayName strDisplayNameStatus=$strDisplayNameStatus")
+//println(s"displayName=$displayName displayNameSet=$displayNameSet strDisplayNameStatus=$strDisplayNameStatus")
 
   lazy val (strOriginalText, strOriginalTextStatus) =
     (originalText.getOrElse("").trim, "original")
@@ -58,13 +58,13 @@ class MainSearchCriteria(conv: MeshConverter,
     val ret = code match {
       case Some(_) =>
         strCodeStatus match {
-          case "exact"  => Some("(mh:\"" + strCode + "\" OR ti:\"" + strCode +
-                                 "\" OR ab:\"" + strCode + "\")")
+          case "exact"  => Some("(mh:\"" + codeSet + "\" OR ti:\"" + codeSet +
+                                 "\" OR ab:\"" + codeSet + "\")")
           case "synonym"  => Some("(" +
-                                  andOrExpression("mh", strCode) + " OR " +
-                                  andOrExpression("ti", strCode) + " OR " +
-                                  andOrExpression("ab", strCode) + ")")
-          case _ => if (strDisplayName.isEmpty) {
+                                  andOrExpression("mh", codeSet) + " OR " +
+                                  andOrExpression("ti", codeSet) + " OR " +
+                                  andOrExpression("ab", codeSet) + ")")
+          case _ => if (displayNameSet.isEmpty) {
             if (strOriginalText.isEmpty) {
               None
             } else {
@@ -76,9 +76,9 @@ class MainSearchCriteria(conv: MeshConverter,
             }
           } else {
             Some("(" +
-              andOrExpression("mh", strDisplayName) + " OR " +
-              andOrExpression("ti", strDisplayName) + " OR " +
-              andOrExpression("ab", strDisplayName) + ")"
+              andOrExpression("mh", displayNameSet) + " OR " +
+              andOrExpression("ti", displayNameSet) + " OR " +
+              andOrExpression("ab", displayNameSet) + ")"
             )
           }
         }
@@ -97,6 +97,18 @@ class MainSearchCriteria(conv: MeshConverter,
   }
 
   private def andOrExpression(index: String,
+                              inSet: Set[String]): String = {
+    val builder = new StringBuilder("(")
+
+    inSet.map(x => andOrExpression(index, x)).toSeq.zipWithIndex.foreach {
+      case (descr, idx) =>
+        if (idx > 0) builder.append(" OR ")
+        builder.append(descr)
+    }
+    builder.append(")").toString()
+  }
+
+  private def andOrExpression(index: String,
                               in: String): String = {
     require (index != null)
     require (in != null)
@@ -104,7 +116,7 @@ class MainSearchCriteria(conv: MeshConverter,
     val words = in.trim.split("\\s+").foldLeft[Set[String]](TreeSet()) {
       case (set, word) =>
         val normWord = Tools.uniformString(word)
-        if ((normWord.length > 3) && (!StopWords.stopwords.contains(normWord))) {
+        if ((normWord.length > 2) && (!StopWords.stopwords.contains(normWord))) {
           set + normWord
         } else {
           set

@@ -41,7 +41,7 @@ class SubTopic(
     val in2 = intr //if (intr.endsWith("*")) intr else intr + "*"
     val ostr: Option[String] = conv.convert(codeSystem.get, in2) match {
       case Right(str) => Some(str)
-      case Left(optStr) => optStr orElse snomedct2DeCS.get(intr.toLowerCase)
+      case Left(optStr) => optStr.map(_.head) orElse snomedct2DeCS.get(intr.toLowerCase)
     }
 
     ostr.map {

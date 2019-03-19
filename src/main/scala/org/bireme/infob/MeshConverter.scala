@@ -12,8 +12,7 @@ import java.io.File
 import org.apache.lucene.analysis.core.KeywordAnalyzer
 import org.apache.lucene.index.{DirectoryReader, Term}
 import org.apache.lucene.queryparser.classic.QueryParser
-import org.apache.lucene.search.{ BooleanClause, BooleanQuery, IndexSearcher,
-                                 TermQuery }
+import org.apache.lucene.search._
 import org.apache.lucene.store.FSDirectory
 
 import scala.util.{Either, Left, Right}
@@ -68,7 +67,7 @@ class MeshConverter(indexes: String) {
     *         or the string describing the term associated with the code (left)
     */
   def convert(codeSystem: String,
-              code: String): Either[Option[String], String] = {
+              code: String): Either[Option[Set[String]], String] = {
     require (code != null)
 
     val tcode = code.trim.toUpperCase
@@ -99,50 +98,40 @@ class MeshConverter(indexes: String) {
   }
 
   private def getMeshCode(codeSystem: String,
-                          code: String): Either[Option[String], String] = {
+                          code: String): Either[Option[Set[String]], String] = {
     thesauri.get(codeSystem) match {
       case Some(cSystem) => thes2thesSearchers.get("UMLS") match {
         case Some(searcher) =>
-          val parser = new QueryParser("thesaurus", analyzer)
-          val query = parser.parse(s"thesaurus:$cSystem AND termCode:$code")
-          val topDocs = searcher.search(query, 1)
+          val parser: QueryParser = new QueryParser("thesaurus", analyzer)
+          val query: Query = parser.parse(s"thesaurus:$cSystem AND termCode:$code")
+          val topDocs = searcher.search(query, 10)
           if (topDocs.totalHits == 0) {
-            val ucode = Tools.uniformString(code)
-            val query2 = parser.parse(s"thesaurus:$cSystem AND termLabelNorm:$ucode")
-            val topDocs2 = searcher.search(query2, 1)
+            val ucode: String = Tools.uniformString(code)
+            val query2: Query = parser.parse(s"thesaurus:$cSystem AND termLabelNorm:$ucode")
+            val topDocs2: TopDocs = searcher.search(query2, 10)
             if (topDocs2.totalHits == 0) {
               Left(None)
             } else {
-              val doc = searcher.doc(topDocs2.scoreDocs.head.doc)
-              val meshCode = doc.get("meshCode")
-              if (meshCode == null) {
-                val meshDesc = doc.get("termLabel")
-                if (meshDesc == null) {
-                  Left(None)
-                } else {
-                  Left(Some(meshDesc))
-                }
-              } else {
-                Right(meshCode)
-              }
+              getCode(topDocs2.scoreDocs.map(_.doc), searcher)
             }
           } else {
-            val doc = searcher.doc(topDocs.scoreDocs.head.doc)
-            val meshCode = doc.get("meshCode")
-            if (meshCode == null) {
-              val meshDesc = doc.get("termLabel")
-              if (meshDesc == null) {
-                Left(None)
-              } else {
-                Left(Some(meshDesc))
-              }
-            } else {
-              Right(meshCode)
-            }
+            getCode(topDocs.scoreDocs.map(_.doc), searcher)
           }
         case None => Left(None)
       }
       case None => Left(None)
+    }
+  }
+
+  private def getCode(docIds: Array[Int],
+                      searcher: IndexSearcher): Either[Option[Set[String]], String] = {
+    docIds.map(id => searcher.doc(id)).find(doc1 => doc1.get("meshCode") != null) match {
+      case Some(doc) => Right(doc.get("meshCode"))
+      case None =>
+        val labelSet: Set[String] = docIds.foldLeft(Set[String]()) {
+          case (set, docId) => set + searcher.doc(docId).get("termLabel").trim.toLowerCase
+        }
+        Left(Some(labelSet))
     }
   }
 

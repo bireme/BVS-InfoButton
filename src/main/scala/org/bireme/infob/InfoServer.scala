@@ -467,17 +467,18 @@ class InfoServer(
 /**
   * Object to call BVS_Infobutton.
   * usage: InfoServer <url>
-  * where <url> is the url specified by the infobuuton protocol
+  * where <url> is the url specified by the infobutton protocol
   */
 object InfoServer extends App {
   val url = if (args.isEmpty) {
-    "representedOrganization.id.root=[OID of the organization submitting the " +
+    /*"representedOrganization.id.root=[OID of the organization submitting the " +
       "request]&taskContext.c.c=PROBLISTREV&mainSearchCriteria.v.c=C18.452.394.750.149&mainSea" +
       "rchCriteria.v.cs=2.16.840.1.113883.6.177&mainSearchCriteria.v.dn=Type+2+" +
       "Diabetes+Mellitus&mainSearchCriteria.v.ot=diabetes+type+2&patientPerson" +
       ".administrativeGenderCode.c=M&age.v.v=45&age.v.u=a&informationRecipient" +
       "=PAT&performer=PROV&performer.languageCode.c=en&performer.healthCarePro" +
-      "vider.c.c=163W00000X&knowledgeResponseType=application/json"
+      "vider.c.c=163W00000X&knowledgeResponseType=application/json"*/
+     "http://localhost:8084/BVSInfoButton/infobutton/search?mainSearchCriteria.v.c=77386006&mainSearchCriteria.v.cs=2.16.840.1.113883.6.96&mainSearchCriteria.v.c1=44808001&mainSearchCriteria.v.cs1=2.16.840.1.113883.6.96&knowledgeResponseType=text/xml&explain=true"
   } else {
     args(0)
   }

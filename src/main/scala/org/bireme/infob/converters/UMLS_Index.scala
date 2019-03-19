@@ -8,23 +8,23 @@
 package org.bireme.infob.converters
 
 import bruma.master._
-
 import java.io.File
 
 import org.apache.lucene.analysis.core.KeywordAnalyzer
 import org.apache.lucene.document.{Document, Field, StringField}
 import org.apache.lucene.index.{IndexWriter, IndexWriterConfig}
 import org.apache.lucene.store.FSDirectory
-
 import org.bireme.infob.Tools
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.HashSet
+import scala.io.{BufferedSource, Source}
 
 /**
   * Create a Lucene UMLS index from a UMLS Isis master file'
   * [-mst=<path>] - path to the Isis UMLS master
   * [-index=<UMLSIndex>] - path to Lucene index to be created"
+  * [-snomed=<path>] - path to Snomed-CT text file"
   */
 object UMLS_Index extends App {
   case class EntryTerm(umlsConceptCode: String,
@@ -34,8 +34,9 @@ object UMLS_Index extends App {
                        termType: String)
 
   val DEF_UMLS_INDEX = "web/BVSInfoButton/indexes/UMLS"
-  val DEF_UMLS_YEAR = 2017
-  val DEF_UMLS_MASTER = s"/bases/umls/${DEF_UMLS_YEAR}AA/decsnamecuisty"
+  val DEF_UMLS_YEAR = 2018
+  val DEF_UMLS_MASTER =  "decsnamecuisty" //s"/bases/umls/${DEF_UMLS_YEAR}AA/decsnamecuisty"
+  val DEF_SNOMED_CT_FILE = "Snomed-CT/sct2_Description_Full-en_INT_20180731.txt"
 
   val thesauri = HashSet("ICD9CM", "ICD10CM", "ICD10", "SNOMEDCT_US", "RXNORM",
     "NDC", "LOINC")
@@ -61,10 +62,13 @@ object UMLS_Index extends App {
   }
   val index = parameters.getOrElse("index", DEF_UMLS_INDEX)
   val mstPath = parameters.getOrElse("mst", DEF_UMLS_MASTER)
+  val snomedPath = parameters.getOrElse("snomed", DEF_SNOMED_CT_FILE)
 
-  createIndex(mstPath, index)
+  createIndex(mstPath, index, snomedPath)
 
-  def createIndex(umlsMaster: String, umlsIndex: String): Unit = {
+  def createIndex(umlsMaster: String,
+                  umlsIndex: String,
+                  snomedCT: String): Unit = {
 
     val mst = MasterFactory.getInstance(umlsMaster).open()
     val analyzer = new KeywordAnalyzer()
@@ -75,6 +79,8 @@ object UMLS_Index extends App {
 
     val indexWriter = new IndexWriter(directory, config)
 
+    writeSnomedCT(snomedCT, indexWriter)
+
     mst.iterator().asScala.foreach(writeRecord(_, indexWriter))
 
     indexWriter.forceMerge(1)
@@ -83,7 +89,29 @@ object UMLS_Index extends App {
     mst.close()
   }
 
-  private def writeRecord(rec: Record, indexWriter: IndexWriter): Unit = {
+  private def writeSnomedCT(file: String,
+                            indexWriter: IndexWriter): Unit = {
+    val source: BufferedSource = Source.fromFile(file, "utf-8")
+
+    source.getLines().foreach {
+      line =>
+        val linet: String = line.trim
+        val split: Array[String] = linet.split("\t")
+        if (split.length == 9) {
+          val doc: Document = new Document()
+          doc.add(new StringField("thesaurus", "SNOMED-CT", Field.Store.YES))
+          doc.add(new StringField("termCode", split(4), Field.Store.YES))
+          doc.add(new StringField("termLabel", split(7), Field.Store.YES))
+          doc.add(new StringField("termLabelNorm",
+            Tools.uniformString(split(7)), Field.Store.YES))
+          indexWriter.addDocument(doc)
+        }
+    }
+    source.close()
+  }
+
+  private def writeRecord(rec: Record,
+                          indexWriter: IndexWriter): Unit = {
     parseRecord(rec).foreach {
       _.groupBy[String](_.umlsConceptCode).foreach {
         case (code, etSeq) =>

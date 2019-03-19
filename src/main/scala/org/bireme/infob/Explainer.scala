@@ -37,8 +37,11 @@ object Explainer {
     val terms = JsArray(
       convert(srcParam) map {
         param =>
+          val seq: Seq[JsString] = param._2.foldLeft(Seq[JsString]()) {
+            case (seq2: Seq[JsString], expr) => seq2 :+ JsString(expr)
+          }
           JsObject(Seq("original" -> JsString(param._1),
-                       "after" -> JsString(param._2),
+                       "after" -> JsArray(seq),
                        "status" -> JsString(param._3),
                        "thesaurus" -> JsString(param._4.getOrElse(""))))
       }
@@ -69,7 +72,9 @@ object Explainer {
       param =>
         val thesaurus = terms.addElement("term")
         thesaurus.addElement("original").addText(param._1)
-        thesaurus.addElement("after").addText(param._2).addAttribute("status", param._3)
+        param._2.foreach {
+          expr => thesaurus.addElement("after").addText(expr).addAttribute("status", param._3)
+        }
         thesaurus.addElement("thesaurus").addText(param._4.getOrElse(""))
     }
 
@@ -85,27 +90,27 @@ object Explainer {
 
   // (original, after, status, codeSystem)
   private def convert(srcParam: Seq[SearchParameter]):
-                              Seq[(String, String, String, Option[String])] = {
+                              Seq[(String, Set[String], String, Option[String])] = {
     require(srcParam != null)
 //println(s"convert srcParam=$srcParam")
     srcParam.filter(_.isInstanceOf[MainSearchCriteria]).map {
       param =>
-        val msc = param.asInstanceOf[MainSearchCriteria]
-        if (msc.strCode.isEmpty) {
-          if (msc.strDisplayName.isEmpty) {
+        val msc: MainSearchCriteria = param.asInstanceOf[MainSearchCriteria]
+        if (msc.codeSet.isEmpty) {
+          if (msc.displayNameSet.isEmpty) {
             if (msc.originalText.isEmpty) {
-              (msc.code.getOrElse(""), msc.strCode,
+              (msc.code.getOrElse(""), msc.codeSet,
                msc.strCodeStatus, msc.codeSystem)
             } else {
-              (msc.originalText.get, msc.strOriginalText,
+              (msc.originalText.get, Set(msc.strOriginalText),
                 msc.strOriginalTextStatus, msc.codeSystem)
             }
           } else {
-            (msc.displayName.get, msc.strDisplayName,
+            (msc.displayName.get, msc.displayNameSet,
               msc.strDisplayNameStatus, msc.codeSystem)
           }
         } else {
-          (msc.code.get, msc.strCode, msc.strCodeStatus, msc.codeSystem)
+          (msc.code.get, msc.codeSet, msc.strCodeStatus, msc.codeSystem)
         }
     }
   }
