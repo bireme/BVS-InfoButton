@@ -104,12 +104,12 @@ class MeshConverter(indexes: String) {
         case Some(searcher) =>
           val parser: QueryParser = new QueryParser("thesaurus", analyzer)
           val query: Query = parser.parse(s"thesaurus:$cSystem AND termCode:$code")
-          val topDocs = searcher.search(query, 10)
-          if (topDocs.totalHits == 0) {
+          val topDocs = searcher.search(query, 1)
+          if (topDocs.totalHits.value == 0) {
             val ucode: String = Tools.uniformString(code)
             val query2: Query = parser.parse(s"thesaurus:$cSystem AND termLabelNorm:$ucode")
             val topDocs2: TopDocs = searcher.search(query2, 10)
-            if (topDocs2.totalHits == 0) {
+            if (topDocs2.totalHits.value == 0) {
               Left(None)
             } else {
               getCode(topDocs2.scoreDocs.map(_.doc), searcher)
@@ -152,7 +152,7 @@ class MeshConverter(indexes: String) {
           .build()
         val topDocs = searcher.search(booleanQuery, 1)
 
-        if (topDocs.totalHits == 0) {
+        if (topDocs.totalHits.value == 0) {
           None
         } else {
           val doc = searcher.doc(topDocs.scoreDocs.head.doc)

@@ -1,7 +1,7 @@
 lazy val commonSettings = Seq(
   organization := "org.bireme",
   version := "1.0.0",
-  scalaVersion := "2.12.7"
+  scalaVersion := "2.12.8"
 )
 
 lazy val root = (project in file(".")).
@@ -10,16 +10,16 @@ lazy val root = (project in file(".")).
     name := "BVS-InfoButton"
   )
 
-val akkaVersion = "10.1.5" // "10.1.1"
-val playJsonVersion = "2.6.10" // "2.6.9"
+val akkaVersion = "10.1.7" //"10.1.5"
+val playJsonVersion = "2.7.2" //"2.6.10"
 val scalaXmlVersion = "1.1.1" // "1.0.6"
 val dom4jVersion = "2.1.1" // "2.1.0"
-val scalaLoggingVersion = "3.9.0" //"3.7.2"
+val scalaLoggingVersion = "3.9.2" //"3.9.0"
 val logbackVersion = "1.2.3"
-val scalaTestVersion = "3.0.5"
+val scalaTestVersion = "3.0.7" // "3.0.5"
 val hairyfotrVersion = "0.1.17"
-val luceneVersion = "7.5.0" // "7.3.0"
-val httpComponentsVersion = "4.5.6"
+val luceneVersion = "8.0.0" // "7.5.0"
+val httpComponentsVersion = "4.5.7" //"4.5.6"
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http" % akkaVersion,

@@ -75,7 +75,7 @@ object ICD10_UpdateIndex extends App {
       val termLabel = split(1)
       val searcher2 = searcher.getOrElse(new IndexSearcher(DirectoryReader.open(writer)))
       val topDocs = searcher2.search(new TermQuery(new Term("termCode", code)), 1)
-      if (topDocs.totalHits == 0) {
+      if (topDocs.totalHits.value == 0) {
         val doc = new Document()
 
         doc.add(new StringField("thesaurus", "ICD10", Field.Store.YES))
