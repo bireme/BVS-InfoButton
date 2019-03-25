@@ -60,27 +60,27 @@ class MainSearchCriteria(conv: MeshConverter,
         strCodeStatus match {
           case "exact"  =>
             val code2: String = codeSet.head.toLowerCase
-            Some("(mh:\"" + code2 + "\" OR ti:\"" + code2 +
-                                 "\" OR ab:\"" + code2 + "\")")
+            Some("(mh:\"" + code2 + "\" OR ti:\"" + code2 + "\")")
+            //                     "\" OR ab:\"" + code2 + "\")")
           case "synonym"  => Some("(" +
                                   andOrExpression("mh", codeSet) + " OR " +
-                                  andOrExpression("ti", codeSet) + " OR " +
-                                  andOrExpression("ab", codeSet) + ")")
+                                  andOrExpression("ti", codeSet) + ")") //" OR " +
+                                  //andOrExpression("ab", codeSet) + ")")
           case _ => if (displayNameSet.isEmpty) {
             if (strOriginalText.isEmpty) {
               None
             } else {
               Some("(" +
                 andOrExpression("mh", strOriginalText) + " OR " +
-                andOrExpression("ti", strOriginalText) + " OR " +
-                andOrExpression("ab", strOriginalText) + ")"
+                andOrExpression("ti", strOriginalText) + ")" //" OR " +
+                //andOrExpression("ab", strOriginalText) + ")"
               )
             }
           } else {
             Some("(" +
               andOrExpression("mh", displayNameSet) + " OR " +
-              andOrExpression("ti", displayNameSet) + " OR " +
-              andOrExpression("ab", displayNameSet) + ")"
+              andOrExpression("ti", displayNameSet) + ")" //" OR " +
+              //andOrExpression("ab", displayNameSet) + ")"
             )
           }
         }
@@ -90,8 +90,8 @@ class MainSearchCriteria(conv: MeshConverter,
         } else {
           Some("(" +
             andOrExpression("mh", strOriginalText) + " OR " +
-            andOrExpression("ti", strOriginalText) + " OR " +
-            andOrExpression("ab", strOriginalText) + ")"
+            andOrExpression("ti", strOriginalText) + ")" //" OR " +
+            //andOrExpression("ab", strOriginalText) + ")"
           )
         }
     }

@@ -35,7 +35,7 @@ object UMLS_Index extends App {
 
   val DEF_UMLS_INDEX = "web/BVSInfoButton/indexes/UMLS"
   val DEF_UMLS_YEAR = 2018
-  val DEF_UMLS_MASTER =  "decsnamecuisty" //s"/bases/umls/${DEF_UMLS_YEAR}AA/decsnamecuisty"
+  val DEF_UMLS_MASTER =  s"/bases/umls/${DEF_UMLS_YEAR}AA/decsnamecuisty"
   val DEF_SNOMED_CT_FILE = "Snomed-CT/sct2_Description_Full-en_INT_20180731.txt"
 
   val thesauri = HashSet("ICD9CM", "ICD10CM", "ICD10", "SNOMEDCT_US", "RXNORM",
