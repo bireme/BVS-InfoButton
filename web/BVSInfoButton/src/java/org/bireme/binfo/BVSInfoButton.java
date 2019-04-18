@@ -9,6 +9,7 @@ package org.bireme.binfo;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Calendar;
 import java.util.Map;
 
 import javax.servlet.ServletConfig;
@@ -76,31 +77,57 @@ public class BVSInfoButton extends HttpServlet {
         try (PrintWriter out = response.getWriter()) {
             //out.println(getMainSearchCriteria(request.getParameterMap()));
             //out.println(getDocuments(request.getParameterMap()));
-            scala.Tuple2<Object,String> result = info.getInfo(request.getParameterMap(), 10);
-            out.println(result._2);
-            logger.info(getRequestInfo(request, ((Integer)result._1)));
+            final scala.Tuple3<Object,String, String[]> 
+                        result = info.getInfo(request.getParameterMap(), 10);
+            final String[] ids = result._3();
+                        
+            out.println(result._2());
+            logger.info(getRequestInfo(request, ((Integer)result._1()), ids));            
         }                
     }
     
     private String getRequestInfo(HttpServletRequest request,
-                                    int total) {
+                                  int total,
+                                  String[] ids) {
         final Map<String, String[]> parameters = request.getParameterMap();
         final String raddr = request.getRemoteAddr();
         final String referer = request.getHeader("referer");        
         final StringBuilder builder = new StringBuilder();
+        final long now = Calendar.getInstance().getTimeInMillis();
         
+        builder.append("date=" + now);
+        builder.append("\tremote_address==" + raddr);
+        builder.append("\treferer=" + referer);
         builder.append("\tdocs_found=" + total);
         
+        boolean first = true;
+        builder.append("\tparameters=");
         for (Map.Entry<String, String[]> elem : parameters.entrySet()) {
             final String key = elem.getKey();
-            final String[] values = elem.getValue();
+            final String[] values = elem.getValue();            
             
             for (String value: values) {
-                builder.append("\t" + key + "=" + value);
+                if (first) {
+                    first = false;
+                } else {
+                    builder.append("|");
+                }
+                builder.append(key + "=" + value);
             }
         }        
         
-        return "remote_address=" + raddr + "\treferer=" + referer + builder.toString();
+        first = true;
+        builder.append("\tdoc_ids=");
+        for (String id: ids) {
+            if (first) {
+                first = false;
+            } else {
+                builder.append("|");
+            }
+            builder.append(id);
+        }
+        
+        return builder.toString();
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">

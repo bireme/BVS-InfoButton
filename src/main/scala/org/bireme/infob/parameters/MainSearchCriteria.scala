@@ -55,42 +55,44 @@ class MainSearchCriteria(conv: MeshConverter,
 //println(s"strOriginalText=$strOriginalText strOriginalTextStatus=$strOriginalTextStatus")
 
   override def toSrcExpression(env: Seq[SearchParameter]): Option[String] = {
+    val circ = "&circ;"
     val ret = code match {
       case Some(_) =>
         strCodeStatus match {
           case "exact"  =>
             val code2: String = codeSet.head.toLowerCase
-            Some("(mh:\"" + code2 + "\" OR ti:\"" + code2 + "\")")
+            Some("(mh:\"" + code2 + circ + "2\" OR ti:\"" + code2 + circ + "1\")")
             //                     "\" OR ab:\"" + code2 + "\")")
           case "synonym"  => Some("(" +
-                                  andOrExpression("mh", codeSet) + " OR " +
-                                  andOrExpression("ti", codeSet) + ")") //" OR " +
+                                  andOrExpression("mh", codeSet, 2) + " OR " +
+                                  andOrExpression("ti", codeSet, 1) + ")") //" OR " +
                                   //andOrExpression("ab", codeSet) + ")")
-          case _ => if (displayNameSet.isEmpty) {
-            if (strOriginalText.isEmpty) {
-              None
+          case _ =>
+            if (displayNameSet.isEmpty) {
+              if (strOriginalText.isEmpty) {
+                None
+              } else {
+                Some("(" +
+                  andOrExpression("mh", strOriginalText, 2) + " OR " +
+                  andOrExpression("ti", strOriginalText, 1) + ")" //" OR " +
+                  //andOrExpression("ab", strOriginalText) + ")"
+                )
+              }
             } else {
               Some("(" +
-                andOrExpression("mh", strOriginalText) + " OR " +
-                andOrExpression("ti", strOriginalText) + ")" //" OR " +
-                //andOrExpression("ab", strOriginalText) + ")"
+                andOrExpression("mh", displayNameSet, 2) + " OR " +
+                andOrExpression("ti", displayNameSet, 1) + ")" //" OR " +
+                //andOrExpression("ab", displayNameSet) + ")"
               )
             }
-          } else {
-            Some("(" +
-              andOrExpression("mh", displayNameSet) + " OR " +
-              andOrExpression("ti", displayNameSet) + ")" //" OR " +
-              //andOrExpression("ab", displayNameSet) + ")"
-            )
-          }
         }
       case None =>
         if (strOriginalText.isEmpty) {
           None
         } else {
           Some("(" +
-            andOrExpression("mh", strOriginalText) + " OR " +
-            andOrExpression("ti", strOriginalText) + ")" //" OR " +
+            andOrExpression("mh", strOriginalText, 2) + " OR " +
+            andOrExpression("ti", strOriginalText, 1) + ")" //" OR " +
             //andOrExpression("ab", strOriginalText) + ")"
           )
         }
@@ -98,11 +100,21 @@ class MainSearchCriteria(conv: MeshConverter,
     ret
   }
 
+  /**
+    *  Interleave a set of search expressions with OR operator and each search expression inside the set with boolean
+    *  connector AND or OR according to the number of input words of input search expression and boost factor
+    * @param index Lucene index used to search
+    * @param inSet a set input search expressions
+    * @param boost factor used to increase the importance of the terms of a expression search
+    * @return the set of search expression interleaved with boolean OR and each search expression interleaved with
+    *         boolean operator and boost factor
+    */
   private def andOrExpression(index: String,
-                              inSet: Set[String]): String = {
+                              inSet: Set[String],
+                              boost: Int): String = {
     val builder = new StringBuilder("(")
 
-    inSet.map(x => andOrExpression(index, x)).toSeq.zipWithIndex.foreach {
+    inSet.map(andOrExpression(index, _, boost)).toSeq.zipWithIndex.foreach {
       case (descr, idx) =>
         if (idx > 0) builder.append(" OR ")
         builder.append(descr)
@@ -110,10 +122,20 @@ class MainSearchCriteria(conv: MeshConverter,
     builder.append(")").toString()
   }
 
+  /**
+  *  Create a search expression with boolean connector AND or OR according to the number of input words of input
+    *  search expression
+    * @param index Lucene index used to search
+    * @param in input search expression
+    * @param boost factor used to increase the importance of the terms of a expression search
+    * @return the input search expression interleaved with boolean operator and boost factor
+    */
   private def andOrExpression(index: String,
-                              in: String): String = {
+                              in: String,
+                              boost: Int): String = {
     require (index != null)
     require (in != null)
+    require (boost >= 1)
 
     val words = in.trim.split("\\s+").foldLeft[Set[String]](TreeSet()) {
       case (set, word) =>
@@ -125,7 +147,10 @@ class MainSearchCriteria(conv: MeshConverter,
         }
     }
 
-    val words2 = words.map(word => s"$index:$word")
+    val circ = "&circ;"
+    val words2 = if (boost == 1) words.map(word => s"$index:$word")
+      else words.map(word => s"$index:$word$circ$boost")
+
     val words3 = if (words2.size > 5) {
       words2.mkString(" OR ")
     } else {

@@ -70,11 +70,11 @@ class MeshConverter(indexes: String) {
               code: String): Either[Option[Set[String]], String] = {
     require (code != null)
 
-    val tcode = code.trim.toUpperCase
+    val tcode: String = code.trim.toUpperCase
     if (tcode.isEmpty) {
       Left(None)
     } else {
-      val mesh = codeSystem.trim.toUpperCase match {
+      val mesh: Either[Option[Set[String]], String] = codeSystem.trim.toUpperCase match {
         case "2.16.840.1.113883.6.103" => getMeshCode("ICD9-CM", tcode)
         case "2.16.840.1.113883.6.90"  => getMeshCode("ICD10-CM", tcode)
         case "2.16.840.1.113883.6.3"   => getMeshCode("ICD10", tcode)
@@ -123,13 +123,22 @@ class MeshConverter(indexes: String) {
     }
   }
 
+  /**
+  * Look for the Mesh code equivalent of a thesauri code
+    * @param docIds the Lucene document ids of document that have the given thesauri code
+    * @param searcher searcher of UMLS index
+    * @return the equivalent Mesh code or the textual term descriptions of the found document
+    */
   private def getCode(docIds: Array[Int],
                       searcher: IndexSearcher): Either[Option[Set[String]], String] = {
     docIds.map(id => searcher.doc(id)).find(doc1 => doc1.get("meshCode") != null) match {
       case Some(doc) => Right(doc.get("meshCode"))
       case None =>
         val labelSet: Set[String] = docIds.foldLeft(Set[String]()) {
-          case (set, docId) => set + searcher.doc(docId).get("termLabel").trim.toLowerCase
+          case (set, docId) =>
+            searcher.doc(docId).getValues("termLabel").foldLeft(set) {
+              case (set1, value) => set1 + value.trim.toLowerCase
+            }
         }
         Left(Some(labelSet))
     }

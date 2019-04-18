@@ -58,19 +58,21 @@ class InfoServer(
                                  "overview",
                                  "question_answer")
 
-  def getInfo(param: java.util.Map[String, Array[String]], maxDocs: Int): (Int, String) = {
-    val pmap = param.asScala.toMap.map { case (key, value) => (key, value(0)) }
-    getInfo(pmap, maxDocs)
+  def getInfo(param: java.util.Map[String, Array[String]], maxDocs: Int): (Int, String, Array[String]) = {
+    val pmap: Map[String, String] = param.asScala.toMap.map { case (key, value) => (key, value(0)) }
+    val res: (Int, String, Set[String]) = getInfo(pmap, maxDocs)
+
+    (res._1, res._2, res._3.toArray)
   }
 
-  def getInfo(url: String, maxDocs: Int): (Int, String) = {
+  def getInfo(url: String, maxDocs: Int): (Int, String, Set[String]) = {
     urlToParms(url) match {
       case Some(param) => getInfo(param, maxDocs)
-      case None => (0, "")
+      case None => (0, "", Set[String]())
     }
   }
 
-  def getInfo(param: Map[String, String], maxDocs: Int = 10): (Int, String) = {
+  def getInfo(param: Map[String, String], maxDocs: Int = 10): (Int, String, Set[String]) = {
     require(param != null)
     require(maxDocs > 0)
 
@@ -112,7 +114,7 @@ class InfoServer(
     logger.debug(" (OR) : " + docsOR.size)
     logger.debug(" total: " + total)
 
-    (total, convToInfoResponse(info, docs, oType, callbackFunc, explainer))
+    (total, convToInfoResponse(info, docs, oType, callbackFunc, explainer), getDocumentIds(docs))
   }
 
 //http://basalto02.bireme.br:8986/solr5/portal/select?
@@ -191,8 +193,8 @@ class InfoServer(
 
   private def srcParam2SrcExpr[T <: SearchParameter](info: Seq[T],
                                useOR: Boolean) : Option[String] = {
-    val connector = if (useOR) "OR" else "AND"
-    val expressions = info.map(_.toSrcExpression(info))
+    val connector: String = if (useOR) "OR" else "AND"
+    val expressions: Seq[Option[String]] = info.map(_.toSrcExpression(info))
 //println(s"expressions=$expressions")
     if (!useOR && expressions.contains(None)) {
       None
@@ -238,7 +240,7 @@ class InfoServer(
       val tos = typeOfStudy.head
       // 'Question and answer' is not a type of study but a type of document.
       val newExpr = if (tos.equals("question_answer")) {
-        " AND (type:\"perg_resp\")"
+        " AND (db:\"SOF\")"    // " AND (type:\"perg_resp\")"
       } else {
         " AND (type_of_study:" + "\"" + tos + "\")"
       }
@@ -316,7 +318,8 @@ class InfoServer(
           Left(ex.toString)
       }
     } else {
-      Left(statusLine.getReasonPhrase)
+      val reason: String = statusLine.getReasonPhrase
+      Left(if (reason.isEmpty) s"errCode:${statusLine.getStatusCode}" else reason)
     }
   }
 
@@ -363,6 +366,12 @@ class InfoServer(
           case Some(expl) => AtomOutput.toXml(atom, Some(expl.right.get))
           case None => AtomOutput.toXml(atom, None)
         }
+    }
+  }
+
+  private def getDocumentIds(docs: Seq[(String, JsValue)]): Set[String] = {
+    docs.foldLeft(Set[String]()) {
+      case (set, elem) => set + (elem._2 \ "id").as[String]
     }
   }
 
@@ -415,7 +424,7 @@ class InfoServer(
   }
 
   /**
-    * Converts a sequence of search parameters into a url defined by the protocol
+    * Convert a sequence of search parameters into a url defined by the protocol
     *
     * @param info sequence of SearchParameter objects
     * @param infoUrl BVS-Infobutton host url
@@ -478,7 +487,7 @@ object InfoServer extends App {
       ".administrativeGenderCode.c=M&age.v.v=45&age.v.u=a&informationRecipient" +
       "=PAT&performer=PROV&performer.languageCode.c=en&performer.healthCarePro" +
       "vider.c.c=163W00000X&knowledgeResponseType=application/json"*/
-     "http://bvsinfobutton.homolog.bvsalud.org/infobutton/search?mainSearchCriteria.v.c=D000071244&mainSearchCriteria.v.cs=2.16.840.1.113883.6.177&knowledgeResponseType=text/xml&explain=true"
+     "http://bvsinfobutton.homolog.bvsalud.org/infobutton/search?mainSearchCriteria.v.ot=zika virus&knowledgeResponseType=text/xml&knowledgeResponseType=text/xml&explain=true"
   } else {
     args(0)
   }
