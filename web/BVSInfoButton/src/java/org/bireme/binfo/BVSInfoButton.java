@@ -96,7 +96,7 @@ public class BVSInfoButton extends HttpServlet {
         final long now = Calendar.getInstance().getTimeInMillis();
         
         builder.append("date=" + now);
-        builder.append("\tremote_address==" + raddr);
+        builder.append("\tremote_address=" + raddr);
         builder.append("\treferer=" + referer);
         builder.append("\tdocs_found=" + total);
         

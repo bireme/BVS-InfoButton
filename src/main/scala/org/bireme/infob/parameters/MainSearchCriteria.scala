@@ -55,13 +55,12 @@ class MainSearchCriteria(conv: MeshConverter,
 //println(s"strOriginalText=$strOriginalText strOriginalTextStatus=$strOriginalTextStatus")
 
   override def toSrcExpression(env: Seq[SearchParameter]): Option[String] = {
-    val circ = "&circ;"
     val ret = code match {
       case Some(_) =>
         strCodeStatus match {
           case "exact"  =>
             val code2: String = codeSet.head.toLowerCase
-            Some("(mh:\"" + code2 + circ + "2\" OR ti:\"" + code2 + circ + "1\")")
+            Some("(mh:\"" + code2 + "\"^2 OR ti:\"" + code2 + "\"^1)")
             //                     "\" OR ab:\"" + code2 + "\")")
           case "synonym"  => Some("(" +
                                   andOrExpression("mh", codeSet, 2) + " OR " +
@@ -147,9 +146,7 @@ class MainSearchCriteria(conv: MeshConverter,
         }
     }
 
-    val circ = "&circ;"
-    val words2 = if (boost == 1) words.map(word => s"$index:$word")
-      else words.map(word => s"$index:$word$circ$boost")
+    val words2 = words.map(word => s"$index:$word^$boost")
 
     val words3 = if (words2.size > 5) {
       words2.mkString(" OR ")

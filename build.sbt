@@ -19,7 +19,7 @@ val logbackVersion = "1.2.3"
 val scalaTestVersion = "3.0.7" // "3.0.5"
 val hairyfotrVersion = "0.1.17"
 val luceneVersion = "8.0.0" // "7.5.0"
-val httpComponentsVersion = "4.5.7" //"4.5.6"
+val scalajHttpVersion = "2.4.1"
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http" % akkaVersion,
@@ -36,7 +36,7 @@ libraryDependencies ++= Seq(
   "org.apache.lucene" % "lucene-queryparser" % luceneVersion,
   "org.apache.lucene" % "lucene-queries" % luceneVersion,
   "org.apache.lucene" % "lucene-backward-codecs" % luceneVersion,
-  "org.apache.httpcomponents" % "httpclient" % httpComponentsVersion
+  "org.scalaj" %% "scalaj-http" % scalajHttpVersion
 )
 
 logBuffered in Test := false

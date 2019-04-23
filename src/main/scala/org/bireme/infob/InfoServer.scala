@@ -8,20 +8,14 @@
 package org.bireme.infob
 
 import java.net.{URL, URLDecoder, URLEncoder}
-import java.nio.charset.Charset
 
 import ch.qos.logback.classic.{Level, Logger => xLogger}
 import com.typesafe.scalalogging.Logger
-import org.apache.http.HttpEntity
-import org.apache.http.client.entity.UrlEncodedFormEntity
-import org.apache.http.client.methods.HttpPost
-import org.apache.http.impl.client.HttpClients
-import org.apache.http.message.BasicNameValuePair
-import org.apache.http.util.EntityUtils
 import org.bireme.infob.parameters._
 import org.dom4j.Element
 import org.slf4j.LoggerFactory
 import play.api.libs.json._
+import scalaj.http.{Http, HttpResponse}
 
 import scala.collection.JavaConverters._
 import scala.reflect._
@@ -292,34 +286,16 @@ class InfoServer(
     * error occurred
     */
   private def post(params: Seq[(String, String)]): Either[String, String] = {
-//println(s"post: params=$params")
-    val paramSeq: Seq[BasicNameValuePair] = params.map(elem => new BasicNameValuePair(elem._1, elem._2))
-    val httpclient = HttpClients.createDefault()
-    val httpPost = new HttpPost(iahxUrl)
-    httpPost.addHeader("Accept-Charset", "UTF-8")
-    httpPost.addHeader("Accept", "application/json")
-    httpPost.setEntity(new UrlEncodedFormEntity(paramSeq.asJava, Charset.forName("utf-8")))
-//println(s"httpPost=$httpPost")
-    val response = httpclient.execute(httpPost)
-    val statusLine = response.getStatusLine
-//println("status Code=" + statusLine.getStatusCode)
-    if (statusLine.getStatusCode == 200) {
-//println(s"response=$response")
-      try {
-        val entity: HttpEntity = response.getEntity
-        val content: String = EntityUtils.toString(entity)
-  //println(s"content=$content entity=$entity")
-        response.close()
+    //println(s"post: params=$params")
+
+    val response: HttpResponse[String] = Http(iahxUrl)
+      .headers(Seq("Accept-Charset" ->"UTF-8", "Accept" -> "application/json")).postForm(params).asString
+
+    if (response.code == 200) {
+        val content: String = response.body
         Right(content)
-      } catch {
-        case ex: Throwable =>
-  //println("Throwable=${ex.toString}")
-          response.close()
-          Left(ex.toString)
-      }
     } else {
-      val reason: String = statusLine.getReasonPhrase
-      Left(if (reason.isEmpty) s"errCode:${statusLine.getStatusCode}" else reason)
+      Left(s"errCode:${response.code}")
     }
   }
 
@@ -487,7 +463,7 @@ object InfoServer extends App {
       ".administrativeGenderCode.c=M&age.v.v=45&age.v.u=a&informationRecipient" +
       "=PAT&performer=PROV&performer.languageCode.c=en&performer.healthCarePro" +
       "vider.c.c=163W00000X&knowledgeResponseType=application/json"*/
-     "http://bvsinfobutton.homolog.bvsalud.org/infobutton/search?mainSearchCriteria.v.ot=zika virus&knowledgeResponseType=text/xml&knowledgeResponseType=text/xml&explain=true"
+     "http://bvsinfobutton.homolog.bvsalud.org/infobutton/search?mainSearchCriteria.v.ot=zika virus&subTopic.v.c=79899007&subTopic.v.cs=2.16.840.1.113883.6.96&knowledgeResponseType=text/xml&explain=true"
   } else {
     args(0)
   }

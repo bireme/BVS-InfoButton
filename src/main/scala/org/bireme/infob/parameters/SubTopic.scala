@@ -29,9 +29,9 @@ class SubTopic(
   )
 
   override def toSrcExpression(env: Seq[SearchParameter]): Option[String] = {
-    val codeSrcExpr: Option[String] = code.flatMap(x => getSrcExpr(x))
-    lazy val dplNameSrcExpr = displayName.flatMap(x => getSrcExpr(x))
-    lazy val oTextSrcExpr = originalText.flatMap(x => getSrcExpr(x))
+    val codeSrcExpr: Option[String] = code.flatMap(getSrcExpr)
+    lazy val dplNameSrcExpr = displayName.flatMap(getSrcExpr)
+    lazy val oTextSrcExpr = originalText.flatMap(getSrcExpr)
 
     codeSrcExpr orElse dplNameSrcExpr orElse oTextSrcExpr
   }
@@ -52,8 +52,9 @@ class SubTopic(
       }
     }.map {
       case (qual, expr) =>
-        val index = if (qual) "sh" else "mh"
-        s"($index:${'"'}$expr${'"'} OR ti:${'"'}$expr${'"'} OR ab:${'"'}$expr${'"'})"
+        val index = if (qual) "sh" else "mh"  // sh - sub headings.  mh - mesh headings
+        s"($index:${'"'}$expr${'"'} OR ti:${'"'}$expr${'"'})" +
+        s" OR ab:${'"'}$expr${'"'})"
     }
   }
 
@@ -63,7 +64,7 @@ class SubTopic(
       Category("subTopic.v.cs", codeSystem.get),
       Category("subTopic.v.dn", displayName.getOrElse("")),
       Category("subTopic.v.ot", originalText.getOrElse(""))
-    ).filter(!_.term.isEmpty)
+    ).filter(_.term.nonEmpty)
   }
 
   override def toString: String =
