@@ -8,16 +8,16 @@
 package org.bireme.infob
 
 import org.bireme.infob.Tools._
-import org.scalatest._
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
+import org.scalatest.flatspec.AnyFlatSpec
 
 /** Application which uses ScalaTest to check the BVS-Infobutton's Main Search
 * Criteria service parameter
 *
-* @author: Heitor Barbieri
+* author: Heitor Barbieri
 * date: 20180503
 */
-class SubTopicTest extends FlatSpec {
+class SubTopicTest extends AnyFlatSpec {
   //val server = "http://serverofi5.bireme.br:8180"
   val server = "http://localhost:8084"
   val service = s"$server/BVSInfoButton/infobutton/search"

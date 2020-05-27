@@ -8,6 +8,7 @@
 package org.bireme.infob
 
 import java.net.{URL, URLDecoder, URLEncoder}
+import java.time.Year
 
 import ch.qos.logback.classic.{Level, Logger => xLogger}
 import com.typesafe.scalalogging.Logger
@@ -17,7 +18,7 @@ import org.slf4j.LoggerFactory
 import play.api.libs.json._
 import scalaj.http.{Http, HttpResponse}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.reflect._
 import scala.util.{Failure, Success, Try}
 
@@ -39,7 +40,7 @@ class InfoServer(
     .asInstanceOf[xLogger]
     .setLevel(Level.INFO)
 
-  val logger = Logger("BVS-InfoButton")
+  val logger: Logger = Logger("BVS-InfoButton")
 
   // Types of study
   // 'overview' is present to grant that at least some document will be returned
@@ -52,26 +53,30 @@ class InfoServer(
                                  "overview",
                                  "question_answer")
 
-  def getInfo(param: java.util.Map[String, Array[String]], maxDocs: Int): (Int, String, Array[String]) = {
+  def getInfo(param: java.util.Map[String, Array[String]],
+              maxDocs: Int): (Int, String, Array[String]) = {
     val pmap: Map[String, String] = param.asScala.toMap.map { case (key, value) => (key, value(0)) }
     val res: (Int, String, Set[String]) = getInfo(pmap, maxDocs)
 
     (res._1, res._2, res._3.toArray)
   }
 
-  def getInfo(url: String, maxDocs: Int): (Int, String, Set[String]) = {
+  def getInfo(url: String,
+              maxDocs: Int): (Int, String, Set[String]) = {
     urlToParms(url) match {
       case Some(param) => getInfo(param, maxDocs)
       case None => (0, "", Set[String]())
     }
   }
 
-  def getInfo(param: Map[String, String], maxDocs: Int = 10): (Int, String, Set[String]) = {
+  def getInfo(param: Map[String, String],
+              maxDocs: Int = 10): (Int, String, Set[String]) = {
     require(param != null)
     require(maxDocs > 0)
 
     val (info, oType, callbackFunc) = ParameterParser.parse(conv, param)
-    val exprAND: Option[Seq[(String, String)]] = convToSrcExpression(info, maxDocs, useOR = false)
+    val upToDate: Boolean = param.getOrElse("uptodate", "false").toBoolean
+    val exprAND: Option[Seq[(String, String)]] = convToSrcExpression(info, maxDocs, useOR = false, upToDate)
     val explainer: Option[Either[JsObject, Element]] = if (param.contains("explain")) {
       val isXml = oType.equals("text/xml")
       Some(Explainer.explain(this, info, exprAND, isXml))
@@ -81,7 +86,7 @@ class InfoServer(
     val useORExpression = false
     val docsAND: Seq[(String, JsValue)] = orderedSearch(studies, exprAND, maxDocs)
     val exprOR: Option[Seq[(String, String)]] = if (useORExpression) {
-      convToSrcExpression(info, maxDocs, useOR=true)
+      convToSrcExpression(info, maxDocs, useOR=true, upToDate)
     } else {
       None
     }
@@ -116,7 +121,8 @@ class InfoServer(
 //indent=true&start=0&rows=10&sort=da+desc
   private def convToSrcExpression(info: Seq[SearchParameter],
                                   maxDocs: Int,
-                                  useOR: Boolean): Option[Seq[(String, String)]] = {
+                                  useOR: Boolean,
+                                  upToDate: Boolean): Option[Seq[(String, String)]] = {
     // Processing MainSearchCriteria
     val (s1,s2) = partition[MainSearchCriteria](info)
 //println(s"info=$info s1=$s1 s2=$s2")
@@ -136,7 +142,7 @@ class InfoServer(
 
           //Processing other parameters
           val srcParam = s4.foldLeft[String](s"$msc_str AND " +
-            "(instance:\"regional\") AND (fulltext:\"1\")" + loi) {
+            "(instance:\"regional\") AND (fulltext:\"1\")" + upToDateExpr(upToDate) + loi) {
               case (str, sparam) =>
                 str +
                   (sparam.toSrcExpression(info) match {
@@ -203,6 +209,19 @@ class InfoServer(
     }
   }
 
+  private def upToDateExpr(upToDate: Boolean): String = {
+    if (upToDate) " "
+    else {
+      val year: Int = Year.now.getValue
+      val yearsAgo: Int = year - 5
+
+      (yearsAgo until year).foldLeft(" AND year_cluster:(") {
+        case (str: String, curY: Int) =>
+          str + (if (curY == yearsAgo) "" else " OR ") + curY
+      } + ")"
+    }
+  }
+
   def orderedSearch(typeOfStudy: Seq[String],
                     expression: Option[Seq[(String, String)]],
                     maxDocs: Int,
@@ -218,6 +237,7 @@ class InfoServer(
     }
   }
 
+  @scala.annotation.tailrec
   private def oSearch(typeOfStudy: Seq[String],
                       params: Seq[(String,String)],
                       maxDocs: Int,
@@ -268,7 +288,11 @@ class InfoServer(
 
     post(params) match {
       case Right(ctt) => (Json.parse(ctt) \ "response" \ "docs").validate[JsArray] match {
-        case res: JsResult[JsArray] => res.get.value.take(maxDocs)
+        case res: JsResult[JsArray] =>
+          res.asOpt match {
+            case Some(jarr) => jarr.value.take(maxDocs).toSeq
+            case None => Seq()
+          }
         case _                      => Seq()
       }
       case Left(err) =>
@@ -289,11 +313,12 @@ class InfoServer(
     //println(s"post: params=$params")
 
     val response: HttpResponse[String] = Http(iahxUrl)
+      .timeout(connTimeoutMs = 1000, readTimeoutMs = 20000)
       .headers(Seq("Accept-Charset" ->"UTF-8", "Accept" -> "application/json")).postForm(params).asString
 
     if (response.code == 200) {
-        val content: String = response.body
-        Right(content)
+      val content: String = response.body
+      Right(content)
     } else {
       Left(s"errCode:${response.code}")
     }
@@ -322,24 +347,39 @@ class InfoServer(
     outType.toLowerCase match {
       case "application/json" =>
         explainer match {
-          case Some(expl) => AtomOutput.toJson(atom, Some(expl.left.get))
+          case Some(expl) =>
+            expl.left.toOption match {
+              case Some(jobj) => AtomOutput.toJson(atom, Some(jobj))
+              case None => AtomOutput.toJson(atom, None)
+            }
           case None => AtomOutput.toJson(atom, None)
         }
       case "application/javascript" =>
         val fname = callbackFunc.getOrElse("callback")
         explainer match {
-          case Some(expl) => s"$fname(${AtomOutput.toJson(atom, Some(expl.left.get))});"
+          case Some(expl) =>
+            expl.left.toOption match {
+              case Some(jobj) => s"$fname(${AtomOutput.toJson(atom, Some(jobj))});"
+              case None => s"$fname(${AtomOutput.toJson(atom, None)});"
+            }
           case None => s"$fname(${AtomOutput.toJson(atom, None)});"
-
         }
       case "text/xml" =>
         explainer match {
-          case Some(expl) => AtomOutput.toXml(atom, Some(expl.right.get))
+          case Some(expl) =>
+            expl.toOption match {
+              case Some(elem) => AtomOutput.toXml(atom, Some(elem))
+              case None => AtomOutput.toXml(atom, None)
+            }
           case None => AtomOutput.toXml(atom, None)
         }
       case _  =>
         explainer match {
-          case Some(expl) => AtomOutput.toXml(atom, Some(expl.right.get))
+          case Some(expl) =>
+            expl.toOption match {
+              case Some(elem) => AtomOutput.toXml(atom, Some(elem))
+              case None => AtomOutput.toXml(atom, None)
+            }
           case None => AtomOutput.toXml(atom, None)
         }
     }
@@ -435,7 +475,7 @@ class InfoServer(
       case Success(u) =>
         Try {
           URLDecoder.decode(u.getQuery, "utf-8")
-            .split("\\&")
+            .split("&")
             .map(_.split("="))
             .foldLeft[Map[String, String]](Map()) {
               case (map, arr) => map + ((arr(0).trim, arr(1).trim))

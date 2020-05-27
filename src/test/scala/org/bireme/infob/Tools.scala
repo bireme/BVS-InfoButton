@@ -34,7 +34,7 @@ object Tools {
 
     val split = text.split("entry", 2)
     if (split.size == 1) false
-    else !pattern.r.findFirstIn(split(1)).isEmpty
+    else pattern.r.findFirstIn(split(1)).isDefined
   }
 
   def urlEncode(url: String,

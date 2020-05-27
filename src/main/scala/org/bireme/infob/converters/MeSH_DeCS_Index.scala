@@ -18,7 +18,7 @@ import org.apache.lucene.store.FSDirectory
 
 import org.bireme.infob.Tools._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
   * Create a Lucene MeSH to DeCS index from a decs Isis master file'

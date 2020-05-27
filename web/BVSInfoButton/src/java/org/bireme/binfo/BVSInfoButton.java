@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+//import org.bireme.aut.IPRange;
 import org.bireme.infob.InfoServer;
 import org.bireme.infob.MeshConverter;
 
@@ -38,6 +39,7 @@ public class BVSInfoButton extends HttpServlet {
     private InfoServer info;
     private String tpath;
     private MeshConverter mconverter;
+    //private IPRange ipRange;
 
     @Override
     public void init(ServletConfig config) throws ServletException {
@@ -52,7 +54,12 @@ public class BVSInfoButton extends HttpServlet {
                                          "empty 'LUCENE_THESAURI_PATH' config");
         mconverter = new MeshConverter(tpath);
         info = new InfoServer(mconverter, solrUrl);
-
+        
+        /*
+        final String dbPath = context.getInitParameter("DB_PATH");
+        ipRange = (dbPath == null) ? null : new IPRange();
+        int x = 0;
+        */
     }
 
     /**
@@ -66,26 +73,27 @@ public class BVSInfoButton extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request,
                                   HttpServletResponse response)
-                                          throws ServletException, IOException {                
+                                          throws ServletException, IOException {
         final String auxContentType = request.getParameter("knowledgeResponseType");
         final String contentType = (auxContentType == null) ? "text/xml"
                                                  : auxContentType.toLowerCase();
-//sSystem.out.println("processing Request");
-        response.setContentType(contentType);
-        response.setCharacterEncoding("utf-8");
-        
-        try (PrintWriter out = response.getWriter()) {
-            //out.println(getMainSearchCriteria(request.getParameterMap()));
-            //out.println(getDocuments(request.getParameterMap()));
-            final scala.Tuple3<Object,String, String[]> 
-                        result = info.getInfo(request.getParameterMap(), 10);
-            final String[] ids = result._3();
-                        
-            out.println(result._2());
-            logger.info(getRequestInfo(request, ((Integer)result._1()), ids));            
-        }                
+         //sSystem.out.println("processing Request");
+         response.setContentType(contentType);
+         response.setCharacterEncoding("utf-8");
+            
+         try (PrintWriter out = response.getWriter()) {
+             //out.println(getMainSearchCriteria(request.getParameterMap()));
+             //out.println(getDocuments(request.getParameterMap()));
+             final scala.Tuple3<Object,String, String[]>
+                     result = info.getInfo(request.getParameterMap(), 10);
+                          //result = info.getInfo(improveRequest(request).getParameterMap(), 10);
+             final String[] ids = result._3();
+                            
+             out.println(result._2());
+             logger.info(getRequestInfo(request, ((Integer)result._1()), ids));
+         }                    
     }
-    
+
     private String getRequestInfo(HttpServletRequest request,
                                   int total,
                                   String[] ids) {
@@ -95,10 +103,10 @@ public class BVSInfoButton extends HttpServlet {
         final StringBuilder builder = new StringBuilder();
         final long now = Calendar.getInstance().getTimeInMillis();
         
-        builder.append("date=" + now);
-        builder.append("\tremote_address=" + raddr);
-        builder.append("\treferer=" + referer);
-        builder.append("\tdocs_found=" + total);
+        builder.append("date=").append(now);
+        builder.append("\tremote_address=").append(raddr);
+        builder.append("\treferer=").append(referer);
+        builder.append("\tdocs_found=").append(total);
         
         boolean first = true;
         builder.append("\tparameters=");
@@ -112,7 +120,7 @@ public class BVSInfoButton extends HttpServlet {
                 } else {
                     builder.append("|");
                 }
-                builder.append(key + "=" + value);
+                builder.append(key).append("=").append(value);
             }
         }        
         
@@ -129,6 +137,23 @@ public class BVSInfoButton extends HttpServlet {
         
         return builder.toString();
     }
+
+    /*
+    private void improveRequest(final HttpServletRequest request) {
+        //See https://stackoverflow.com/questions/29910074/how-to-get-client-ip-address-in-java-httpservletrequest
+        String ipAddress = request.getHeader("X-FORWARDED-FOR");
+        if (ipAddress == null) {
+            ipAddress = request.getRemoteAddr();
+        } else {
+            ipAddress = ipAddress.contains(",") ? ipAddress.split(",")[0]
+                    : ipAddress;
+        }
+        request.setAttribute("uptodate",
+                (ipRange == null) ||
+                ipRange.isAuthenticated(ipAddress) ||
+                ipRange.isAuthenticated(request.getServerName()));
+    }
+    */
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
     /**

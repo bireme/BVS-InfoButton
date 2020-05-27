@@ -96,7 +96,7 @@ object ISO3166 {
     "Greece" -> "europa",
     "Greenland" -> "america-do-norte",
     "Grenada" -> "grenada",
-    "Guadeloupe" -> "guadalope",
+    "Guadeloupe" -> "guadalupe",
     "Guam" -> "oceania",
     "Guatemala" -> "guatemala",
     "Guernsey" -> "europa",

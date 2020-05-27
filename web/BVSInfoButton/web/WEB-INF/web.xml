@@ -8,6 +8,10 @@
         <param-name>LUCENE_THESAURI_PATH</param-name>
         <param-value>/home/javaapps/sbt-projects/BVS-InfoButton/web/BVSInfoButton/indexes</param-value>
     </context-param>
+    <context-param>
+        <param-name>DB_PATH</param-name>
+        <param-value>/home/javaapps/sbt-projects/Autentica/db</param-value>
+    </context-param>
     <servlet>
         <servlet-name>BVSInfoButton</servlet-name>
         <servlet-class>org.bireme.binfo.BVSInfoButton</servlet-class>
