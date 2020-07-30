@@ -63,7 +63,7 @@ var host = window.location.hostname;
 
 var protocol = window.location.protocol
 var prefix = "";
-if (host === "bvsinfobutton.homolog.bvsalud.org") {
+if ((host === "bvsinfobutton.homolog.bvsalud.org") || (host === "bvsinfobutton.bvsalud.org")) {
   prefix = protocol + "//" + host + "/infobutton/search";
 } else {
   var port = window.location.port;
@@ -95,7 +95,7 @@ function parseElement(elemName) {
 }
 
 function addElements(elemNames, url) {
-  var url2 = (typeof url == 'undefined') ? "" : url;
+  var url2 = (typeof url === 'undefined') ? "" : url;
   var sep = (0 === url2.length) ? "" : "&";
   var parsed = [];
   var indexes = new Set();
@@ -161,7 +161,7 @@ function getParamUrl() {
 
 function buildUrl() {
   var parameters = getParamUrl();
-  if (parameters.length == 0) {
+  if (parameters.length === 0) {
     document.getElementById("url").innerHTML = "url: ";
   } else {
     document.getElementById("url").innerHTML = "url: " + window.prefix + "?" + parameters;

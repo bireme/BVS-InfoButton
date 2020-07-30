@@ -7,7 +7,7 @@
 
 package org.bireme.infob
 
-import org.bireme.infob.Tools._
+import org.bireme.infob.Tools2._
 import org.scalatest.matchers.should.Matchers._
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -19,11 +19,12 @@ import org.scalatest.flatspec.AnyFlatSpec
 */
 class MainSearchCriteriaTest extends AnyFlatSpec {
   //val server = "http://bvsinfobutton.homolog.bvsalud.org"
-  //val service = s"$server/infobutton/search"
-  val server = "http://localhost:8084"
-  val service = s"$server/BVSInfoButton/infobutton/search"
+  val server = "http://bvsinfobutton.bvsalud.org"
+  val service = s"$server/infobutton/search"
+  //val server = "http://localhost:8084"
+  //val service = s"$server/BVSInfoButton/infobutton/search"
 
-if (1 < 0) {
+if (-1 < 0) {
   /* === Check if the service complains if no Main Search Criteria paramenter is
     used === */
   "BVS_Infobutton" should "not return any document if no Main Search Criteria " +
@@ -32,7 +33,7 @@ if (1 < 0) {
     getPageContent(url) match {
       case Some(content) =>
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be (0)
-      case None => fail
+      case None => fail()
     }
   }
 
@@ -45,7 +46,7 @@ if (1 < 0) {
       case Some(content) =>
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be (0)
         hasStringPattern(content, "[Pp]alpita[çc][õo]es") should be (false)
-        case None => println(s"url=$url");fail
+        case None => println(s"url=$url"); fail()
       }
   }
 
@@ -59,7 +60,7 @@ if (1 < 0) {
       case Some(content) =>
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be (0)
         hasStringPattern(content, "[Pp]alpita[^s]+s") should be (false)
-        case None => fail
+        case None => fail()
       }
   }
 
@@ -74,7 +75,7 @@ if (1 < 0) {
 //println(s"num=${getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org")}")
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 50
         hasStringPattern(content, "[Dd]engue") should be (true)
-        case None => fail
+        case None => fail()
       }
   }
 
@@ -89,7 +90,7 @@ if (1 < 0) {
 //println(s"num=${getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org")}")
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 50
         hasStringPattern(content, "[Dd]engue") should be (true)
-        case None => fail
+        case None => fail()
       }
   }
 
@@ -104,7 +105,7 @@ if (1 < 0) {
 //println(s"num=${getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org")}")
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 50
         hasStringPattern(content, "[Cc]ongenital") should be (true)
-        case None => fail
+        case None => fail()
       }
   }
 
@@ -120,7 +121,7 @@ if (1 < 0) {
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 32
         hasStringPattern(content, "[Pp]remature") should be (true)
         hasStringPattern(content, "[Pp]lacenta") should be (true)
-        case None => fail
+        case None => fail()
       }
   }
 
@@ -135,7 +136,7 @@ if (1 < 0) {
 //println(s"num=${getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org")}")
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 50
         hasStringPattern(content, "[Dd]engue") should be (true)
-        case None => fail
+        case None => fail()
       }
   }
 
@@ -150,7 +151,7 @@ if (1 < 0) {
 //println(s"num=${getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org")}")
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 50
         hasStringPattern(content, "[Cc]apsule") should be (true)
-        case None => fail
+        case None => fail()
       }
   }
 
@@ -170,7 +171,7 @@ if (1 < 0) {
       case Some(content) =>
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be (0)
         hasStringPattern(content, "[Ss]ardinha") should be (false)
-        case None => fail
+        case None => fail()
       }
   }
 
@@ -183,7 +184,7 @@ if (1 < 0) {
     getPageContent(url) match {
       case Some(content) =>
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be (0)
-        case None => fail
+        case None => fail()
       }
   }
 
@@ -196,7 +197,7 @@ if (1 < 0) {
     getPageContent(url) match {
       case Some(content) =>
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be (0)
-        case None => fail
+        case None => fail()
       }
   }
 
@@ -209,7 +210,7 @@ if (1 < 0) {
     getPageContent(url) match {
       case Some(content) =>
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be (0)
-        case None => fail
+        case None => fail()
       }
   }
 
@@ -224,7 +225,7 @@ if (1 < 0) {
       case Some(content) =>
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 3
         hasStringPattern(content, "[Dd]engue") should be (true)
-        case None => fail
+        case None => fail()
       }
   }
 
@@ -240,7 +241,7 @@ if (1 < 0) {
       case Some(content) =>
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 50
         hasStringPattern(content, "[Dd]engue") should be (true)
-        case None => fail
+        case None => fail()
       }
   }
 
@@ -256,7 +257,7 @@ if (1 < 0) {
       case Some(content) =>
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 50
         hasStringPattern(content, "[Dd]engue") should be (true)
-        case None => fail
+        case None => fail()
       }
   }
 
@@ -273,7 +274,7 @@ if (1 < 0) {
       case Some(content) =>
         hasStringPattern(content, "[Cc]rian[çc]a|[Cc]hild") should be (true)
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 50
-      case None => fail
+      case None => fail()
     }
   }
 
@@ -290,7 +291,7 @@ if (1 < 0) {
       case Some(content) =>
         hasStringPattern(content, "[Cc]rian[çc]a|[Cc]hild") should be (true)
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 50
-      case None => fail
+      case None => fail()
     }
   }
 
@@ -305,7 +306,7 @@ if (1 < 0) {
       case Some(content) =>
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 50
         hasStringPattern(content, "[Dd]engue") should be (true)
-      case None => fail
+      case None => fail()
     }
   }
 
@@ -320,7 +321,7 @@ if (1 < 0) {
       case Some(content) =>
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 50
         hasStringPattern(content, "[Dd]engue") should be (true)
-      case None => fail
+      case None => fail()
     }
   }
 
@@ -338,7 +339,7 @@ if (1 < 0) {
       case Some(content) =>
         hasStringPattern(content, "[Cc]rian[çc]a|[Cc]hild") should be (true)
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 50
-      case None => fail
+      case None => fail()
     }
   }
 
@@ -356,7 +357,7 @@ if (1 < 0) {
       case Some(content) =>
         hasStringPattern(content, "[Cc]rian[çc]a|[Cc]hild") should be (true)
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 50
-      case None => fail
+      case None => fail()
     }
   }
 
@@ -371,7 +372,7 @@ if (1 < 0) {
     getPageContent(url) match {
       case Some(content) =>
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be (0)
-      case None => fail
+      case None => fail()
     }
   }
 
@@ -388,7 +389,7 @@ if (1 < 0) {
       case Some(content) =>
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 50
         hasStringPattern(content, "[Cc]rian[çc]a|[Cc]hild") should be (true)
-      case None => fail
+      case None => fail()
     }
   }
 
@@ -407,7 +408,7 @@ if (1 < 0) {
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 50
         hasStringPattern(content, "[Cc]rian[çc]a|[Cc]hild") should be (true)
         hasStringPattern(content, "[Mm]ortalid") should be (true)
-      case None => fail
+      case None => fail()
     }
   }
 
@@ -424,7 +425,7 @@ if (1 < 0) {
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 50
         hasStringPattern(content, "[Cc]rian[çc]a|[Cc]hild") should be (true)
         hasStringPattern(content, "[Mm]ortalid") should be (true)
-      case None => fail
+      case None => fail()
     }
   }
 
@@ -441,7 +442,7 @@ if (1 < 0) {
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 50
         hasStringPattern(content, "[Cc]rian[çc]a|[Cc]hild") should be (true)
         hasStringPattern(content, "[Mm]ortalid") should be (true)
-      case None => fail
+      case None => fail()
     }
   }
 
@@ -458,7 +459,7 @@ if (1 < 0) {
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 40
         hasStringPattern(content, "[Dd]engue") should be (true)
         hasStringPattern(content, "[Cc]rian[çc]a|[Cc]hild") should be (true)
-      case None => fail
+      case None => fail()
     }
   }
 
@@ -471,7 +472,7 @@ if (1 < 0) {
     getPageContent(url) match {
       case Some(content) =>
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be (0)
-      case None => fail
+      case None => fail()
     }
   }
 
@@ -486,7 +487,7 @@ if (1 < 0) {
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 40
         hasStringPattern(content, "[Dd]engue") should be (true)
         hasStringPattern(content, "[Cc]rian[çc]a") should be (true)
-      case None => fail
+      case None => fail()
     }
   }
 
@@ -500,7 +501,7 @@ if (1 < 0) {
       case Some(content) =>
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 50
         hasStringPattern(content, "[Dd]engue") should be (true)
-      case None => fail
+      case None => fail()
     }
   }
 
@@ -515,7 +516,7 @@ if (1 < 0) {
       case Some(content) =>
 //println(s"url=[$url] content=[$content]")
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be (0)
-      case None => fail
+      case None => fail()
     }
   }
 
@@ -531,7 +532,7 @@ if (1 < 0) {
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be >= 40
         hasStringPattern(content, "[Dd]engue") should be (true)
         hasStringPattern(content, "[Cc]rian[çc]a") should be (true)
-      case None => fail
+      case None => fail()
     }
   }
 }

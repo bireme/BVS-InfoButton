@@ -33,7 +33,7 @@ object UMLS_Index extends App {
                        termType: String)
 
   val DEF_UMLS_INDEX = "web/BVSInfoButton/indexes/UMLS"
-  val DEF_UMLS_YEAR = 2018
+  val DEF_UMLS_YEAR = 2020
   val DEF_UMLS_MASTER =  s"/bases/umls/${DEF_UMLS_YEAR}AA/decsnamecuisty"
 
   val thesauri = HashSet("ICD9CM", "ICD10CM", "ICD10", "SNOMEDCT_US", "RXNORM",

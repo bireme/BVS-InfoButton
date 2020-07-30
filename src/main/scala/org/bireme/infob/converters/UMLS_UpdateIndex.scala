@@ -29,14 +29,15 @@ import scala.io.Source
 object UMLS_UpdateIndex extends App {
   val DEF_LUCENE_INDEX = "web/BVSInfoButton/indexes/UMLS"
   //val DEF_FILES = "ICD10:cid10/ver2010/all.txt,ICD10:cid10/espanhol/all.txt,ICD10:cid10/datasus/ver2008/all.txt,SNOMED-CT:Snomed-CT/all.txt"
-  val DEF_FILES = "ICD10:cid10/one.txt"
+  //val DEF_FILES = "ICD10:cid10/one.txt"
+  val DEF_FILES = "ICD10:cid10/ver2010/all.txt,ICD10:cid10/espanhol/all.txt,ICD10:cid10/datasus/ver2008/all.txt"
 
   val parameters = args.foldLeft[Map[String, String]](Map()) {
     case (map, par) =>
       val split = par.split(" *= *", 2)
       map + ((split(0).substring(1), split(1)))
   }
-  val files: Set[(String, String)] = parameters.getOrElse("files", DEF_FILES).split(" *\\, *")
+  val files: Set[(String, String)] = parameters.getOrElse("files", DEF_FILES).split(" *, *")
     .map { elem =>
       val split = elem.split(" *: *")
       (split(0), split(1))
@@ -79,7 +80,7 @@ object UMLS_UpdateIndex extends App {
                                 writer: IndexWriter,
                                 searcher: Option[IndexSearcher]): Unit = {
     if (lines.hasNext) {
-      val line = lines.next.trim
+      val line = lines.next().trim
       val split = line.split("\\|", 2)
       if (split.size == 2) {
         val code: String = split(0)

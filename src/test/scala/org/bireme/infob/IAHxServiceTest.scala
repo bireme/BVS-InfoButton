@@ -59,7 +59,7 @@ class IAHxServiceTest extends AnyFlatSpec {
       case Some(mat) =>
         val totalRes = mat.group(1).toInt
         totalRes should be > 26700000
-      case None => fail
+      case None => fail()
     }
   }
 
@@ -74,7 +74,7 @@ class IAHxServiceTest extends AnyFlatSpec {
       case Some(mat) =>
         val numFound = mat.group(1).toInt
         numFound should be > 12500
-      case None => fail
+      case None => fail()
     }
   }
 
@@ -88,7 +88,7 @@ class IAHxServiceTest extends AnyFlatSpec {
       case Some(mat) =>
         val numFound = mat.group(1).toInt
         numFound should be >= 4
-      case None => fail
+      case None => fail()
     }
   }
 }

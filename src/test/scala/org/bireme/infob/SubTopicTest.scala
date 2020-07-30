@@ -7,7 +7,7 @@
 
 package org.bireme.infob
 
-import org.bireme.infob.Tools._
+import org.bireme.infob.Tools2._
 import org.scalatest.matchers.should.Matchers._
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -32,7 +32,7 @@ if (1 < 0) {
       case Some(content) =>
         getNumberOccurrences(content, "\\<id\\>tag:bvsalud.org") should be (0)
         hasStringPattern(content, "[Pp]alpita[çc][õo]es") should be (false)
-        case None => println(s"url=$url");fail
+        case None => println(s"url=$url");fail()
       }
   }
 

@@ -27,7 +27,7 @@ import scala.jdk.CollectionConverters._
   */
 object MeSH_DeCS_Index extends App {
   val DEF_DECS_INDEX = "web/BVSInfoButton/indexes/DeCS"
-  val DEF_DECS_MASTER = "/bases/dec.000/dec.dec/decs"
+  val DEF_DECS_MASTER = "/usr/local/bireme/tabs/decs"
 
   val MESH_ID_TAG = 480
   val HIERARCHICAL_CODE_TAG = 20
