@@ -25,7 +25,7 @@ import scala.util.{Either, Left, Right}
   */
 class MeshConverter(indexes: String) {
   //"ICD9CM", "ICD10CM", "IDC10", "SNOMED-CT", "RXNORM"
-  val thesauri: Map[String, String] = Map(
+  private val thesauri: Map[String, String] = Map(
     "ICD9-CM" -> "ICD9-CM",
     "ICD10-CM" -> "ICD10-CM",
     "ICD10" -> "ICD10",
@@ -34,13 +34,13 @@ class MeshConverter(indexes: String) {
   )
 
   // Names of Lucene indexes to convert one thesaurus into another
-  val thes2thes: Map[String, String] = Map(
+  private val thes2thes: Map[String, String] = Map(
     "DeCS" -> s"$indexes/DeCS",
     "UMLS" -> s"$indexes/UMLS"
   )
 
   // Lucene index searchers to convert one system into another
-  val thes2thesSearchers: Map[String, IndexSearcher] = thes2thes.map {
+  private val thes2thesSearchers: Map[String, IndexSearcher] = thes2thes.map {
     case (k, v) =>
       val directory: FSDirectory = FSDirectory.open(new File(v).toPath)
       require(DirectoryReader.indexExists(directory))
@@ -49,7 +49,7 @@ class MeshConverter(indexes: String) {
       (k, new IndexSearcher(ireader))
   }
 
-  val analyzer: KeywordAnalyzer = new KeywordAnalyzer()
+  private val analyzer: KeywordAnalyzer = new KeywordAnalyzer()
 
   def close(): Unit = {
     thes2thesSearchers.foreach {
@@ -131,12 +131,14 @@ class MeshConverter(indexes: String) {
     */
   private def getCode(docIds: Array[Int],
                       searcher: IndexSearcher): Either[Option[Set[String]], String] = {
-    docIds.map(id => searcher.doc(id)).find(doc1 => doc1.get("meshCode") != null) match {
+    docIds.map(id => searcher.storedFields().document(id)).find(doc1 => doc1.get("meshCode") != null) match {
+    //docIds.map(id => searcher.storedFields().document(id)).find(doc1 => doc1.get("meshCode") != null) match {
       case Some(doc) => Right(doc.get("meshCode"))
       case None =>
         val labelSet: Set[String] = docIds.foldLeft(Set[String]()) {
           case (set, docId) =>
-            searcher.doc(docId).getValues("termLabel").foldLeft(set) {
+            searcher.storedFields().document(docId).getValues("termLabel").foldLeft(set) {
+            //searcher.doc(docId).getValues("termLabel").foldLeft(set) {
               case (set1, value) => set1 + value.trim.toLowerCase
             }
         }
@@ -164,7 +166,8 @@ class MeshConverter(indexes: String) {
         if (topDocs.totalHits.value == 0) {
           None
         } else {
-          val doc = searcher.doc(topDocs.scoreDocs.head.doc)
+          val doc = searcher.storedFields().document(topDocs.scoreDocs.head.doc)
+          //val doc = searcher.doc(topDocs.scoreDocs.head.doc)
           val eDescr = doc.get("ENGLISH_DESCR")
           if (eDescr == null) {
             val sDescr = doc.get("SPANISH_DESCR")

@@ -12,13 +12,13 @@ import scala.util.{Try, Success, Failure}
 
 class Age(value: Option[String],
           unit: Option[String]) extends SearchParameter {
-  val value2: Int = value.getOrElse("0").toInt
+  private val value2: Int = value.getOrElse("0").toInt
   require(value2 > 0)
-  val unit2: String = unit.getOrElse("").toLowerCase
+  private val unit2: String = unit.getOrElse("").toLowerCase
   require(unit2.equals("min") || unit2.equals("h") || unit2.equals("d") ||
           unit2.equals("wk") || unit2.equals("mo") || unit2.equals("a"))
 
-  val agroup: Option[String] = convertToMonth(value.get, unit.get) match {
+  private val agroup: Option[String] = convertToMonth(value.get, unit.get) match {
     case Some(x) if (x >= 0) && (x <= 1)    => Some("infant, newborn")
     case Some(x) if (x > 1) && (x < 24)     => Some("infant")
     case Some(x) if (x >= 24) && (x < 72)   => Some("child, preschool")
@@ -29,7 +29,7 @@ class Age(value: Option[String],
     case Some(x) if (x >= 540) && (x < 780) => Some("middle aged")
     case Some(x) if (x >= 780) && (x < 960) => Some("aged")
     case Some(x) if x >= 960                => Some("aged, 80 and older")
-    case None                               => None
+    case _                                  => None
   }
 
   private def convertToMonth(value: String, unit: String): Option[Int] = {

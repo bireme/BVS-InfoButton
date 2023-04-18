@@ -27,22 +27,22 @@ import scala.io.Source
   * [-index=<UMLSIndex>] - path to Lucene index to be updated"
   */
 object UMLS_UpdateIndex extends App {
-  val DEF_LUCENE_INDEX = "web/BVSInfoButton/indexes/UMLS"
+  private val DEF_LUCENE_INDEX = "web/BVSInfoButton/indexes/UMLS"
   //val DEF_FILES = "ICD10:cid10/ver2010/all.txt,ICD10:cid10/espanhol/all.txt,ICD10:cid10/datasus/ver2008/all.txt,SNOMED-CT:Snomed-CT/all.txt"
   //val DEF_FILES = "ICD10:cid10/one.txt"
-  val DEF_FILES = "ICD10:cid10/ver2010/all.txt,ICD10:cid10/espanhol/all.txt,ICD10:cid10/datasus/ver2008/all.txt"
+  private val DEF_FILES = "ICD10:cid10/ver2010/all.txt,ICD10:cid10/espanhol/all.txt,ICD10:cid10/datasus/ver2008/all.txt"
 
-  val parameters = args.foldLeft[Map[String, String]](Map()) {
+  private val parameters = args.foldLeft[Map[String, String]](Map()) {
     case (map, par) =>
       val split = par.split(" *= *", 2)
       map + ((split(0).substring(1), split(1)))
   }
-  val files: Set[(String, String)] = parameters.getOrElse("files", DEF_FILES).split(" *, *")
+  private val files: Set[(String, String)] = parameters.getOrElse("files", DEF_FILES).split(" *, *")
     .map { elem =>
       val split = elem.split(" *: *")
       (split(0), split(1))
     }.toSet                                        // Set((thesaurus_name,path)...)
-  val index = parameters.getOrElse("index", DEF_LUCENE_INDEX)
+  private val index = parameters.getOrElse("index", DEF_LUCENE_INDEX)
 
   updateIndex(index, files)
 
@@ -99,7 +99,8 @@ object UMLS_UpdateIndex extends App {
           doc.add(new StringField("termLabelNorm", Tools.uniformString(termLabel), Field.Store.YES))
           writer.addDocument(doc)
         } else {
-          val doc1: Document = searcher2.doc(topDocs.scoreDocs.head.doc)
+          //val doc1: Document = searcher2.doc(topDocs.scoreDocs.head.doc)
+          val doc1: Document = searcher2.storedFields().document(topDocs.scoreDocs.head.doc)
           val labels = getLabels(doc1) + termLabel
           labels.foreach {
             label =>
