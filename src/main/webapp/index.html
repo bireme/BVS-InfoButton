@@ -1,0 +1,1330 @@
+<!--
+=========================================================================
+
+    BVS-InfoButton © Pan American Health Organization, 2017.
+    See License at: https://github.com/bireme/BVS-InfoButton/blob/master/LICENSE.txt
+
+==========================================================================
+-->
+
+<!DOCTYPE html>
+<html>
+<body bgcolor="#f3f3f9">
+
+<style>
+  div {
+    padding-bottom: 1.3em;
+  }
+  h1 {
+    margin-bottom: 1em;
+  }
+  h3 {
+    padding-bottom: 0.8em;
+  }
+  select {
+    margin-left: 0.2em;
+  }
+  .hoverable {
+    font-size: 11.0px;
+    color: blue;
+    text-align: left;
+  }
+  p.copyright {
+    font-size: 10.0px;
+    color: blue;
+    text-align: right;
+
+  }
+  .dropdown {
+    position: relative;
+    display: inline-block;
+  }
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 850px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    padding: 12px 16px;
+    z-index: 1;
+    font-size: 90%;
+  }
+  .dropdown:hover .dropdown-content {
+    display: block;
+  }
+
+</style>
+
+<script type="text/javascript">
+
+var host = window.location.hostname;
+          //"serverofi5.bireme.br";
+          //"bvsinfobutton.homolog.bvsalud.org";
+
+var protocol = window.location.protocol
+var prefix = "";
+if ((host === "bvsinfobutton.homolog.bvsalud.org") || (host === "bvsinfobutton.bvsalud.org")) {
+  prefix = protocol + "//" + host + "/infobutton/search";
+} else {
+  var port = window.location.port;
+  var strPort = "";
+  if (port === "80") strPort = ""; else strPort = ":" + port;
+  prefix = protocol + "//" + host + strPort + "/BVSInfoButton/infobutton/search";
+}
+
+
+function parseElement(elemName) {
+  var elem = document.getElementsByName(elemName);
+  var ret = [];
+  var size = elem.length;
+
+  if ((elem != null) && (size > 0)) {
+    var elem2 = elem[0];
+    var isInputText = elem2 instanceof HTMLInputElement && elem2.type == 'text';
+    var isCheckBox = elem2 instanceof HTMLInputElement && elem2.type == 'checkbox';
+
+    for (i = 0; i < size; i++) {
+      var content = (isInputText)
+                ? elem[i].value
+                : (isCheckBox) ? (elem[i].checked) ? "true" : ""
+                               : elem[i].options[elem[i].selectedIndex].value;
+      ret.push(content.trim());
+    }
+  }
+  return ret;
+}
+
+function addElements(elemNames, url) {
+  var url2 = (typeof url === 'undefined') ? "" : url;
+  var sep = (0 === url2.length) ? "" : "&";
+  var parsed = [];
+  var indexes = new Set();
+
+  for (ii = 0; ii < elemNames.length; ii++) {
+    var name = elemNames[ii];
+    var pElem = parseElement(name);
+    parsed.push(pElem);
+    for (j = 0; j < pElem.length; j++) {
+      if (pElem[j].length > 0) indexes.add(j);
+    }
+  }
+  var iSize = indexes.size;
+  var useIndex = iSize > 1;
+  ret = url2;
+  // Quantos indices serao utilizados na url
+  if (iSize > 0) {
+    var pl = parsed[0].length;
+    // Quantas instancias tem do mesmo campo
+    var k = 0;
+    for (j = 0; j < pl; j++) {
+      var found = false;
+      for (i = 0; i < parsed.length; i++) {
+        var content = parsed[i][j];
+        if (content.length > 0) {
+          var idx = useIndex && (k > 0) ? k : "";
+          ret = ret + sep + elemNames[i] + idx + "=" + content;
+          sep = "&";
+          found = true;
+        }
+      }
+      if (found) k = k + 1;
+    }
+  }
+  return ret;
+}
+
+function getParamUrl() {
+  var url = "";
+  url = addElements(["mainSearchCriteria.v.c", "mainSearchCriteria.v.cs",
+                         "mainSearchCriteria.v.dn", "mainSearchCriteria.v.ot"] , url);
+  url = addElements(["subTopic.v.c"], url);
+  url = addElements(["subTopic.v.dn"], url);
+  url = addElements(["subTopic.v.cs"], url);
+  url = addElements(["patientPerson.administrativeGenderCode.c"], url);
+  url = addElements(["patientPerson.administrativeGenderCode.dn"], url);
+  url = addElements(["age.v.v"], url);
+  url = addElements(["age.v.u"], url);
+  url = addElements(["ageGroup.v.c"], url);
+  url = addElements(["ageGroup.v.dn"], url);
+  url = addElements(["informationRecipient"], url);
+  url = addElements(["informationRecipient.languageCode.c"], url);
+  url = addElements(["informationRecipient.languageCode.dn"], url);
+  url = addElements(["locationOfInterest.addr.CNT"], url);
+  url = addElements(["performer"], url);
+  url = addElements(["performer.languageCode.c"], url);
+  url = addElements(["performer.languageCode.dn"], url);
+  url = addElements(["knowledgeResponseType"], url);
+  url = addElements(["explain"], url);
+
+  return url;
+}
+
+function buildUrl() {
+  var parameters = getParamUrl();
+  if (parameters.length === 0) {
+    document.getElementById("url").innerHTML = "url: ";
+  } else {
+    document.getElementById("url").innerHTML = "url: " + window.prefix + "?" + parameters;
+  }
+}
+
+function post(path, params, method) {
+    method = method || "post"; // Set method to post by default if not specified.
+    // The rescopyrightt of this code assumes you are not using a library.
+    // It can be made less wordy if you use one.
+    var form = document.createElement("form");
+    form.setAttribute("method", method);
+    form.setAttribute("action", path);
+
+    for(var key in params) {
+        if(params.hasOwnProperty(key)) {
+            var hiddenField = document.createElement("input");
+            hiddenField.setAttribute("type", "hidden");
+            hiddenField.setAttribute("name", key);
+            hiddenField.setAttribute("value", params[key]);
+            form.appendChild(hiddenField);
+        }
+    }
+
+    document.body.appendChild(form);
+    form.submit();
+}
+
+
+function getUrlParameters(url) {
+  var params = {};
+  var split1 = url.split("&");
+
+  for (i=0; i < split1.length; i++) {
+    var par = split1[i];
+    var split2 = par.split("=");
+    params[split2[0].trim()] = split2[1].trim();
+  }
+  return params;
+}
+
+</script>
+
+<h1>BVS - Infobutton (version 1.0.0)</h1>
+
+<form id="myForm">
+
+  <div>
+  Main Search Criteria 1 (Concept Code): <input type="text" name="mainSearchCriteria.v.c" size="30" onkeyup="buildUrl()"/>
+  </div>
+  <div>
+  Main Search Criteria 1 (Code System): &nbsp;<select name="mainSearchCriteria.v.cs" onchange="buildUrl()">
+   <option value="">---do not use---</option>
+   <option value="2.16.840.1.113883.6.177">2.16.840.1.113883.6.177 &nbsp;&nbsp;(MESH)</option>
+   <option value="2.16.840.1.113883.6.3">2.16.840.1.113883.6.3 &nbsp;&nbsp;(ICD10)</option>
+   <option value="2.16.840.1.113883.6.90">2.16.840.1.113883.6.90 &nbsp;&nbsp;(ICD10-CM)</option>
+   <option value="2.16.840.1.113883.6.103">2.16.840.1.113883.6.103 &nbsp;&nbsp;(ICD9-CM)</option>
+   <option value="2.16.840.1.113883.6.96">2.16.840.1.113883.6.96 &nbsp;&nbsp;(SNOMED-CT)</option>
+   <option value="2.16.840.1.113883.6.88">2.16.840.1.113883.6.88 &nbsp;&nbsp;(RXNORM)</option>
+   <option disabled value="2.16.840.1.113883.6.69">2.16.840.1.113883.6.69 &nbsp;&nbsp;(NDC)</option>
+   <option disabled value="2.16.840.1.113883.6.1">2.16.840.1.113883.6.1 &nbsp;&nbsp;(LOINC)</option>
+  </select>
+  </div>
+  <div>
+  Main Search Criteria 1 (Display Name): <input type="text" name="mainSearchCriteria.v.dn" size="60" onkeyup="buildUrl()"/>
+  </div>
+  <div>
+  Main Search Criteria 1 (Original Text): &nbsp;<input type="text" name="mainSearchCriteria.v.ot" size="60" onkeyup="buildUrl()"/>
+  </div>
+
+  <div class="dropdown">
+    <span class="hoverable">See rules</span>
+    <div class="dropdown-content">
+      <p>1) If code is present, displayName MAY also be present, so that knowledge resources that do not support a given code system MAY still process the request using displayName as a search keyword.</p>
+      <p>2) If code is present, codeSystem SHALL be present.</p>
+      <p>3) If the code, the displayName, and originalText are all present, knowledge resources MAY decide whether to process the code, the displayName, and/or the originalText to retrieve relevant content.</p>
+      <p>4) If code is not present, the text displayed to (or entered by) the user SHALL be represented in the originalText attribute.</p>
+    </div>
+  </div>
+  <hr/>
+
+  <div>
+  Main Search Criteria 2 (Concept Code): <input type="text" name="mainSearchCriteria.v.c" size="30" onkeyup="buildUrl()"/>
+  </div>
+  <div>
+  Main Search Criteria 2 (Code System): &nbsp;<select name="mainSearchCriteria.v.cs" onchange="buildUrl()">
+   <option value="">---do not use---</option>
+   <option value="2.16.840.1.113883.6.177">2.16.840.1.113883.6.177 &nbsp;&nbsp;(MESH)</option>
+   <option value="2.16.840.1.113883.6.3">2.16.840.1.113883.6.3 &nbsp;&nbsp;(ICD10)</option>
+   <option value="2.16.840.1.113883.6.90">2.16.840.1.113883.6.90 &nbsp;&nbsp;(ICD10-CM)</option>
+   <option value="2.16.840.1.113883.6.103">2.16.840.1.113883.6.103 &nbsp;&nbsp;(ICD9-CM)</option>
+   <option value="2.16.840.1.113883.6.96">2.16.840.1.113883.6.96 &nbsp;&nbsp;(SNOMED-CT)</option>
+   <option value="2.16.840.1.113883.6.88">2.16.840.1.113883.6.88 &nbsp;&nbsp;(RXNORM)</option>
+   <option disabled value="2.16.840.1.113883.6.69">2.16.840.1.113883.6.69 &nbsp;&nbsp;(NDC)</option>
+   <option disabled value="2.16.840.1.113883.6.1">2.16.840.1.113883.6.1 &nbsp;&nbsp;(LOINC)</option>
+  </select>
+  </div>
+  <div>
+  Main Search Criteria 2 (Display Name): <input type="text" name="mainSearchCriteria.v.dn" size="60" onkeyup="buildUrl()"/>
+  </div>
+  <div>
+  Main Search Criteria 2 (Original Text): &nbsp;<input type="text" name="mainSearchCriteria.v.ot" size="60" onkeyup="buildUrl()"/>
+</div>
+  <hr/>
+
+  <div>
+  Main Search Criteria 3 (Concept Code): <input type="text" name="mainSearchCriteria.v.c" size="30" onkeyup="buildUrl()"/>
+  </div>
+
+  <div>
+  Main Search Criteria 3 (Code System): &nbsp;<select name="mainSearchCriteria.v.cs" onchange="buildUrl()">
+   <option value="">---do not use---</option>
+   <option value="2.16.840.1.113883.6.177">2.16.840.1.113883.6.177 &nbsp;&nbsp;(MESH)</option>
+   <option value="2.16.840.1.113883.6.3">2.16.840.1.113883.6.3 &nbsp;&nbsp;(ICD10)</option>
+   <option value="2.16.840.1.113883.6.90">2.16.840.1.113883.6.90 &nbsp;&nbsp;(ICD10-CM)</option>
+   <option value="2.16.840.1.113883.6.103">2.16.840.1.113883.6.103 &nbsp;&nbsp;(ICD9-CM)</option>
+   <option value="2.16.840.1.113883.6.96">2.16.840.1.113883.6.96 &nbsp;&nbsp;(SNOMED-CT)</option>
+   <option value="2.16.840.1.113883.6.88">2.16.840.1.113883.6.88 &nbsp;&nbsp;(RXNORM)</option>
+   <option disabled value="2.16.840.1.113883.6.69">2.16.840.1.113883.6.69 &nbsp;&nbsp;(NDC)</option>
+   <option disabled value="2.16.840.1.113883.6.1">2.16.840.1.113883.6.1 &nbsp;&nbsp;(LOINC)</option>
+  </select>
+  </div>
+  <div>
+  Main Search Criteria 3 (Display Name): <input type="text" name="mainSearchCriteria.v.dn" size="60" onkeyup="buildUrl()"/>
+  </div>
+  <div>
+  Main Search Criteria 3 (Original Text): &nbsp;<input type="text" name="mainSearchCriteria.v.ot" size="60" onkeyup="buildUrl()"/>
+  </div>
+  <hr/>
+
+  <div>
+  SubTopic (Concept Code): <select name="subTopic.v.c" onchange="buildUrl()">
+   <option value="">---do not use---</option>
+   <option value="Q000008">Q000008 - administration & dosage (MeSH)</option>
+   <option value="Q000744">Q000744 - contraindications (MeSH)</option>
+   <option value="Q000009">Q000009 - adverse effects (MeSH)</option>
+   <option value="D004347">D004347 - drug interaction (MeSH)</option>
+   <option value="Q000145">Q000145 - classification (MeSH)</option>
+   <option value="Q000209">Q000209 - etiology (MeSH)</option>
+   <option value="Q000175">Q000175 - diagnosis (MeSH)</option>
+   <option value="Q000628">Q000628 - therapy (MeSH)</option>
+   <option value="D011379">D011379 - prognosis (MeSH)</option>
+   <option value="Q000627">Q000627 - therapeutic use (MeSH)</option>
+   <option value="Q000493">Q000493 - pharmacokinetics (MeSH)</option>
+   <option value="Q000494">Q000494 - pharmacology (MeSH)</option>
+   <option value="Q000633">Q000633 - toxicity (MeSH)</option>
+   <option value="Q000506">Q000506 - poisoning (MeSH)</option>
+
+   <option value="79899007">79899007 - Drug Interaction (SNOMED_CT)</option>
+   <option value="47965005">47965005 - Diagnosis, Differential (SNOMED_CT)</option>
+   <option value="404204005">404204005 - Drug interaction with drug (SNOMED_CT)</option>
+   <option value="95907004">95907004 - Drug interaction with food (SNOMED_CT)</option>
+   <option value="95906008">95906008 - Drug interaction with alcohol (SNOMED_CT)</option>
+  </select>
+  &nbsp;&nbsp;Code System: <select name="subTopic.v.cs" onchange="buildUrl()">
+   <option value="">---do not use---</option>
+   <option value="2.16.840.1.113883.6.177">MESH</option>
+   <option value="2.16.840.1.113883.6.96">SNOMED-CT</option>
+  </select>
+  </div>
+
+  <div>
+  SubTopic (Display Name): <select name="subTopic.v.dn" onchange="buildUrl()">
+   <option value="">---do not use---</option>
+   <option value="administration & dosage">administration & dosage (MeSH)</option>
+   <option value="contraindications">contraindications (MeSH)</option>
+   <option value="adverse effects">adverse effects (MeSH)</option>
+   <option value="drug interaction">drug interaction (MeSH)</option>
+   <option value="classification">classification (MeSH)</option>
+   <option value="etiology">etiology (MeSH)</option>
+   <option value="diagnosis">diagnosis (MeSH)</option>
+   <option value="therapy">therapy (MeSH)</option>
+   <option value="prognosis">prognosis (MeSH)</option>
+   <option value="therapeutic use">therapeutic use (MeSH)</option>
+   <option value="pharmacokinetics">pharmacokinetics (MeSH)</option>
+   <option value="pharmacology">pharmacology (MeSH)</option>
+   <option value="toxicity">toxicity (MeSH)</option>
+   <option value="poisoning">poisoning (MeSH)</option>
+
+   <option value="Drug Interactions">Drug Interactions (SNOMED_CT)</option>
+   <option value="Diagnosis, Differential">Diagnosis, Differential (SNOMED_CT)</option>
+   <option value="Drug interaction with drug">Drug interaction with drug (SNOMED_CT)</option>
+   <option value="Drug interaction with food">Drug interaction with food (SNOMED_CT)</option>
+   <option value="Drug interaction with alcohol">Drug interaction with alcohol (SNOMED_CT)</option>
+  </select>
+  </div>
+
+  <hr/>
+
+  <div>
+  Administrative Gender Code (Concept Code): <select name="patientPerson.administrativeGenderCode.c" onchange="buildUrl()">
+   <option value="">---do not use---</option>
+   <option value="F">F (female)</option>
+   <option value="M">M (male)</option>
+   <option value="UN">UN (undifferentiated)</option>
+  </select>
+  </div>
+
+  <div>
+  Administrative Gender Code (Display Name): <select name="patientPerson.administrativeGenderCode.dn" onchange="buildUrl()">
+   <option value="">---do not use---</option>
+   <option value="Undifferentiated">undifferentiated</option>
+   <option value="Male">male</option>
+   <option value="Female">female</option>
+  </select>
+  </div>
+
+  <hr/>
+
+  <div>
+  Age Value: <input type="text" name="age.v.v" size="4" onkeyup="buildUrl()"/>
+  </div>
+
+  <div>
+  Age Unit: <select name="age.v.u" onchange="buildUrl()">
+    <option value="">---do not use---</option>
+    <option value="min">min (minute)</option>
+    <option value="h">h (hour)</option>
+    <option value="d">d (day)</option>
+    <option value="wk">wk (week)</option>
+    <option value="mo">mo (month)</option>
+    <option value="a">a (year)</option>
+    </select>
+  </div>
+
+  <hr/>
+
+  <div>
+  Age Group (Concept Code): <select name="ageGroup.v.c" onchange="buildUrl()">
+   <option value="">---do not use---</option>
+   <option value="D007231">D007231 (infant, newborn; birth to 1 month)</option>
+   <option value="D007223">D007223 (infant; 1 to 23 months)</option>
+   <option value="D002675">D002675 (child, preschool; 2 to 5 years)</option>
+   <option value="D002648">D002648 (child; 6 to 12 years)</option>
+   <option value="D000293">D000293 (adolescent; 13-18 years)</option>
+   <option value="D055815">D055815 (young adult; 19-24 years)</option>
+   <option value="D000328">D000328 (adult; 19-44 years)</option>
+   <option value="D008875">D008875 (middle aged; 45-64 years)</option>
+   <option value="D000368">D000368 (aged; 56-79 years)</option>
+   <option value="D000369">D000369 (aged, 80 and older; a person 80 years of age and older)</option>
+  </select>
+  </div>
+
+  <div>
+  Age Group (Display Name): <select name="ageGroup.v.dn" onchange="buildUrl()">
+   <option value="">---do not use---</option>
+   <option value="infant, newborn; birth to 1 month">infant, newborn; birth to 1 month</option>
+   <option value="infant; 1 to 23 months">infant; 1 to 23 months</option>
+   <option value="child, preschool; 2 to 5 years">child, preschool; 2 to 5 years</option>
+   <option value="child; 6 to 12 years">child; 6 to 12 years</option>
+   <option value="adolescent; 13-18 years">adolescent; 13-18 years</option>
+   <option value="young adult; 19-24 years">young adult; 19-24 years</option>
+   <option value="adult; 19-44 years">adult; 19-44 years</option>
+   <option value="middle aged; 45-64 years">middle aged; 45-64 years</option>
+   <option value="aged; 56-79 years">aged; 56-79 years</option>
+   <option value="aged, 80 and older; a person 80 years of age and older">aged, 80 and older; a person 80 years of age and older</option>
+  </select>
+  </div>
+
+  <hr/>
+
+  <div>
+  Info Recipient Role: <select name="informationRecipient" onchange="buildUrl()">
+    <option value="">---do not use---</option>
+    <option disabled value="PAT">patient</option>
+    <option disabled value="PROV">health care provider</option>
+    <option disabled value="PAYOR">payor</option>
+  </select>
+  </div>
+
+  <div>
+  Info Recipient Language (Concept Code): <select name="informationRecipient.languageCode.c" onchange="buildUrl()">
+   <option value="">---do not use---</option>
+   <option value="en">en</option>
+   <option value="es">es</option>
+   <option value="pt">pt</option>
+   <option value="fr">fr</option>
+   <option disabled value="zh">zh</option>
+   <option disabled value="de">de</option>
+   <option disabled value="ru">ru</option>
+   <option disabled value="ja">ja</option>
+   <option disabled value="nl">nl</option>
+   <option disabled value="ar">ar</option>
+   <option disabled value="pl">pl</option>
+   <option disabled value="da">da</option>
+   <option disabled value="it">it</option>
+   <option disabled value="nb">nb</option>
+  </select>
+  </div>
+
+  <div>
+  Info Recipient Language (Display Name): <select name="informationRecipient.languageCode.dn" onchange="buildUrl()">
+   <option value="">---do not use---</option>
+   <option value="english">english</option>
+   <option value="spanish">spanish</option>
+   <option value="portuguese">portuguese</option>
+   <option value="french">french</option>
+   <option disabled value="chinese">chinese</option>
+   <option disabled value="german">german</option>
+   <option disabled value="russian">russian</option>
+   <option disabled value="japanese">japanese</option>
+   <option disabled value="dutch">dutch</option>
+   <option disabled value="arabic">arabic</option>
+   <option disabled value="polish">polish</option>
+   <option disabled value="danish">danish</option>
+   <option disabled value="italian">italian</option>
+   <option disabled value="norwegian">norwegian</option>
+  </select>
+  </div>
+
+  <hr/>
+
+  <div>
+  Location of Interest 1: <select name="locationOfInterest.addr.CNT" onchange="buildUrl()">
+    <option value="">---do not use---</option>
+    <option value="AFG">Afghanistan</option>
+    <option value="ALB">Albania</option>
+    <option value="DZA">Algeria</option>
+    <option value="ASM">American Samoa</option>
+    <option value="AND">Andorra</option>
+    <option value="AGO">Angola</option>
+    <option value="AIA">Anguilla</option>
+    <option value="ATA">Antarctica</option>
+    <option value="ATG">Antigua and Barbuda</option>
+    <option value="ARG">Argentina</option>
+    <option value="ARM">Armenia</option>
+    <option value="ABW">Aruba</option>
+    <option value="AUS">Australia</option>
+    <option value="AUT">Austria</option>
+    <option value="AZE">Azerbaijan</option>
+    <option value="BHS">Bahamas</option>
+    <option value="BHR">Bahrain</option>
+    <option value="BGD">Bangladesh</option>
+    <option value="BRB">Barbados</option>
+    <option value="BLR">Belarus</option>
+    <option value="BEL">Belgium</option>
+    <option value="BLZ">Belize</option>
+    <option value="BEN">Benin</option>
+    <option value="BMU">Bermuda</option>
+    <option value="BTN">Bhutan</option>
+    <option value="BOL">Bolivia Plurinational State of</option>
+    <option value="BES">Bonaire Sint Eustatius and Saba</option>
+    <option value="BIH">Bosnia and Herzegovina</option>
+    <option value="BWA">Botswana</option>
+    <option value="BVT">Bouvet Island</option>
+    <option value="BRA">Brazil</option>
+    <option value="IOT">British Indian Ocean Territory</option>
+    <option value="BRN">Brunei Darussalam</option>
+    <option value="BGR">Bulgaria</option>
+    <option value="BFA">Burkina Faso</option>
+    <option value="BDI">Burundi</option>
+    <option value="CPV">Cabo Verde</option>
+    <option value="KHM">Cambodia</option>
+    <option value="CMR">Cameroon</option>
+    <option value="CAN">Canada</option>
+    <option value="CYM">Cayman Islands</option>
+    <option value="CAF">Central African Republic</option>
+    <option value="TCD">Chad</option>
+    <option value="CHL">Chile</option>
+    <option value="CHN">China</option>
+    <option value="CXR">Christmas Island</option>
+    <option value="CCK">Cocos (Keeling) Islands</option>
+    <option value="COL">Colombia</option>
+    <option value="COM">Comoros</option>
+    <option value="COG">Congo</option>
+    <option value="COD">Congo the Democratic Republic of the</option>
+    <option value="COK">Cook Islands</option>
+    <option value="CRI">Costa Rica</option>
+    <option value="CIV">Côte d'Ivoire</option>
+    <option value="HRV">Croatia</option>
+    <option value="CUB">Cuba</option>
+    <option value="CUW">Curaçao</option>
+    <option value="CYP">Cyprus</option>
+    <option value="CZE">Czechia</option>
+    <option value="DNK">Denmark</option>
+    <option value="DJI">Djibouti</option>
+    <option value="DMA">Dominica</option>
+    <option value="DOM">Dominican Republic</option>
+    <option value="ECU">Ecuador</option>
+    <option value="EGY">Egypt</option>
+    <option value="SLV">El Salvador</option>
+    <option value="GNQ">Equatorial Guinea</option>
+    <option value="ERI">Eritrea</option>
+    <option value="EST">Estonia</option>
+    <option value="ETH">Ethiopia</option>
+    <option value="FLK">Falkland Islands (Malvinas)</option>
+    <option value="FRO">Faroe Islands</option>
+    <option value="FJI">Fiji</option>
+    <option value="FIN">Finland</option>
+    <option value="FRA">France</option>
+    <option value="GUF">French Guiana</option>
+    <option value="PYF">French Polynesia</option>
+    <option value="ATF">French Southern Territories</option>
+    <option value="GAB">Gabon</option>
+    <option value="GMB">Gambia</option>
+    <option value="GEO">Georgia</option>
+    <option value="DEU">Germany</option>
+    <option value="GHA">Ghana</option>
+    <option value="GIB">Gibraltar</option>
+    <option value="GRC">Greece</option>
+    <option value="GRL">Greenland</option>
+    <option value="GRD">Grenada</option>
+    <option value="GLP">Guadeloupe</option>
+    <option value="GUM">Guam</option>
+    <option value="GTM">Guatemala</option>
+    <option value="GGY">Guernsey</option>
+    <option value="GNB">Guinea-Bissau</option>
+    <option value="GIN">Guinea</option>
+    <option value="GUY">Guyana</option>
+    <option value="HTI">Haiti</option>
+    <option value="HMD">Heard Island and McDonald Islands</option>
+    <option value="VAT">Holy See</option>
+    <option value="HND">Honduras</option>
+    <option value="HKG">Hong Kong</option>
+    <option value="HUN">Hungary</option>
+    <option value="ISL">Iceland</option>
+    <option value="IND">India</option>
+    <option value="IDN">Indonesia</option>
+    <option value="IRN">Iran Islamic Republic of</option>
+    <option value="IRQ">Iraq</option>
+    <option value="IRL">Ireland</option>
+    <option value="ALA">Islands</option>
+    <option value="IMN">Isle of Man</option>
+    <option value="ISR">Israel</option>
+    <option value="ITA">Italy</option>
+    <option value="JAM">Jamaica</option>
+    <option value="JPN">Japan</option>
+    <option value="JEY">Jersey</option>
+    <option value="JOR">Jordan</option>
+    <option value="KAZ">Kazakhstan</option>
+    <option value="KEN">Kenya</option>
+    <option value="KIR">Kiribati</option>
+    <option value="PRK">Korea Democratic People's Republic of</option>
+    <option value="KOR">Korea Republic of</option>
+    <option value="KWT">Kuwait</option>
+    <option value="KGZ">Kyrgyzstan</option>
+    <option value="LAO">Lao People's Democratic Republic</option>
+    <option value="LVA">Latvia</option>
+    <option value="LBN">Lebanon</option>
+    <option value="LSO">Lesotho</option>
+    <option value="LBR">Liberia</option>
+    <option value="LBY">Libya</option>
+    <option value="LIE">Liechtenstein</option>
+    <option value="LTU">Lithuania</option>
+    <option value="LUX">Luxembourg</option>
+    <option value="MAC">Macao</option>
+    <option value="MKD">Macedonia the former Yugoslav Republic of</option>
+    <option value="MDG">Madagascar</option>
+    <option value="MWI">Malawi</option>
+    <option value="MYS">Malaysia</option>
+    <option value="MDV">Maldives</option>
+    <option value="MLI">Mali</option>
+    <option value="MLT">Malta</option>
+    <option value="MHL">Marshall Islands</option>
+    <option value="MTQ">Martinique</option>
+    <option value="MRT">Mauritania</option>
+    <option value="MUS">Mauritius</option>
+    <option value="MYT">Mayotte</option>
+    <option value="MEX">Mexico</option>
+    <option value="FSM">Micronesia Federated States of</option>
+    <option value="MDA">Moldova Republic of</option>
+    <option value="MCO">Monaco</option>
+    <option value="MNG">Mongolia</option>
+    <option value="MNE">Montenegro</option>
+    <option value="MSR">Montserrat</option>
+    <option value="MAR">Morocco</option>
+    <option value="MOZ">Mozambique</option>
+    <option value="MMR">Myanmar</option>
+    <option value="NAM">Namibia</option>
+    <option value="NRU">Nauru</option>
+    <option value="NPL">Nepal</option>
+    <option value="NLD">Netherlands</option>
+    <option value="NCL">New Caledonia</option>
+    <option value="NZL">New Zealand</option>
+    <option value="NIC">Nicaragua</option>
+    <option value="NGA">Nigeria</option>
+    <option value="NER">Niger</option>
+    <option value="NIU">Niue	</option>
+    <option value="NFK">Norfolk Island</option>
+    <option value="MNP">Northern Mariana Islands</option>
+    <option value="NOR">Norway</option>
+    <option value="OMN">Oman</option>
+    <option value="PAK">Pakistan</option>
+    <option value="PLW">Palau</option>
+    <option value="PSE">Palestine State of</option>
+    <option value="PAN">Panama</option>
+    <option value="PNG">Papua New Guinea</option>
+    <option value="PRY">Paraguay</option>
+    <option value="PER">Peru</option>
+    <option value="PHL">Philippines</option>
+    <option value="PCN">Pitcairn</option>
+    <option value="POL">Poland</option>
+    <option value="PRT">Portugal</option>
+    <option value="PRI">Puerto Rico</option>
+    <option value="QAT">Qatar</option>
+    <option value="REU">Réunion</option>
+    <option value="ROU">Romania</option>
+    <option value="RUS">Russian Federation</option>
+    <option value="RWA">Rwanda</option>
+    <option value="BLM">Saint Barthélemy</option>
+    <option value="SHN">Saint Helena Ascension and Tristan da Cunha</option>
+    <option value="KNA">Saint Kitts and Nevis</option>
+    <option value="LCA">Saint Lucia</option>
+    <option value="MAF">Saint Martin (French part)</option>
+    <option value="SPM">Saint Pierre and Miquelon</option>
+    <option value="VCT">Saint Vincent and the Grenadines</option>
+    <option value="WSM">Samoa</option>
+    <option value="SMR">San Marino</option>
+    <option value="STP">Sao Tome and Principe</option>
+    <option value="SAU">Saudi Arabia</option>
+    <option value="SEN">Senegal</option>
+    <option value="SRB">Serbia</option>
+    <option value="SYC">Seychelles</option>
+    <option value="SLE">Sierra Leone</option>
+    <option value="SGP">Singapore</option>
+    <option value="SXM">Sint Maarten (Dutch part)</option>
+    <option value="SVK">Slovakia</option>
+    <option value="SVN">Slovenia</option>
+    <option value="SLB">Solomon Islands</option>
+    <option value="SOM">Somalia</option>
+    <option value="ZAF">South Africa</option>
+    <option value="SGS">South Georgia and the South Sandwich Islands</option>
+    <option value="SSD">South Sudan</option>
+    <option value="ESP">Spain</option>
+    <option value="LKA">Sri Lanka</option>
+    <option value="SDN">Sudan</option>
+    <option value="SUR">Suriname</option>
+    <option value="SJM">Svalbard and Jan Mayen</option>
+    <option value="SWZ">Swaziland</option>
+    <option value="SWE">Sweden</option>
+    <option value="CHE">Switzerland</option>
+    <option value="SYR">Syrian Arab Republic</option>
+    <option value="TWN">Taiwan Province of China</option>
+    <option value="TJK">Tajikistan</option>
+    <option value="TZA">Tanzania United Republic of</option>
+    <option value="THA">Thailand</option>
+    <option value="TLS">Timor-Leste</option>
+    <option value="TGO">Togo</option>
+    <option value="TKL">Tokelau</option>
+    <option value="TON">Tonga</option>
+    <option value="TTO">Trinidad and Tobago</option>
+    <option value="TUN">Tunisia</option>
+    <option value="TUR">Turkey</option>
+    <option value="TKM">Turkmenistan</option>
+    <option value="TCA">Turks and Caicos Islands</option>
+    <option value="TUV">Tuvalu</option>
+    <option value="UGA">Uganda</option>
+    <option value="UKR">Ukraine</option>
+    <option value="ARE">United Arab Emirates</option>
+    <option value="GBR">United Kingdom</option>
+    <option value="UMI">United States Minor Outlying Islands</option>
+    <option value="USA">United States of America</option>
+    <option value="URY">Uruguay</option>
+    <option value="UZB">Uzbekistan</option>
+    <option value="VUT">Vanuatu</option>
+    <option value="VEN">Venezuela Bolivarian Republic of</option>
+    <option value="VNM">Viet Nam</option>
+    <option value="VGB">Virgin Islands British</option>
+    <option value="VIR">Virgin Islands U.S.</option>
+    <option value="WLF">Wallis and Futuna</option>
+    <option value="ESH">Western Sahara</option>
+    <option value="YEM">Yemen</option>
+    <option value="ZMB">Zambia</option>
+    <option value="ZWE">Zimbabwe</option>
+  </select>
+  </div>
+
+  <div>
+  Location of Interest 2: <select name="locationOfInterest.addr.CNT" onchange="buildUrl()">
+    <option value="">---do not use---</option>
+    <option value="AFG">Afghanistan</option>
+    <option value="ALB">Albania</option>
+    <option value="DZA">Algeria</option>
+    <option value="ASM">American Samoa</option>
+    <option value="AND">Andorra</option>
+    <option value="AGO">Angola</option>
+    <option value="AIA">Anguilla</option>
+    <option value="ATA">Antarctica</option>
+    <option value="ATG">Antigua and Barbuda</option>
+    <option value="ARG">Argentina</option>
+    <option value="ARM">Armenia</option>
+    <option value="ABW">Aruba</option>
+    <option value="AUS">Australia</option>
+    <option value="AUT">Austria</option>
+    <option value="AZE">Azerbaijan</option>
+    <option value="BHS">Bahamas</option>
+    <option value="BHR">Bahrain</option>
+    <option value="BGD">Bangladesh</option>
+    <option value="BRB">Barbados</option>
+    <option value="BLR">Belarus</option>
+    <option value="BEL">Belgium</option>
+    <option value="BLZ">Belize</option>
+    <option value="BEN">Benin</option>
+    <option value="BMU">Bermuda</option>
+    <option value="BTN">Bhutan</option>
+    <option value="BOL">Bolivia Plurinational State of</option>
+    <option value="BES">Bonaire Sint Eustatius and Saba</option>
+    <option value="BIH">Bosnia and Herzegovina</option>
+    <option value="BWA">Botswana</option>
+    <option value="BVT">Bouvet Island</option>
+    <option value="BRA">Brazil</option>
+    <option value="IOT">British Indian Ocean Territory</option>
+    <option value="BRN">Brunei Darussalam</option>
+    <option value="BGR">Bulgaria</option>
+    <option value="BFA">Burkina Faso</option>
+    <option value="BDI">Burundi</option>
+    <option value="CPV">Cabo Verde</option>
+    <option value="KHM">Cambodia</option>
+    <option value="CMR">Cameroon</option>
+    <option value="CAN">Canada</option>
+    <option value="CYM">Cayman Islands</option>
+    <option value="CAF">Central African Republic</option>
+    <option value="TCD">Chad</option>
+    <option value="CHL">Chile</option>
+    <option value="CHN">China</option>
+    <option value="CXR">Christmas Island</option>
+    <option value="CCK">Cocos (Keeling) Islands</option>
+    <option value="COL">Colombia</option>
+    <option value="COM">Comoros</option>
+    <option value="COG">Congo</option>
+    <option value="COD">Congo the Democratic Republic of the</option>
+    <option value="COK">Cook Islands</option>
+    <option value="CRI">Costa Rica</option>
+    <option value="CIV">Côte d'Ivoire</option>
+    <option value="HRV">Croatia</option>
+    <option value="CUB">Cuba</option>
+    <option value="CUW">Curaçao</option>
+    <option value="CYP">Cyprus</option>
+    <option value="CZE">Czechia</option>
+    <option value="DNK">Denmark</option>
+    <option value="DJI">Djibouti</option>
+    <option value="DMA">Dominica</option>
+    <option value="DOM">Dominican Republic</option>
+    <option value="ECU">Ecuador</option>
+    <option value="EGY">Egypt</option>
+    <option value="SLV">El Salvador</option>
+    <option value="GNQ">Equatorial Guinea</option>
+    <option value="ERI">Eritrea</option>
+    <option value="EST">Estonia</option>
+    <option value="ETH">Ethiopia</option>
+    <option value="FLK">Falkland Islands (Malvinas)</option>
+    <option value="FRO">Faroe Islands</option>
+    <option value="FJI">Fiji</option>
+    <option value="FIN">Finland</option>
+    <option value="FRA">France</option>
+    <option value="GUF">French Guiana</option>
+    <option value="PYF">French Polynesia</option>
+    <option value="ATF">French Southern Territories</option>
+    <option value="GAB">Gabon</option>
+    <option value="GMB">Gambia</option>
+    <option value="GEO">Georgia</option>
+    <option value="DEU">Germany</option>
+    <option value="GHA">Ghana</option>
+    <option value="GIB">Gibraltar</option>
+    <option value="GRC">Greece</option>
+    <option value="GRL">Greenland</option>
+    <option value="GRD">Grenada</option>
+    <option value="GLP">Guadeloupe</option>
+    <option value="GUM">Guam</option>
+    <option value="GTM">Guatemala</option>
+    <option value="GGY">Guernsey</option>
+    <option value="GNB">Guinea-Bissau</option>
+    <option value="GIN">Guinea</option>
+    <option value="GUY">Guyana</option>
+    <option value="HTI">Haiti</option>
+    <option value="HMD">Heard Island and McDonald Islands</option>
+    <option value="VAT">Holy See</option>
+    <option value="HND">Honduras</option>
+    <option value="HKG">Hong Kong</option>
+    <option value="HUN">Hungary</option>
+    <option value="ISL">Iceland</option>
+    <option value="IND">India</option>
+    <option value="IDN">Indonesia</option>
+    <option value="IRN">Iran Islamic Republic of</option>
+    <option value="IRQ">Iraq</option>
+    <option value="IRL">Ireland</option>
+    <option value="ALA">Islands</option>
+    <option value="IMN">Isle of Man</option>
+    <option value="ISR">Israel</option>
+    <option value="ITA">Italy</option>
+    <option value="JAM">Jamaica</option>
+    <option value="JPN">Japan</option>
+    <option value="JEY">Jersey</option>
+    <option value="JOR">Jordan</option>
+    <option value="KAZ">Kazakhstan</option>
+    <option value="KEN">Kenya</option>
+    <option value="KIR">Kiribati</option>
+    <option value="PRK">Korea Democratic People's Republic of</option>
+    <option value="KOR">Korea Republic of</option>
+    <option value="KWT">Kuwait</option>
+    <option value="KGZ">Kyrgyzstan</option>
+    <option value="LAO">Lao People's Democratic Republic</option>
+    <option value="LVA">Latvia</option>
+    <option value="LBN">Lebanon</option>
+    <option value="LSO">Lesotho</option>
+    <option value="LBR">Liberia</option>
+    <option value="LBY">Libya</option>
+    <option value="LIE">Liechtenstein</option>
+    <option value="LTU">Lithuania</option>
+    <option value="LUX">Luxembourg</option>
+    <option value="MAC">Macao</option>
+    <option value="MKD">Macedonia the former Yugoslav Republic of</option>
+    <option value="MDG">Madagascar</option>
+    <option value="MWI">Malawi</option>
+    <option value="MYS">Malaysia</option>
+    <option value="MDV">Maldives</option>
+    <option value="MLI">Mali</option>
+    <option value="MLT">Malta</option>
+    <option value="MHL">Marshall Islands</option>
+    <option value="MTQ">Martinique</option>
+    <option value="MRT">Mauritania</option>
+    <option value="MUS">Mauritius</option>
+    <option value="MYT">Mayotte</option>
+    <option value="MEX">Mexico</option>
+    <option value="FSM">Micronesia Federated States of</option>
+    <option value="MDA">Moldova Republic of</option>
+    <option value="MCO">Monaco</option>
+    <option value="MNG">Mongolia</option>
+    <option value="MNE">Montenegro</option>
+    <option value="MSR">Montserrat</option>
+    <option value="MAR">Morocco</option>
+    <option value="MOZ">Mozambique</option>
+    <option value="MMR">Myanmar</option>
+    <option value="NAM">Namibia</option>
+    <option value="NRU">Nauru</option>
+    <option value="NPL">Nepal</option>
+    <option value="NLD">Netherlands</option>
+    <option value="NCL">New Caledonia</option>
+    <option value="NZL">New Zealand</option>
+    <option value="NIC">Nicaragua</option>
+    <option value="NGA">Nigeria</option>
+    <option value="NER">Niger</option>
+    <option value="NIU">Niue	</option>
+    <option value="NFK">Norfolk Island</option>
+    <option value="MNP">Northern Mariana Islands</option>
+    <option value="NOR">Norway</option>
+    <option value="OMN">Oman</option>
+    <option value="PAK">Pakistan</option>
+    <option value="PLW">Palau</option>
+    <option value="PSE">Palestine State of</option>
+    <option value="PAN">Panama</option>
+    <option value="PNG">Papua New Guinea</option>
+    <option value="PRY">Paraguay</option>
+    <option value="PER">Peru</option>
+    <option value="PHL">Philippines</option>
+    <option value="PCN">Pitcairn</option>
+    <option value="POL">Poland</option>
+    <option value="PRT">Portugal</option>
+    <option value="PRI">Puerto Rico</option>
+    <option value="QAT">Qatar</option>
+    <option value="REU">Réunion</option>
+    <option value="ROU">Romania</option>
+    <option value="RUS">Russian Federation</option>
+    <option value="RWA">Rwanda</option>
+    <option value="BLM">Saint Barthélemy</option>
+    <option value="SHN">Saint Helena Ascension and Tristan da Cunha</option>
+    <option value="KNA">Saint Kitts and Nevis</option>
+    <option value="LCA">Saint Lucia</option>
+    <option value="MAF">Saint Martin (French part)</option>
+    <option value="SPM">Saint Pierre and Miquelon</option>
+    <option value="VCT">Saint Vincent and the Grenadines</option>
+    <option value="WSM">Samoa</option>
+    <option value="SMR">San Marino</option>
+    <option value="STP">Sao Tome and Principe</option>
+    <option value="SAU">Saudi Arabia</option>
+    <option value="SEN">Senegal</option>
+    <option value="SRB">Serbia</option>
+    <option value="SYC">Seychelles</option>
+    <option value="SLE">Sierra Leone</option>
+    <option value="SGP">Singapore</option>
+    <option value="SXM">Sint Maarten (Dutch part)</option>
+    <option value="SVK">Slovakia</option>
+    <option value="SVN">Slovenia</option>
+    <option value="SLB">Solomon Islands</option>
+    <option value="SOM">Somalia</option>
+    <option value="ZAF">South Africa</option>
+    <option value="SGS">South Georgia and the South Sandwich Islands</option>
+    <option value="SSD">South Sudan</option>
+    <option value="ESP">Spain</option>
+    <option value="LKA">Sri Lanka</option>
+    <option value="SDN">Sudan</option>
+    <option value="SUR">Suriname</option>
+    <option value="SJM">Svalbard and Jan Mayen</option>
+    <option value="SWZ">Swaziland</option>
+    <option value="SWE">Sweden</option>
+    <option value="CHE">Switzerland</option>
+    <option value="SYR">Syrian Arab Republic</option>
+    <option value="TWN">Taiwan Province of China</option>
+    <option value="TJK">Tajikistan</option>
+    <option value="TZA">Tanzania United Republic of</option>
+    <option value="THA">Thailand</option>
+    <option value="TLS">Timor-Leste</option>
+    <option value="TGO">Togo</option>
+    <option value="TKL">Tokelau</option>
+    <option value="TON">Tonga</option>
+    <option value="TTO">Trinidad and Tobago</option>
+    <option value="TUN">Tunisia</option>
+    <option value="TUR">Turkey</option>
+    <option value="TKM">Turkmenistan</option>
+    <option value="TCA">Turks and Caicos Islands</option>
+    <option value="TUV">Tuvalu</option>
+    <option value="UGA">Uganda</option>
+    <option value="UKR">Ukraine</option>
+    <option value="ARE">United Arab Emirates</option>
+    <option value="GBR">United Kingdom</option>
+    <option value="UMI">United States Minor Outlying Islands</option>
+    <option value="USA">United States of America</option>
+    <option value="URY">Uruguay</option>
+    <option value="UZB">Uzbekistan</option>
+    <option value="VUT">Vanuatu</option>
+    <option value="VEN">Venezuela Bolivarian Republic of</option>
+    <option value="VNM">Viet Nam</option>
+    <option value="VGB">Virgin Islands British</option>
+    <option value="VIR">Virgin Islands U.S.</option>
+    <option value="WLF">Wallis and Futuna</option>
+    <option value="ESH">Western Sahara</option>
+    <option value="YEM">Yemen</option>
+    <option value="ZMB">Zambia</option>
+    <option value="ZWE">Zimbabwe</option>
+  </select>
+  </div>
+
+  <div>
+  Location of Interest 3: <select name="locationOfInterest.addr.CNT"  onchange="buildUrl()">
+    <option value="">---do not use---</option>
+    <option value="AFG">Afghanistan</option>
+    <option value="ALB">Albania</option>
+    <option value="DZA">Algeria</option>
+    <option value="ASM">American Samoa</option>
+    <option value="AND">Andorra</option>
+    <option value="AGO">Angola</option>
+    <option value="AIA">Anguilla</option>
+    <option value="ATA">Antarctica</option>
+    <option value="ATG">Antigua and Barbuda</option>
+    <option value="ARG">Argentina</option>
+    <option value="ARM">Armenia</option>
+    <option value="ABW">Aruba</option>
+    <option value="AUS">Australia</option>
+    <option value="AUT">Austria</option>
+    <option value="AZE">Azerbaijan</option>
+    <option value="BHS">Bahamas</option>
+    <option value="BHR">Bahrain</option>
+    <option value="BGD">Bangladesh</option>
+    <option value="BRB">Barbados</option>
+    <option value="BLR">Belarus</option>
+    <option value="BEL">Belgium</option>
+    <option value="BLZ">Belize</option>
+    <option value="BEN">Benin</option>
+    <option value="BMU">Bermuda</option>
+    <option value="BTN">Bhutan</option>
+    <option value="BOL">Bolivia Plurinational State of</option>
+    <option value="BES">Bonaire Sint Eustatius and Saba</option>
+    <option value="BIH">Bosnia and Herzegovina</option>
+    <option value="BWA">Botswana</option>
+    <option value="BVT">Bouvet Island</option>
+    <option value="BRA">Brazil</option>
+    <option value="IOT">British Indian Ocean Territory</option>
+    <option value="BRN">Brunei Darussalam</option>
+    <option value="BGR">Bulgaria</option>
+    <option value="BFA">Burkina Faso</option>
+    <option value="BDI">Burundi</option>
+    <option value="CPV">Cabo Verde</option>
+    <option value="KHM">Cambodia</option>
+    <option value="CMR">Cameroon</option>
+    <option value="CAN">Canada</option>
+    <option value="CYM">Cayman Islands</option>
+    <option value="CAF">Central African Republic</option>
+    <option value="TCD">Chad</option>
+    <option value="CHL">Chile</option>
+    <option value="CHN">China</option>
+    <option value="CXR">Christmas Island</option>
+    <option value="CCK">Cocos (Keeling) Islands</option>
+    <option value="COL">Colombia</option>
+    <option value="COM">Comoros</option>
+    <option value="COG">Congo</option>
+    <option value="COD">Congo the Democratic Republic of the</option>
+    <option value="COK">Cook Islands</option>
+    <option value="CRI">Costa Rica</option>
+    <option value="CIV">Côte d'Ivoire</option>
+    <option value="HRV">Croatia</option>
+    <option value="CUB">Cuba</option>
+    <option value="CUW">Curaçao</option>
+    <option value="CYP">Cyprus</option>
+    <option value="CZE">Czechia</option>
+    <option value="DNK">Denmark</option>
+    <option value="DJI">Djibouti</option>
+    <option value="DMA">Dominica</option>
+    <option value="DOM">Dominican Republic</option>
+    <option value="ECU">Ecuador</option>
+    <option value="EGY">Egypt</option>
+    <option value="SLV">El Salvador</option>
+    <option value="GNQ">Equatorial Guinea</option>
+    <option value="ERI">Eritrea</option>
+    <option value="EST">Estonia</option>
+    <option value="ETH">Ethiopia</option>
+    <option value="FLK">Falkland Islands (Malvinas)</option>
+    <option value="FRO">Faroe Islands</option>
+    <option value="FJI">Fiji</option>
+    <option value="FIN">Finland</option>
+    <option value="FRA">France</option>
+    <option value="GUF">French Guiana</option>
+    <option value="PYF">French Polynesia</option>
+    <option value="ATF">French Southern Territories</option>
+    <option value="GAB">Gabon</option>
+    <option value="GMB">Gambia</option>
+    <option value="GEO">Georgia</option>
+    <option value="DEU">Germany</option>
+    <option value="GHA">Ghana</option>
+    <option value="GIB">Gibraltar</option>
+    <option value="GRC">Greece</option>
+    <option value="GRL">Greenland</option>
+    <option value="GRD">Grenada</option>
+    <option value="GLP">Guadeloupe</option>
+    <option value="GUM">Guam</option>
+    <option value="GTM">Guatemala</option>
+    <option value="GGY">Guernsey</option>
+    <option value="GNB">Guinea-Bissau</option>
+    <option value="GIN">Guinea</option>
+    <option value="GUY">Guyana</option>
+    <option value="HTI">Haiti</option>
+    <option value="HMD">Heard Island and McDonald Islands</option>
+    <option value="VAT">Holy See</option>
+    <option value="HND">Honduras</option>
+    <option value="HKG">Hong Kong</option>
+    <option value="HUN">Hungary</option>
+    <option value="ISL">Iceland</option>
+    <option value="IND">India</option>
+    <option value="IDN">Indonesia</option>
+    <option value="IRN">Iran Islamic Republic of</option>
+    <option value="IRQ">Iraq</option>
+    <option value="IRL">Ireland</option>
+    <option value="ALA">Islands</option>
+    <option value="IMN">Isle of Man</option>
+    <option value="ISR">Israel</option>
+    <option value="ITA">Italy</option>
+    <option value="JAM">Jamaica</option>
+    <option value="JPN">Japan</option>
+    <option value="JEY">Jersey</option>
+    <option value="JOR">Jordan</option>
+    <option value="KAZ">Kazakhstan</option>
+    <option value="KEN">Kenya</option>
+    <option value="KIR">Kiribati</option>
+    <option value="PRK">Korea Democratic People's Republic of</option>
+    <option value="KOR">Korea Republic of</option>
+    <option value="KWT">Kuwait</option>
+    <option value="KGZ">Kyrgyzstan</option>
+    <option value="LAO">Lao People's Democratic Republic</option>
+    <option value="LVA">Latvia</option>
+    <option value="LBN">Lebanon</option>
+    <option value="LSO">Lesotho</option>
+    <option value="LBR">Liberia</option>
+    <option value="LBY">Libya</option>
+    <option value="LIE">Liechtenstein</option>
+    <option value="LTU">Lithuania</option>
+    <option value="LUX">Luxembourg</option>
+    <option value="MAC">Macao</option>
+    <option value="MKD">Macedonia the former Yugoslav Republic of</option>
+    <option value="MDG">Madagascar</option>
+    <option value="MWI">Malawi</option>
+    <option value="MYS">Malaysia</option>
+    <option value="MDV">Maldives</option>
+    <option value="MLI">Mali</option>
+    <option value="MLT">Malta</option>
+    <option value="MHL">Marshall Islands</option>
+    <option value="MTQ">Martinique</option>
+    <option value="MRT">Mauritania</option>
+    <option value="MUS">Mauritius</option>
+    <option value="MYT">Mayotte</option>
+    <option value="MEX">Mexico</option>
+    <option value="FSM">Micronesia Federated States of</option>
+    <option value="MDA">Moldova Republic of</option>
+    <option value="MCO">Monaco</option>
+    <option value="MNG">Mongolia</option>
+    <option value="MNE">Montenegro</option>
+    <option value="MSR">Montserrat</option>
+    <option value="MAR">Morocco</option>
+    <option value="MOZ">Mozambique</option>
+    <option value="MMR">Myanmar</option>
+    <option value="NAM">Namibia</option>
+    <option value="NRU">Nauru</option>
+    <option value="NPL">Nepal</option>
+    <option value="NLD">Netherlands</option>
+    <option value="NCL">New Caledonia</option>
+    <option value="NZL">New Zealand</option>
+    <option value="NIC">Nicaragua</option>
+    <option value="NGA">Nigeria</option>
+    <option value="NER">Niger</option>
+    <option value="NIU">Niue	</option>
+    <option value="NFK">Norfolk Island</option>
+    <option value="MNP">Northern Mariana Islands</option>
+    <option value="NOR">Norway</option>
+    <option value="OMN">Oman</option>
+    <option value="PAK">Pakistan</option>
+    <option value="PLW">Palau</option>
+    <option value="PSE">Palestine State of</option>
+    <option value="PAN">Panama</option>
+    <option value="PNG">Papua New Guinea</option>
+    <option value="PRY">Paraguay</option>
+    <option value="PER">Peru</option>
+    <option value="PHL">Philippines</option>
+    <option value="PCN">Pitcairn</option>
+    <option value="POL">Poland</option>
+    <option value="PRT">Portugal</option>
+    <option value="PRI">Puerto Rico</option>
+    <option value="QAT">Qatar</option>
+    <option value="REU">Réunion</option>
+    <option value="ROU">Romania</option>
+    <option value="RUS">Russian Federation</option>
+    <option value="RWA">Rwanda</option>
+    <option value="BLM">Saint Barthélemy</option>
+    <option value="SHN">Saint Helena Ascension and Tristan da Cunha</option>
+    <option value="KNA">Saint Kitts and Nevis</option>
+    <option value="LCA">Saint Lucia</option>
+    <option value="MAF">Saint Martin (French part)</option>
+    <option value="SPM">Saint Pierre and Miquelon</option>
+    <option value="VCT">Saint Vincent and the Grenadines</option>
+    <option value="WSM">Samoa</option>
+    <option value="SMR">San Marino</option>
+    <option value="STP">Sao Tome and Principe</option>
+    <option value="SAU">Saudi Arabia</option>
+    <option value="SEN">Senegal</option>
+    <option value="SRB">Serbia</option>
+    <option value="SYC">Seychelles</option>
+    <option value="SLE">Sierra Leone</option>
+    <option value="SGP">Singapore</option>
+    <option value="SXM">Sint Maarten (Dutch part)</option>
+    <option value="SVK">Slovakia</option>
+    <option value="SVN">Slovenia</option>
+    <option value="SLB">Solomon Islands</option>
+    <option value="SOM">Somalia</option>
+    <option value="ZAF">South Africa</option>
+    <option value="SGS">South Georgia and the South Sandwich Islands</option>
+    <option value="SSD">South Sudan</option>
+    <option value="ESP">Spain</option>
+    <option value="LKA">Sri Lanka</option>
+    <option value="SDN">Sudan</option>
+    <option value="SUR">Suriname</option>
+    <option value="SJM">Svalbard and Jan Mayen</option>
+    <option value="SWZ">Swaziland</option>
+    <option value="SWE">Sweden</option>
+    <option value="CHE">Switzerland</option>
+    <option value="SYR">Syrian Arab Republic</option>
+    <option value="TWN">Taiwan Province of China</option>
+    <option value="TJK">Tajikistan</option>
+    <option value="TZA">Tanzania United Republic of</option>
+    <option value="THA">Thailand</option>
+    <option value="TLS">Timor-Leste</option>
+    <option value="TGO">Togo</option>
+    <option value="TKL">Tokelau</option>
+    <option value="TON">Tonga</option>
+    <option value="TTO">Trinidad and Tobago</option>
+    <option value="TUN">Tunisia</option>
+    <option value="TUR">Turkey</option>
+    <option value="TKM">Turkmenistan</option>
+    <option value="TCA">Turks and Caicos Islands</option>
+    <option value="TUV">Tuvalu</option>
+    <option value="UGA">Uganda</option>
+    <option value="UKR">Ukraine</option>
+    <option value="ARE">United Arab Emirates</option>
+    <option value="GBR">United Kingdom</option>
+    <option value="UMI">United States Minor Outlying Islands</option>
+    <option value="USA">United States of America</option>
+    <option value="URY">Uruguay</option>
+    <option value="UZB">Uzbekistan</option>
+    <option value="VUT">Vanuatu</option>
+    <option value="VEN">Venezuela Bolivarian Republic of</option>
+    <option value="VNM">Viet Nam</option>
+    <option value="VGB">Virgin Islands British</option>
+    <option value="VIR">Virgin Islands U.S.</option>
+    <option value="WLF">Wallis and Futuna</option>
+    <option value="ESH">Western Sahara</option>
+    <option value="YEM">Yemen</option>
+    <option value="ZMB">Zambia</option>
+    <option value="ZWE">Zimbabwe</option>
+  </select>
+  </div>
+
+  <hr/>
+
+  <div>
+  Performer Role: <select name="performer" onchange="buildUrl()">
+   <option value="">---do not use---</option>
+   <option disabled value="PAT">patient</option>
+   <option disabled value="PROV">health care provider</option>
+   <option disabled value="PAYOR">payor</option>
+  </select>
+  </div>
+
+  <div>
+  Performer Language (Concept Code): <select name="performer.languageCode.c" onchange="buildUrl()">
+   <option value="">---do not use---</option>
+   <option value="en">en</option>
+   <option value="es">es</option>
+   <option value="pt">pt</option>
+   <option value="fr">fr</option>
+   <option disabled value="zh">zh</option>
+   <option disabled value="de">de</option>
+   <option disabled value="ru">ru</option>
+   <option disabled value="ja">ja</option>
+   <option disabled value="nl">nl</option>
+   <option disabled value="ar">ar</option>
+   <option disabled value="pl">pl</option>
+   <option disabled value="da">da</option>
+   <option disabled value="it">it</option>
+   <option disabled value="nb">nb</option>
+  </select>
+  </div>
+
+  <div>
+  Performer Language (Display Name): <select name="performer.languageCode.dn" onchange="buildUrl()">
+   <option value="">---do not use---</option>
+   <option value="english">english</option>
+   <option value="spanish">spanish</option>
+   <option value="portuguese">portuguese</option>
+   <option value="french">french</option>
+   <option disabled value="chinese">chinese</option>
+   <option disabled value="german">german</option>
+   <option disabled value="russian">russian</option>
+   <option disabled value="japanese">japanese</option>
+   <option disabled value="dutch">dutch</option>
+   <option disabled value="arabic">arabic</option>
+   <option disabled value="polish">polish</option>
+   <option disabled value="danish">danish</option>
+   <option disabled value="italian">italian</option>
+   <option disabled value="norwegian">norwegian</option>
+  </select>
+  </div>
+  <hr/>
+
+  <div>
+    Knowledge Response Type: <select name="knowledgeResponseType" onchange="buildUrl()">
+      <option value="text/xml">text/xml</option>
+      <option value="application/json">application/json</option>
+     </select>
+  </div>
+  <hr/>
+
+      <input type="checkbox" name="explain" value="explain" onchange="buildUrl()">Explain results (not in the infobutton protocol)<br>
+
+  <hr/>
+
+  <p id="url"></p>
+
+  <hr/>
+
+
+  <br/>
+  <div>
+    <button onclick="document.getElementById('myForm').reset();">Clear</button>
+    <input type="button" value="Send" onclick="post(window.prefix, getUrlParameters(getParamUrl()), 'post')" />
+  </div>
+  </form>
+
+  <p class="copyright">BVS-InfoButton &copy; Pan American Health Organization, 2017.</p>
+
+<script type="text/javascript">
+  window.onpageshow = function(event) {
+    if (event.persisted) {
+      window.location.reload();
+    }
+  };
+  buildUrl();
+</script>
+
+</body>
+</html>

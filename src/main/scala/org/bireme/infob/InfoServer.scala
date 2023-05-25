@@ -33,7 +33,8 @@ import scala.util.{Failure, Success, Try}
   */
 class InfoServer(
     conv: MeshConverter,
-    iahxUrl: String = "http://basalto02.bireme.br:8986/solr5/portal/select") {
+    //iahxUrl: String = "http://basalto02.bireme.br:8986/solr5/portal/select") {
+    iahxUrl: String = "http://iahx-idx02.bireme.br:8986/solr5/portal/select") {
 
   LoggerFactory
     .getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME)
