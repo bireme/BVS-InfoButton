@@ -1,7 +1,7 @@
 lazy val commonSettings = Seq(
   organization := "org.bireme",
   version := "1.0.0",
-  scalaVersion := "2.13.13" //"2.12.8"  // org.scala-lang.modules:scala-xml _2.13, _2.12
+  scalaVersion := "2.13.14" //"2.13.13"  // org.scala-lang.modules:scala-xml _2.13, _2.12
 )
 
 lazy val root = (project in file(".")).
@@ -11,7 +11,7 @@ lazy val root = (project in file(".")).
   )
 
 val akkaVersion = "10.5.3" //"10.5.2"
-val playJsonVersion = "2.10.4" //"2.9.4"
+val playJsonVersion = "2.10.5" //"2.10.4"
 val scalaXmlVersion = "2.3.0" //"2.1.0"
 val dom4jVersion = "2.1.4" //"2.1.3"
 val scalaLoggingVersion = "3.9.5" //"3.9.2"
@@ -48,7 +48,8 @@ trapExit := false  // To allow System.exit() without an exception (TestIndex.sca
 
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Ywarn-unused")
 
-enablePlugins(JettyPlugin)
+//enablePlugins(JettyPlugin)
+enablePlugins(TomcatPlugin)
 
 assembly / assemblyMergeStrategy := {
   case "module-info.class" => MergeStrategy.first //MergeStrategy.discard
