@@ -40,7 +40,7 @@ libraryDependencies ++= Seq(
   "org.apache.lucene" % "lucene-backward-codecs" % luceneVersion,
   "org.scalaj" %% "scalaj-http" % scalajHttpVersion,
   "jakarta.servlet" % "jakarta.servlet-api" % jakartaServletApiVersion % "provided",
-  "org.apache.logging.log4j" % "log4j-api" % log4jVersion
+  "org.apache.logging.log4j" % "log4j-api" % log4jVersion,
 )
 
 Test / logBuffered := false
@@ -48,8 +48,8 @@ trapExit := false  // To allow System.exit() without an exception (TestIndex.sca
 
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Ywarn-unused")
 
-//enablePlugins(JettyPlugin)
-enablePlugins(TomcatPlugin)
+enablePlugins(JettyPlugin)
+//enablePlugins(TomcatPlugin)
 
 assembly / assemblyMergeStrategy := {
   case "module-info.class" => MergeStrategy.first //MergeStrategy.discard

@@ -26,7 +26,7 @@ import scala.jdk.CollectionConverters._
   * [-index=<DeCsIndex>] - path to Lucene index to be created"
   */
 object MeSH_DeCS_Index extends App {
-  val DEF_DECS_INDEX = "web/BVSInfoButton/indexes/DeCS"
+  val DEF_DECS_INDEX = "indexes/DeCS" //"web/BVSInfoButton/indexes/DeCS"
   val DEF_DECS_MASTER = "isis/decs" //"/usr/local/bireme/tabs/decs"
 
   val MESH_ID_TAG = 480
