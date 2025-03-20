@@ -1,11 +1,7 @@
 lazy val commonSettings = Seq(
   organization := "org.bireme",
   version := "1.0.0",
-<<<<<<< HEAD
   scalaVersion := "2.13.16" //"2.12.8"  // org.scala-lang.modules:scala-xml _2.13, _2.12
-=======
-  scalaVersion := "2.13.14" //"2.13.13"  // org.scala-lang.modules:scala-xml _2.13, _2.12
->>>>>>> 2246501f92b18775cfed39ebf2d7c4a7f1b5007e
 )
 
 lazy val root = (project in file(".")).
@@ -14,7 +10,6 @@ lazy val root = (project in file(".")).
     name := "BVS-InfoButton"
   )
 
-<<<<<<< HEAD
 val akkaVersion = "10.5.3" //"10.5.0"
 val playJsonVersion = "2.10.6" //"2.9.4" //"2.9.0"
 val scalaXmlVersion = "2.3.0" //"2.1.0" //"1.3.0"
@@ -26,19 +21,6 @@ val luceneVersion = "9.12.1" //"9.6.0" //"9.5.0"
 val scalajHttpVersion = "2.4.2" //"2.4.1"
 val jakartaServletApiVersion = "6.1.0" //"6.0.0"
 val log4jVersion = "2.24.3" //"2.19.0"
-=======
-val akkaVersion = "10.5.3" //"10.5.2"
-val playJsonVersion = "2.10.5" //"2.10.4"
-val scalaXmlVersion = "2.3.0" //"2.1.0"
-val dom4jVersion = "2.1.4" //"2.1.3"
-val scalaLoggingVersion = "3.9.5" //"3.9.2"
-val logbackVersion = "1.5.6" //"1.4.7"
-val scalaTestVersion = "3.2.18" //"3.2.16"
-val luceneVersion = "9.10.0" //"9.6.0"
-val scalajHttpVersion = "2.4.2" //"2.4.1"
-val jakartaServletApiVersion = "6.0.0"
-val log4jVersion = "2.23.1" //"2.19.0"
->>>>>>> 2246501f92b18775cfed39ebf2d7c4a7f1b5007e
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http" % akkaVersion,
@@ -77,4 +59,3 @@ assembly / assemblyMergeStrategy := {
 }
 
 assembly / test := {}
-
