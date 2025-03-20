@@ -1,6 +1,7 @@
-project
-target
-/web/BVSInfoButton/nbproject/private/
-/web/BVSInfoButton/dist/
-/bin/
-/web/BVSInfoButton/nbproject/private/
+.bsp
+.idea
+target/
+web/BVSInfoButton/nbproject/private/
+web/BVSInfoButton/dist/
+bin/
+web/BVSInfoButton/nbproject/private/
