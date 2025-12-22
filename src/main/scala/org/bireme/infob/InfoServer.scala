@@ -7,7 +7,7 @@
 
 package org.bireme.infob
 
-import java.net.{URL, URLDecoder, URLEncoder}
+import java.net.{URI, URL, URLDecoder, URLEncoder}
 import java.time.Year
 
 import ch.qos.logback.classic.{Level, Logger => xLogger}
@@ -16,7 +16,10 @@ import org.bireme.infob.parameters._
 import org.dom4j.Element
 import org.slf4j.LoggerFactory
 import play.api.libs.json._
-import scalaj.http.{Http, HttpResponse}
+//import scalaj.http.{Http, HttpResponse}
+import sttp.client3.*
+import sttp.model.*
+import scala.concurrent.duration.*
 
 import scala.jdk.CollectionConverters._
 import scala.reflect._
@@ -294,7 +297,7 @@ class InfoServer(
             case Some(jarr) => jarr.value.take(maxDocs).toSeq
             case None => Seq()
           }
-        case _                      => Seq()
+        //case _                      => Seq()
       }
       case Left(err) =>
         println(s"FAILURE=$err")
@@ -310,7 +313,7 @@ class InfoServer(
     * if everything was ok or Left(err) where err is the error message is Some
     * error occurred
     */
-  private def post(params: Seq[(String, String)]): Either[String, String] = {
+  /*private def post(params: Seq[(String, String)]): Either[String, String] = {
     //println(s"post: params=$params")
 
     val response: HttpResponse[String] = Http(iahxUrl)
@@ -323,6 +326,28 @@ class InfoServer(
     } else {
       Left(s"errCode:${response.code}")
     }
+  }*/
+  private def post(params: Seq[(String, String)]): Either[String, String] = {
+
+    val backend = HttpURLConnectionBackend(
+      options = SttpBackendOptions.connectionTimeout(1000.millis)
+    )
+
+    val request =
+      basicRequest
+        .post(uri"$iahxUrl")
+        .headers(
+          Header.acceptCharset("UTF-8"),
+          Header.accept(MediaType.ApplicationJson)
+        )
+        .readTimeout(20.seconds)
+        .body(params.toMap) // envia como form-urlencoded
+
+    val response = request.send(backend)
+
+    response.code match
+      case StatusCode.Ok => Right(response.body.getOrElse(""))
+      case _ => Left(s"errCode:${response.code.code}")
   }
 
   private def convToInfoResponse(info: Seq[SearchParameter],
@@ -418,7 +443,7 @@ class InfoServer(
     } else {
       val className: String = info.head.getClass.getName
       val (same, dif) = info.partition {
-        sp: SearchParameter => sp.getClass.getName.equals(className)
+        sp => sp.getClass.getName.equals(className)
       }
 
       same.size match {
@@ -450,7 +475,7 @@ class InfoServer(
     */
   def paramsToUrl(info: Seq[SearchParameter],
                   infoUrl: String): Option[String] = {
-    Try (new URL(infoUrl)) match {
+    Try (URI.create(infoUrl).toURL) match {
       case Success(u) =>
         val uStr = u.toString
         val url2 = (
@@ -471,8 +496,8 @@ class InfoServer(
     }
   }
 
-  def urlToParms(urlStr: String): Option[Map[String, String]] = {
-    Try (new URL(urlStr)) match {
+  private def urlToParms(urlStr: String): Option[Map[String, String]] = {
+    Try (URI.create(urlStr).toURL) match {
       case Success(u) =>
         Try {
           URLDecoder.decode(u.getQuery, "utf-8")

@@ -72,7 +72,7 @@ object AtomOutput {
 
     root.addElement("title").addAttribute("type", "text").addText(feed.title)
 
-    if (!feed.subtitle.isEmpty) {
+    if (feed.subtitle.nonEmpty) {
       root
         .addElement("subtitle")
         .addAttribute("type", "text")
@@ -86,7 +86,7 @@ object AtomOutput {
     root.addElement("updated").addText(feed.updated)
 
     feed.categories
-      .filter(cat => cat.scheme.isEmpty && !cat.term.isEmpty )
+      .filter(cat => cat.scheme.isEmpty && cat.term.nonEmpty)
       .foreach(
         cat =>
           root
@@ -130,7 +130,7 @@ object AtomOutput {
           .addText(summary))
 
     entry.categories
-      .filter(cat => !cat.scheme.isEmpty && !cat.term.isEmpty )
+      .filter(cat => cat.scheme.nonEmpty && cat.term.nonEmpty)
       .foreach(
         cat =>
           entryElem
@@ -155,7 +155,7 @@ object AtomOutput {
 
     val headerCategory = JsArray(
       feed.categories
-        .filter(cat => !cat.scheme.isEmpty && !cat.term.isEmpty )
+        .filter(cat => cat.scheme.nonEmpty && cat.term.nonEmpty)
         .map(cat =>
           JsObject(List("scheme" -> JsString(cat.scheme),
                         "term" -> JsString(cat.term))))
@@ -176,7 +176,7 @@ object AtomOutput {
           Seq("subtitle" -> JsObject(
             List("_value" -> JsString(feed.subtitle), "type" -> JsString("text"))))
          }) ++
-   Seq("author" -> JsObject(
+    Seq("author" -> JsObject(
         List("_name" -> JsObject(List("_value" -> JsString(feed.author._1))),
              "uri" -> JsObject(List("_value" -> JsString(feed.author._2))))),
       "updated" -> JsObject(List("_value" -> JsString(feed.updated))),
@@ -198,7 +198,7 @@ object AtomOutput {
     val category = Some(
       JsArray(
         entry.categories
-          .filter(cat => !cat.scheme.isEmpty && !cat.term.isEmpty )
+          .filter(cat => cat.scheme.nonEmpty && cat.term.nonEmpty)
           .map(cat =>
             JsObject(List("scheme" -> JsString(cat.scheme),
                           "term" -> JsString(cat.term)))) ++ docType
