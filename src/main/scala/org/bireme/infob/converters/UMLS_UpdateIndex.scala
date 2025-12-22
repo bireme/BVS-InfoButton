@@ -26,26 +26,28 @@ import scala.io.Source
   * [-files=<thesName>:<path>,<thesName>:<path>,...,<thesName>:<path>] - name and path to the descriptors input files
   * [-index=<UMLSIndex>] - path to Lucene index to be updated"
   */
-object UMLS_UpdateIndex extends App {
+object UMLS_UpdateIndex {
   private val DEF_LUCENE_INDEX = "web/BVSInfoButton/indexes/UMLS"
   //val DEF_FILES = "ICD10:cid10/ver2010/all.txt,ICD10:cid10/espanhol/all.txt,ICD10:cid10/datasus/ver2008/all.txt,SNOMED-CT:Snomed-CT/all.txt"
   //val DEF_FILES = "ICD10:cid10/one.txt"
   private val DEF_FILES = "ICD10:cid10/ver2010/all.txt,ICD10:cid10/espanhol/all.txt,ICD10:cid10/datasus/ver2008/all.txt"
+  
+  def main(args: Array[String]): Unit = {
+    val parameters = args.foldLeft[Map[String, String]](Map()) {
+      case (map, par) =>
+        val split = par.split(" *= *", 2)
+        map + ((split(0).substring(1), split(1)))
+    }
+    val files: Set[(String, String)] = parameters.getOrElse("files", DEF_FILES).split(" *, *")
+      .map { elem =>
+        val split = elem.split(" *: *")
+        (split(0), split(1))
+      }.toSet // Set((thesaurus_name,path)...)
+    val index = parameters.getOrElse("index", DEF_LUCENE_INDEX)
 
-  private val parameters = args.foldLeft[Map[String, String]](Map()) {
-    case (map, par) =>
-      val split = par.split(" *= *", 2)
-      map + ((split(0).substring(1), split(1)))
+    updateIndex(index, files)
   }
-  private val files: Set[(String, String)] = parameters.getOrElse("files", DEF_FILES).split(" *, *")
-    .map { elem =>
-      val split = elem.split(" *: *")
-      (split(0), split(1))
-    }.toSet                                        // Set((thesaurus_name,path)...)
-  private val index = parameters.getOrElse("index", DEF_LUCENE_INDEX)
-
-  updateIndex(index, files)
-
+  
   private def updateIndex(luceneIndex: String,
                           inputFiles: Set[(String, String)]): Unit = {
     val analyzer = new KeywordAnalyzer()

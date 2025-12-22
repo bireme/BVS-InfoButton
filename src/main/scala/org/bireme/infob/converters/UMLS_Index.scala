@@ -24,7 +24,7 @@ import scala.collection.immutable.HashSet
   * [-mst=<path>] - path to the Isis UMLS master
   * [-index=<UMLSIndex>] - path to Lucene index to be created"
   */
-object UMLS_Index extends App {
+object UMLS_Index {
   case class EntryTerm(id: String,
                        umlsConceptCode: String,
                        thesaurus: String,
@@ -50,18 +50,20 @@ object UMLS_Index extends App {
   val TERM_LABEL_SUBFLD = 'q'
   val TERM_TYPE_SUBFLD = 't'
 
-  val parameters = args.length match {
-    case 0 => Map[String, String]()
-    case _ => args.foldLeft[Map[String, String]](Map()) {
-      case (map, par) =>
-        val split = par.split(" *= *", 2)
-        map + ((split(0).substring(1), split(1)))
+  def main(args: Array[String]): Unit = {
+    val parameters = args.length match {
+      case 0 => Map[String, String]()
+      case _ => args.foldLeft[Map[String, String]](Map()) {
+        case (map, par) =>
+          val split = par.split(" *= *", 2)
+          map + ((split(0).substring(1), split(1)))
+      }
     }
-  }
-  val index = parameters.getOrElse("index", DEF_UMLS_INDEX)
-  val mstPath = parameters.getOrElse("mst", DEF_UMLS_MASTER)
+    val index = parameters.getOrElse("index", DEF_UMLS_INDEX)
+    val mstPath = parameters.getOrElse("mst", DEF_UMLS_MASTER)
 
-  createIndex(mstPath, index)
+    createIndex(mstPath, index)
+  }
 
   def createIndex(umlsMaster: String,
                   umlsIndex: String): Unit = {

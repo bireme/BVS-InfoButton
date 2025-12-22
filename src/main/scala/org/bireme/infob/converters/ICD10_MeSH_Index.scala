@@ -21,22 +21,24 @@ import scala.io.Source
   * [-index=<luceneIndex>] - path to Lucene index to be created"
   * [-url=<url>] - url of file containing the ICD10 - Mesh map")
   */
-object ICD10_MeSH_Index extends App {
+object ICD10_MeSH_Index {
   val DEF_LUCENE_INDEX = "web/BVSInfoButton/indexes/ICD10"
   val ICD10_MESH_URL = "http://svn.code.sf.net/p/diseaseontology/code/trunk/" +
     "DO_info_files/kegg_disease2xref.txt" // See http://disease-ontology.org/
   val ICD10_2010 = "cid10/ver2010/codes.txt"
 
-  val parameters = args.foldLeft[Map[String, String]](Map()) {
-    case (map, par) =>
-      val split = par.split(" *= *", 2)
-      map + ((split(0).substring(1), split(1)))
+  def main(args: Array[String]): Unit = {
+    val parameters = args.foldLeft[Map[String, String]](Map()) {
+      case (map, par) =>
+        val split = par.split(" *= *", 2)
+        map + ((split(0).substring(1), split(1)))
+    }
+    val index = parameters.getOrElse("index", DEF_LUCENE_INDEX)
+    val url = parameters.getOrElse("url", ICD10_MESH_URL)
+
+    createIndex(index, url, ICD10_2010)
   }
-  val index = parameters.getOrElse("index", DEF_LUCENE_INDEX)
-  val url = parameters.getOrElse("url", ICD10_MESH_URL)
-
-  createIndex(index, url, ICD10_2010)
-
+  
   def createIndex(luceneIndex: String, url: String, cid10: String): Unit = {
     val analyzer = new KeywordAnalyzer()
     val directory = FSDirectory.open(new File(luceneIndex).toPath)

@@ -25,7 +25,7 @@ import scala.jdk.CollectionConverters._
   * [-mst=<path>] - path to the Isis DeCS master
   * [-index=<DeCsIndex>] - path to Lucene index to be created"
   */
-object MeSH_DeCS_Index extends App {
+object MeSH_DeCS_Index {
   val DEF_DECS_INDEX = "indexes/DeCS" //"web/BVSInfoButton/indexes/DeCS"
   val DEF_DECS_MASTER = "isis/decs" //"/usr/local/bireme/tabs/decs"
 
@@ -34,16 +34,18 @@ object MeSH_DeCS_Index extends App {
   val ENGLISH_DESCR_TAG = 1
   val SPANISH_DESCR_TAG = 2
   val PORTUGUESE_DESCR_TAG = 3
+  
+  def main(args: Array[String]): Unit = {
+    val parameters = args.foldLeft[Map[String, String]](Map()) {
+      case (map, par) =>
+        val split = par.split(" *= *", 2)
+        map + ((split(0).substring(1), split(1)))
+    }
+    val index = parameters.getOrElse("index", DEF_DECS_INDEX)
+    val mstPath = parameters.getOrElse("mst", DEF_DECS_MASTER)
 
-  val parameters = args.foldLeft[Map[String,String]](Map()) {
-    case (map,par) =>
-      val split = par.split(" *= *", 2)
-      map + ((split(0).substring(1), split(1)))
+    createIndex(mstPath, index)
   }
-  val index = parameters.getOrElse("index", DEF_DECS_INDEX)
-  val mstPath = parameters.getOrElse("mst", DEF_DECS_MASTER)
-
-  createIndex(mstPath, index)
 
   def createIndex(deCSMaster: String,
                   deCSIndex: String): Unit =  {
